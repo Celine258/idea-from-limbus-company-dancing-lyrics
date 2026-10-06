@@ -19,6 +19,9 @@ def main():
     parser = argparse.ArgumentParser(description="跳动的歌词 · Windows 桌面音乐伴侣")
     parser.add_argument("--demo", action="store_true", help="启动并播放内置合成演示")
     parser.add_argument("--smoke", action="store_true", help="静音执行集成检查并退出")
+    parser.add_argument("--netease", action="store_true", help="接收网易云插件的播放和歌词数据")
+    parser.add_argument("--background", action="store_true", help="联动模式启动到托盘")
+    parser.add_argument("--netease-smoke", action="store_true", help="采集 45 秒真实网易云联动验证并退出")
     parser.add_argument("--report-dir", type=Path, default=app_directory() / "artifacts")
     args = parser.parse_args()
     state_dir = app_directory() / ".state"
@@ -42,23 +45,45 @@ def main():
         app.exit(1)
 
     sys.excepthook = exception_hook
-    store = SettingsStore(state_dir / ("smoke-settings.ini" if args.smoke else "settings.ini"))
+    store = SettingsStore(state_dir / ("smoke-settings.ini" if args.smoke or args.netease_smoke else "settings.ini"))
     prefs = store.load()
-    player = MusicPlayer()
+    if args.netease:
+        from netease import NeteasePlayer, NeteaseBridge, read_bridge_config
+        from process_audio import ProcessAudio
+        try:
+            config = read_bridge_config(state_dir / "netease-bridge.json")
+            player = NeteasePlayer()
+            bridge = NeteaseBridge(player, config["token"])
+            bridge.start()
+        except (ValueError, RuntimeError, OSError) as error:
+            QMessageBox.critical(None, "网易云联动", str(error))
+            return 1
+        audio = ProcessAudio(player)
+        app.aboutToQuit.connect(audio.close)
+        app.aboutToQuit.connect(bridge.close)
+    else:
+        player = MusicPlayer()
     overlay = LyricsOverlay(player, prefs)
     panel = ControlPanel(player, overlay, prefs, store)
     app.aboutToQuit.connect(lambda: store.save(prefs))
-    app.aboutToQuit.connect(player.media.stop)
+    app.aboutToQuit.connect(player.stop if args.netease else player.media.stop)
     app.aboutToQuit.connect(panel.tray.hide)
     panel.fit_to_screen(app.primaryScreen().availableGeometry())
     overlay.show()
-    panel.show()
+    if args.netease:
+        bridge.show_panel.connect(panel.show_panel)
+        bridge.enabled_changed.connect(lambda enabled: panel.set_overlay_visible(enabled))
+    if not (args.netease and args.background and panel.tray_available):
+        panel.show()
     logging.info("Control panel initialized; Qt visible=%s", panel.isVisible())
-    if args.smoke:
+    if args.netease_smoke and args.netease:
+        from netease_validation import NeteaseSmokeCheck
+        check = NeteaseSmokeCheck(app, panel, args.report_dir)
+    elif args.smoke and not args.netease:
         from validation import SmokeCheck
         check = SmokeCheck(app, panel, args.report_dir)
         QTimer.singleShot(200, check.start)
-    elif args.demo:
+    elif args.demo and not args.netease:
         QTimer.singleShot(200, panel.play_demo)
     return app.exec()
 

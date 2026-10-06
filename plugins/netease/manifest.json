@@ -1,0 +1,12 @@
+{
+  "manifest_version": 1,
+  "name": "FloatingLyrics",
+  "slug": "floating-lyrics",
+  "version": "0.1.0",
+  "author": "FloatingLyrics",
+  "description": "跳动的歌词：歌曲由网易云播放，桌面歌词随机倾斜并随音乐跳动。",
+  "betterncm_version": ">=1.3.4",
+  "ncm3-compatible": true,
+  "ncm-version-req": "= 3.1.41",
+  "injects": {"Main": [{"file": "adapter.js"}, {"file": "index.js"}]}
+}

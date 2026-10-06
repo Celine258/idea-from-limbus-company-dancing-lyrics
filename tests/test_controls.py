@@ -269,6 +269,41 @@ class ControlPanelTests(unittest.TestCase):
         self.assertTrue(smaller.contains(QRect(self.panel.pos(), self.panel.size())))
         self.assertLess(self.panel.minimumHeight(), 560)
 
+    def test_netease_mode_updates_song_lyrics_without_local_audio_controls(self):
+        from netease import NeteasePlayer, validate_snapshot
+        from test_netease import packet
+        self.panel.tray.hide()
+        self.panel.hide()
+        self.panel.deleteLater()
+        self.player = NeteasePlayer()
+        with patch("controls.QSystemTrayIcon.isSystemTrayAvailable", return_value=False):
+            self.panel = ControlPanel(self.player, self.overlay, self.prefs, self.store)
+        self.panel.refresh_timer.stop()
+        self.panel.show()
+        self.player.apply(validate_snapshot(packet()))
+        self.panel._refresh_position()
+        APP.processEvents()
+        self.assertEqual(self.panel.song_label.text(), "测试歌曲")
+        self.assertEqual(self.panel.footer_song.text(), "测试歌曲")
+        self.assertEqual(self.panel.footer_detail.text(), "测试歌手")
+        self.assertIn("2 句", self.panel.lyric_label.text())
+        self.assertIsNotNone(self.overlay.document)
+        for widget in (self.panel.import_button, self.panel.lyrics_button, self.panel.demo_button, self.panel.volume_slider):
+            self.assertFalse(widget.isVisibleTo(self.panel))
+        self.assertFalse(self.panel.play_button.isEnabled())
+        self.assertTrue(self.panel.progress.isEnabled())
+        self.assertTrue(self.panel.progress.display_only)
+        before = self.player.position()
+        QTest.keyClick(self.panel.progress, Qt.Key.Key_Right)
+        self.assertLess(abs(self.player.position()-before), 100)
+        self.click(self.panel.nav_buttons[1])
+        self.assertTrue(self.player.playing)
+        self.panel.spins["jump"].setValue(19)
+        self.assertEqual(self.store.load().jump, 19)
+        self.player.disconnect()
+        self.assertIsNone(self.overlay.document)
+        self.assertIn("断开", self.panel.notice.text())
+
 
 if __name__ == "__main__":
     unittest.main()

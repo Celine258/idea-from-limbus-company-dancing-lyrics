@@ -184,6 +184,26 @@ class ElidedLabel(QLabel):
 
 class ThinSlider(QSlider):
     """Flat tracks with QSlider's native input, keyboard and accessibility behavior."""
+    display_only = False
+
+    def mousePressEvent(self, event):
+        if self.display_only:
+            event.ignore()
+        else:
+            super().mousePressEvent(event)
+
+    def keyPressEvent(self, event):
+        if self.display_only:
+            event.ignore()
+        else:
+            super().keyPressEvent(event)
+
+    def wheelEvent(self, event):
+        if self.display_only:
+            event.ignore()
+        else:
+            super().wheelEvent(event)
+
     def paintEvent(self, event):
         option = QStyleOptionSlider()
         self.initStyleOption(option)
@@ -229,6 +249,7 @@ class ControlPanel(QWidget):
     def __init__(self, player, overlay, prefs, store):
         super().__init__()
         self.player, self.overlay = player, overlay
+        self.external = getattr(player, "is_external", False)
         self.prefs, self.store = prefs, store
         self._updating = False
         self._shown_tray_hint = False
@@ -261,6 +282,16 @@ class ControlPanel(QWidget):
         root.addWidget(self._build_player_bar())
         self._select_page(0)
         self._setup_tray()
+        if self.external:
+            for widget in (self.import_button, self.lyrics_button, self.demo_button,
+                           self.volume_slider, self.volume_label, self.volume_icon, self.play_button):
+                widget.hide()
+            self.external_transport.show()
+            self.progress.display_only = True
+            self.music_hint.setText("在网易云中选择歌曲，这里负责桌面歌词效果。")
+            self.player.document_changed.connect(self._external_document)
+            self.lyric_label.setText("网易云播放歌曲后，自动同步歌词，无需选择本地文件。")
+            self.progress.setToolTip("当前网易云进度；请在网易云中拖动进度。")
         self.player.set_volume(prefs.volume)
         player.changed.connect(self._refresh_state)
         player.error.connect(self.show_notice)
@@ -342,7 +373,8 @@ class ControlPanel(QWidget):
         self.playback_status = label("等待音乐", "badge")
         heading.addWidget(self.playback_status)
         body.addLayout(heading)
-        body.addWidget(label("选一首喜欢的歌，为今天的工作添一点节奏。", "muted"))
+        self.music_hint = label("选一首喜欢的歌，为今天的工作添一点节奏。", "muted")
+        body.addWidget(self.music_hint)
         toolbar = QHBoxLayout()
         toolbar.setSpacing(12)
         self.import_button = QPushButton("导入音乐")
@@ -501,6 +533,10 @@ class ControlPanel(QWidget):
         self.play_button.setIconSize(QSize(26, 26))
         self.play_button.clicked.connect(self.player.toggle)
         transport.addWidget(self.play_button, 0, Qt.AlignmentFlag.AlignHCenter)
+        self.external_transport = label("网易云播放", "muted")
+        self.external_transport.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.external_transport.hide()
+        transport.addWidget(self.external_transport)
         time_row = QHBoxLayout()
         time_row.setSpacing(4)
         self.elapsed_label = label("00:00", "muted")
@@ -524,6 +560,7 @@ class ControlPanel(QWidget):
         self.visibility_button.clicked.connect(self.toggle_overlay)
         control_body.addWidget(self.visibility_button)
         volume_icon = QLabel()
+        self.volume_icon = volume_icon
         volume_icon.setPixmap(symbol_icon("volume").pixmap(20, 20))
         volume_icon.setFixedSize(20, 20)
         control_body.addWidget(volume_icon)
@@ -600,6 +637,16 @@ class ControlPanel(QWidget):
         self.notice.setText(text)
         self.notice.setToolTip(text)
         self.notice.setVisible(bool(text))
+
+    def _external_document(self, document):
+        self.overlay.set_document(document)
+        self.lyric_label.setText(f"网易云歌词已同步 · {len(document.lines)} 句" if document else
+                                "等待网易云歌词；纯音乐或暂无歌词时保持空白。")
+
+    def set_overlay_visible(self, visible):
+        # Do not repeat show() every progress packet; preserve native focus behavior.
+        if self.overlay.isVisible() != visible:
+            self.toggle_overlay()
 
     def choose_music(self):
         path, _ = QFileDialog.getOpenFileName(self, "选择本地音乐", "", "音乐文件 (*.mp3 *.wav *.flac *.m4a *.ogg);;所有文件 (*)")
@@ -705,6 +752,23 @@ class ControlPanel(QWidget):
         return f"{seconds // 60:02d}:{seconds % 60:02d}"
 
     def _refresh_state(self):
+        if self.external:
+            self.play_button.setEnabled(False)
+            self.play_button.setIcon(symbol_icon("pause" if self.player.playing else "play", "#ffffff"))
+            self.play_button.setToolTip("播放、暂停和音量请在网易云中操作。")
+            self.play_button.setAccessibleName("由网易云控制播放")
+            self.tray_play.setEnabled(False)
+            self.tray_play.setText("由网易云控制播放")
+            title = self.player.title or "等待网易云播放音乐"
+            self._set_song_title(title, "网易云音乐 · " + self.player.artist)
+            self.source_label.setText(self.player.artist or "请在网易云中点击“跳动的词”启用效果。")
+            self.footer_detail.setText(self.player.artist or self.player.status)
+            self.format_label.setText("网易云")
+            self.track_number.setText("01" if self.player.song_id else "—")
+            self.playback_status.setText("播放中" if self.player.playing else "已暂停" if self.player.connected else "未连接")
+            self.notice.setText(self.player.status)
+            self.notice.show()
+            return
         self.play_button.setEnabled(self.player.path is not None)
         action = "暂停音乐" if self.player.playing else "开始播放"
         self.play_button.setIcon(symbol_icon("pause" if self.player.playing else "play", "#ffffff"))
@@ -718,12 +782,13 @@ class ControlPanel(QWidget):
         position = self.player.position()
         self._updating = True
         self.progress.setRange(0, self.player.duration)
-        self.progress.setEnabled(self.player.media.isSeekable())
+        self.progress.setEnabled(self.player.duration > 0 if self.external else self.player.media.isSeekable())
         if not self.progress.isSliderDown():
             self.progress.setValue(int(position))
             self.elapsed_label.setText(self._format_time(position))
         self.duration_label.setText(self._format_time(self.player.duration))
-        self.track_duration.setText(self._format_time(self.player.duration) if self.player.path else "—")
+        has_song = bool(self.player.song_id) if self.external else self.player.path is not None
+        self.track_duration.setText(self._format_time(self.player.duration) if has_song else "—")
         self._updating = False
         if self.prefs.motion == "wave":
             text = "轻波浪模式 · 暂停音乐时也会停止运动。"
