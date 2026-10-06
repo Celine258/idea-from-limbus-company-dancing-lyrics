@@ -1,4 +1,8 @@
 from pathlib import Path
+import ctypes
+from ctypes import wintypes
+import logging
+import sys
 from PySide6.QtCore import QPointF, QRect, QRectF, QSize, Qt, QTimer
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPalette, QPen, QPixmap, QPolygonF
 from PySide6.QtWidgets import (
@@ -622,6 +626,24 @@ class ControlPanel(QWidget):
         self.showNormal()
         self.raise_()
         self.activateWindow()
+        if sys.platform == "win32" and QApplication.instance().platformName() == "windows":
+            # A background launcher can supply SW_HIDE in STARTUPINFO. Qt may
+            # consider the first show successful while Windows keeps it hidden.
+            user = ctypes.windll.user32
+            user.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
+            user.BringWindowToTop.argtypes = [wintypes.HWND]
+            user.SetForegroundWindow.argtypes = [wintypes.HWND]
+            user.IsWindowVisible.argtypes = [wintypes.HWND]
+            hwnd = int(self.winId())
+            user.ShowWindow(hwnd, 9)  # SW_RESTORE also handles a minimized panel.
+            user.BringWindowToTop(hwnd)
+            user.SetForegroundWindow(hwnd)
+            logging.info("Control panel opened; native visible=%s; page=%s",
+                         bool(user.IsWindowVisible(hwnd)), self.pages.currentIndex())
+
+    def show_effects(self):
+        self._select_page(1)
+        self.show_panel()
 
     def closeEvent(self, event):
         if self.tray_available:

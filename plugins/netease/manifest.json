@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "name": "FloatingLyrics",
   "slug": "floating-lyrics",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "FloatingLyrics",
   "description": "跳动的歌词：歌曲由网易云播放，桌面歌词随机倾斜并随音乐跳动。",
   "betterncm_version": ">=1.3.4",

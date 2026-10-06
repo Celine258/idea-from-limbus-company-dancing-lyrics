@@ -30,7 +30,7 @@
             data.seek=seek;
             socket.send(JSON.stringify(data));
             lastSent=now;
-            updateStatus(enabled?'已连接 · 右键打开歌词设置':'歌词效果已关闭 · 点击开启');
+            updateStatus(enabled?'已连接 · 右键或点击旁边的设置调整效果':'歌词效果已关闭 · 点击开启');
             if (enabled && key && key!==fetchSong) {
                 fetchSong=key;
                 store.dispatch({type:'async:lyric/fetchLyric',payload:{force:true}});
@@ -59,7 +59,7 @@
     }
     function showSettings() {
         if(socket?.readyState===WebSocket.OPEN) socket.send(JSON.stringify({kind:'show',token:config.token}));
-        else {pendingShow=true;launch();connect();}
+        else {pendingShow=true;nextLaunch=0;launch();connect();}
     }
     function installButtons() {
         for (const anchor of document.querySelectorAll('[data-testid="tid_playbar_lyric_btn"]')) {
@@ -68,8 +68,14 @@
             button.className='floating-lyrics-entry';
             button.style.cssText='border:0;border-radius:8px;padding:6px 9px;margin:0 4px;background:#ff3656;color:white;font-size:12px;cursor:pointer;white-space:nowrap';
             button.onclick=()=>{enabled=!enabled;localStorage.setItem('floatingLyrics.enabled',String(enabled));if(enabled){nextLaunch=0;connect();}send(true);updateStatus(status);};
-            button.oncontextmenu=event=>{event.preventDefault();showSettings();};
-            anchor.insertAdjacentElement('afterend',button);buttons.add(button);
+            button.oncontextmenu=event=>{event.preventDefault();event.stopPropagation();showSettings();};
+            const settings=document.createElement('button');
+            settings.className='floating-lyrics-settings';settings.textContent='设置';
+            settings.title='打开歌词效果设置';
+            settings.style.cssText='border:0;border-radius:8px;padding:6px 7px;margin:0 2px;background:#eef1f5;color:#536079;font-size:12px;cursor:pointer;white-space:nowrap';
+            settings.onclick=event=>{event.stopPropagation();showSettings();};
+            anchor.insertAdjacentElement('afterend',button);
+            button.insertAdjacentElement('afterend',settings);buttons.add(button);
         }
         for(const button of buttons) if(!button.isConnected) buttons.delete(button);
         updateStatus(status);
@@ -105,7 +111,7 @@
         const section=document.createElement('div');
         section.style.cssText='padding:20px;line-height:1.8';
         const title=document.createElement('h2');title.textContent='跳动的歌词';section.append(title);
-        const info=document.createElement('p');info.textContent='音乐由网易云播放。播放栏点击“跳动的词”开关效果，右键打开设置。';section.append(info);
+        const info=document.createElement('p');info.textContent='音乐由网易云播放。播放栏点击“跳动的词”开关效果，右键或点击旁边的“设置”调整效果。';section.append(info);
         const note=document.createElement('p');note.textContent=status;section.append(note);
         const button=document.createElement('button');button.textContent='打开歌词效果设置';button.onclick=showSettings;section.append(button);
         return section;

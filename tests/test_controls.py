@@ -127,6 +127,19 @@ class ControlPanelTests(unittest.TestCase):
         self.assertEqual(self.panel.player_bar.geometry(), bar)
         self.assertTrue(self.panel.play_button.isVisibleTo(self.panel))
 
+    def test_effects_entry_restores_hidden_minimized_panel_without_changing_playback(self):
+        self.player.playing = True
+        self.panel.showMinimized()
+        self.panel.hide()
+        self.panel.show_effects()
+        APP.processEvents()
+        self.assertTrue(self.panel.isVisible())
+        self.assertFalse(self.panel.isMinimized())
+        self.assertEqual(self.panel.pages.currentIndex(), 1)
+        self.assertTrue(self.panel.nav_buttons[1].isChecked())
+        self.assertTrue(self.player.playing)
+        self.assertTrue(self.overlay.isVisible())
+
     def test_import_updates_song_footer_and_matching_lyrics(self):
         path = self.music()
         with patch("controls.QFileDialog.getOpenFileName", return_value=(str(path), "")):

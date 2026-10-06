@@ -22,6 +22,7 @@ def main():
     parser.add_argument("--netease", action="store_true", help="接收网易云插件的播放和歌词数据")
     parser.add_argument("--background", action="store_true", help="联动模式启动到托盘")
     parser.add_argument("--netease-smoke", action="store_true", help="采集 45 秒真实网易云联动验证并退出")
+    parser.add_argument("--settings-smoke", action="store_true", help="联动验证同时要求实际打开歌词效果窗口")
     parser.add_argument("--report-dir", type=Path, default=app_directory() / "artifacts")
     args = parser.parse_args()
     state_dir = app_directory() / ".state"
@@ -71,14 +72,14 @@ def main():
     panel.fit_to_screen(app.primaryScreen().availableGeometry())
     overlay.show()
     if args.netease:
-        bridge.show_panel.connect(panel.show_panel)
+        bridge.show_panel.connect(panel.show_effects)
         bridge.enabled_changed.connect(lambda enabled: panel.set_overlay_visible(enabled))
     if not (args.netease and args.background and panel.tray_available):
         panel.show()
     logging.info("Control panel initialized; Qt visible=%s", panel.isVisible())
     if args.netease_smoke and args.netease:
         from netease_validation import NeteaseSmokeCheck
-        check = NeteaseSmokeCheck(app, panel, args.report_dir)
+        check = NeteaseSmokeCheck(app, panel, args.report_dir, require_settings=args.settings_smoke)
     elif args.smoke and not args.netease:
         from validation import SmokeCheck
         check = SmokeCheck(app, panel, args.report_dir)

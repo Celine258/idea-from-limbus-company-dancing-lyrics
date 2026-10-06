@@ -2,6 +2,32 @@
 
 每次改动按日期追加记录，包含改动目的、涉及文件、测试与验证结果、影响或已知限制。
 
+## 2026-10-06：修复后台设置窗口右键无反馈
+
+### 改动
+
+- 用户反馈右键“跳动的词”没有反应。真实鼠标跟踪确认右键处理和打开请求均已执行，但后台启动的 Qt 面板在 Windows 原生状态中仍隐藏；直接调用原生窗口恢复后能够显示。
+- [控制面板](controls.py)打开时增加 Windows 原生恢复、置前和可见状态日志，处理后台隐藏和最小化；新增 `show_effects()`，由 [联动入口](main.py)将插件的设置请求直接送到“歌词效果”页。
+- [网易云插件](plugins/netease/index.js)保留右键入口，并在开关旁新增可左键点击的“设置”按钮。阻止设置点击传播，连接断开时允许显式重启引擎，连接恢复后补发打开请求；打开设置不会改变歌词开关。[插件清单](plugins/netease/manifest.json)升级至 `0.1.2`。
+- 扩展 [面板测试](tests/test_controls.py)和 [插件测试](tests/test_netease_plugin.cjs)，覆盖隐藏及最小化恢复、页面选择、播放状态不变、两个设置入口、断线启动和补发请求。[真实联动验证器](netease_validation.py)新增可选 `--settings-smoke` 检查，要求效果页原生可见；此模式不自动显示面板，避免掩盖后台启动问题。
+- 更新 [使用说明](README.md)、[网易云说明](NETEASE.md)和 [验证记录](验证记录.md)，重新打包引擎并更新本机插件。保留原 `.state`、网易云和 BetterNCM 框架。
+
+### 测试与验证
+
+- `.\.venv\Scripts\python.exe -m unittest discover -s tests -v`：44 项全部通过，包含新增窗口恢复测试及扩展插件设置入口回归检查；文档更新后另行运行文档校验。
+- `.\.venv\Scripts\python.exe main.py --smoke --report-dir artifacts/netease-settings-local-smoke`：源码 Windows 静音播放、动画、窗口和布局检查通过。
+- `.\build.ps1 -SkipDependencies`：原生音频助手与 PyInstaller 打包通过；最终构建前的包保存在 `artifacts/previous-package-20261006-184534-637`，修复前的包保存在 `artifacts/previous-package-20261006-184015-885`。
+- `.\启动.bat -Smoke -ReportDirectory "$PWD\artifacts\netease-settings-launcher"`：实际启动入口面板原生可见，打包版全部静音检查通过。
+- `.\.venv\Scripts\python.exe tools\package_netease.py` 生成 `0.1.2` 插件包，已更新 `C:\betterncm\plugins\FloatingLyrics.plugin`。修复前插件备份为 `artifacts/netease-settings-fix-20261006-184706/FloatingLyrics.plugin`。
+- `artifacts/netease-probe/run-settings-regression.ps1`：后台冷启动后，真实鼠标右键首次打开效果窗口通过；再次将窗口原生隐藏后，真实鼠标左键“设置”恢复窗口通过。`artifacts/netease-settings-live/settings-clicks.json` 三项检查全部为真。验证脚本等待客户端按钮就绪，并将尚未创建原生窗口的后台状态视为隐藏，不依赖预先打开面板。
+- 同次验证的 `host-report.json` 7 项宿主播放检查、`netease-report.json` 10 项桌面与设置窗口检查全部通过。45 秒采集 217 个样本，9 次重定位，最高平滑声音强度 `0.1738`；包含暂停冻结、跳转、连续三次切歌、最小化继续同步及退出网易云清除歌词。
+- 已查看 `netease-settings.png`，确认真实打开“歌词效果”页，150% 比例下字号、颜色和透明度控件显示完整，剩余效果可滚动访问。原用户设置 SHA-256 前后一致，记录在 `artifacts/netease-settings-live/settings-preservation.json`；最终恢复原网易云正常启动，关闭验证调试端口。
+
+### 影响与限制
+
+- 设置入口仍使用独立桌面效果面板；歌词透明层继续鼠标穿透。窗口恢复遵循 Windows 前台激活规则，不更改全局焦点策略。
+- 本次实测网易云 `3.1.41.205529`、BetterNCM `1.3.4` 和本机 Windows；其他客户端版本及长期运行仍需另行验证。截图使用独立验证设置，正常用户偏好未被替换。
+
 ## 2026-10-06：修复网易云进度冻结并补齐切歌验证
 
 ### 改动

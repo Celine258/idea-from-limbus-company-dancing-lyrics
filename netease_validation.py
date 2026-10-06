@@ -8,13 +8,15 @@ from process_audio import netease_pid
 
 
 class NeteaseSmokeCheck:
-    def __init__(self, app, panel, directory):
+    def __init__(self, app, panel, directory, require_settings=False):
         self.app, self.panel, self.player = app, panel, panel.player
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
         self.started = time.monotonic()
         self.samples = []
         self.saved = False
+        self.require_settings = require_settings
+        self.settings_opened = False
         self.jumps = 0
         self.player.discontinuity.connect(self._jump)
         self.timer = QTimer(panel)
@@ -45,13 +47,22 @@ class NeteaseSmokeCheck:
                 return True
             user.EnumWindows(visit, 0)
         overlay = panel.overlay
+        settings_visible = False
+        if panel.pages.currentIndex() == 1 and panel.isVisible():
+            from ctypes import wintypes
+            user = ctypes.windll.user32
+            user.IsWindowVisible.argtypes = [wintypes.HWND]
+            settings_visible = bool(user.IsWindowVisible(int(panel.winId())))
+            if settings_visible and not self.settings_opened:
+                panel.grab().save(str(self.directory / "netease-settings.png"))
+                self.settings_opened = True
         document = overlay.document
         active = overlay.timeline.visible(player.position(), player.duration) if overlay.timeline else []
         sample = {"seconds": round(time.monotonic()-self.started, 2), "connected": player.connected,
                   "song": player.song_id, "playing": player.playing, "position": round(player.position(), 1),
                   "lyricCount": len(document.lines) if document else 0, "activeCount": len(active),
                   "energy": round(player.energy_at(player.position()), 4), "minimized": minimized,
-                  "overlayVisible": overlay.isVisible(), "overlayTimer": overlay.timer.isActive(),
+                  "overlayVisible": overlay.isVisible(), "overlayTimer": overlay.timer.isActive(), "settingsVisible": settings_visible,
                   "overlayHash": overlay.grab().toImage().cacheKey() if not player.playing else 0}
         # cacheKey changes per grab; compare pixel bytes for pause verification instead.
         if not player.playing and player.connected:
@@ -60,7 +71,8 @@ class NeteaseSmokeCheck:
             sample["overlayHash"] = hashlib.sha256(bytes(picture.constBits())).hexdigest()
         self.samples.append(sample)
         if player.connected and document and active and not self.saved:
-            panel.show()
+            if not self.require_settings:
+                panel.show()
             panel.grab().save(str(self.directory / "netease-panel.png"))
             overlay.grab().save(str(self.directory / "netease-overlay.png"))
             self.saved = True
@@ -85,6 +97,8 @@ class NeteaseSmokeCheck:
                   "processAudioEnergy": max((x["energy"] for x in connected), default=0) > .03,
                   "disconnectClearsLyrics": any(not x["connected"] and x["lyricCount"]==0 for x in samples[len(samples)//2:]),
                   "noSecondAudioPlayer": not hasattr(self.player,"media")}
+        if self.require_settings:
+            checks["nativeEffectsSettingsOpened"] = self.settings_opened
         report = {"passed": all(checks.values()), "checks": checks, "jumps": self.jumps,
                   "sampleCount": len(samples), "samples": samples}
         (self.directory / "netease-report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
