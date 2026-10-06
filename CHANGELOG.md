@@ -2,6 +2,29 @@
 
 每次改动按日期追加记录，包含改动目的、涉及文件、测试与验证结果、影响或已知限制。
 
+## 2026-10-06：修复网易云进度冻结并补齐切歌验证
+
+### 改动
+
+- 用户反馈网易云进度条停止、音乐和歌词仍播放，以及切歌跳过。确认旧 [适配器](plugins/netease/adapter.js)通过独立 `window.legacyNativeCmder` 注册 `PlayProgress`、`Seek`，其回调表与客户端播放器分离，可能覆盖客户端的原生事件槽，使网易云自身收不到进度和跳转完成事件。
+- 改为订阅客户端已加载模块导出的 `audioPlayerPlayProgress$`、`audioPlayerSeek$`，复用播放器自己的事件实例；保留暂停迟到事件和歌曲编号过滤，隔离插件处理异常，卸载页面时只取消本插件的订阅。[插件入口](plugins/netease/index.js)接入新订阅方式，[清单](plugins/netease/manifest.json)升级为 `0.1.1`。
+- 扩展适配器、插件生命周期测试，新增 [宿主回调隔离测试](tests/test_netease_host.cjs)与 [宿主验证器测试](tests/test_netease_host_validation.cjs)，纳入 [自动测试](tests/test_netease.py)。新增 [真实宿主验证工具](tools/verify_netease_host.mjs)，直接检查网易云进度条、暂停、跳转及连续切歌；外部驱动计时，兼容客户端旧 Chromium。
+- 更新 [网易云说明](NETEASE.md)与 [验证记录](验证记录.md)。原桌面引擎不变，重新生成并安装插件包，保留原框架、客户端版本和用户配置。
+
+### 测试与验证
+
+- `.\.venv\Scripts\python.exe -m unittest discover -s tests -v`：43 项通过。新增回归检查覆盖宿主回调不被覆盖、连续换歌后的事件过滤、插件异常不阻断宿主、退订不删除宿主回调，以及验证器能识别进度冻结和未经操作的跳歌。
+- `.\.venv\Scripts\python.exe main.py --smoke --report-dir artifacts/netease-progress-local-smoke`：原本地播放和桌面动画的 Windows 静音集成验证通过。
+- `.\启动.bat -Smoke -ReportDirectory "$PWD\artifacts\netease-progress-launcher"`：退出码 0，实际入口面板可见，打包版静音集成检查全部通过。
+- `node tools/verify_netease_host.mjs artifacts/netease-host-regression`：真实网易云宿主 7 项检查通过，连续播放包含《感官过载》在内的多首歌曲，进度持续移动，切歌后没有再次跳过所选歌曲，歌词所属歌曲正确。
+- `artifacts/netease-probe/run-progress-regression.ps1`：已安装 `0.1.1` 与原客户端联合检查通过，`artifacts/netease-progress-live/host-report.json` 的 7 项宿主检查、`netease-report.json` 的 9 项桌面检查全部通过。45 秒采集 220 个样本、10 次进度重定位，最高平滑声音强度约 `0.096`；覆盖暂停画面冻结、最小化后继续同步、退出网易云后清除歌词及不创建第二个播放器。
+- 已查看修复后网易云及歌词面板截图。正常用户设置 SHA-256 前后一致，记录为 `artifacts/netease-progress-live/settings-preservation.json`。原有插件备份在 `artifacts/netease-progress-fix-20261006-174417/FloatingLyrics.plugin`；最终已恢复原网易云正常启动，不带调试端口，实际加载的适配器与项目源码 SHA-256 一致。
+
+### 影响与限制
+
+- 之前的 9 项桌面检查仅覆盖歌词引擎，没有检查网易云自身进度条及连续切歌，未能发现此次宿主干扰；本次增加独立宿主验证。
+- 仍仅适配网易云 `3.1.41.205529`、BetterNCM `1.3.4`。验证覆盖本机多首歌曲与短时操作，不代表全部歌曲版权、网络状态或长期稳定性均已验证。
+
 ## 2026-10-06：接入网易云音乐插件与桌面歌词引擎
 
 ### 改动

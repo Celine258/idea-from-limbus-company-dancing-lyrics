@@ -7,6 +7,8 @@ const adapter=require('../plugins/netease/adapter.js');
     const state={playing:{playId:'live',resourceTrackId:'42',resourceName:'原创测试',resourceDuration:60,
         resourceArtists:[],playingState:2},'async:lyric':{resourceTrackId:'42',displayType:'default',lyricLines:[{time:1,lyric:'原创歌词'}]}};
     const store={getState:()=>state,subscribe:()=>{},dispatch:()=>{}};
+    const streams={audioPlayerPlayProgress$:{subscribe:callback=>{registered.PlayProgress=(...args)=>callback(args);return {unsubscribe:()=>{}};}},
+        audioPlayerSeek$:{subscribe:callback=>{registered.Seek=(...args)=>callback(args);return {unsubscribe:()=>{}};}}};
     const player={'__reactInternalInstance$test':{memoizedProps:{value:{store}}}};
     const anchor={parentElement:{querySelector:()=>entries[0]},insertAdjacentElement:(_position,button)=>entries.push(button)};
     function element(){let text='';return {style:{},isConnected:true,title:'',get textContent(){return text;},set textContent(value){textWrites++;text=value;}};}
@@ -16,9 +18,9 @@ const adapter=require('../plugins/netease/adapter.js');
         send(text){sent.push(JSON.parse(text));}
         close(){this.readyState=3;}
     }
-    const context={FloatingLyricsAdapter:adapter,plugin:{pluginPath:'plugin',onLoad:fn=>loaded=fn,onConfig:()=>{}},
+    const context={FloatingLyricsAdapter:{...adapter,playbackStreams:()=>streams},plugin:{pluginPath:'plugin',onLoad:fn=>loaded=fn,onConfig:()=>{}},
         betterncm:{ncm:{getNCMVersion:()=> '3.1.41'},fs:{readFileText:async()=>JSON.stringify({token:'a'.repeat(64),command:'test'})},app:{exec:async()=>true}},
-        legacyNativeCmder:{appendRegisterCall:(name,_prefix,callback)=>registered[name]=callback},
+        legacyNativeCmder:{appendRegisterCall:()=>{throw new Error('不得重注册网易云原生回调');}},
         document:{body:{},querySelector:()=>player,querySelectorAll:()=>[anchor],createElement:element},
         MutationObserver:class {constructor(callback){observe=callback;}observe(){}},
         localStorage:{getItem:()=>null,setItem:()=>{}},WebSocket:Socket,setInterval:()=>{},Date,console,Promise,

@@ -118,6 +118,16 @@ class NeteasePlayerTests(unittest.TestCase):
         result = subprocess.run(["node", str(ROOT / "tests/test_netease_plugin.cjs")], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js 用于宿主播放安全测试")
+    def test_javascript_host_progress_seek_and_callback_isolation(self):
+        result = subprocess.run(["node", str(ROOT / "tests/test_netease_host.cjs")], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js 用于真实客户端验证器测试")
+    def test_host_validator_rejects_frozen_progress_and_unrequested_skips(self):
+        result = subprocess.run(["node", str(ROOT / "tests/test_netease_host_validation.cjs")], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
 
 class BridgeTests(unittest.TestCase):
     def setUp(self):

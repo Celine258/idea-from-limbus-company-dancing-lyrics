@@ -25,27 +25,46 @@
             position_ms:Math.round(Math.max(0,Number.isFinite(position)?position:0)),
             playing:p.playingState===2, lyrics:lyricsFor(state,songId)};
     }
+    let runtime=null;
+    function playbackStreams(host=root) {
+        if (!runtime && typeof host.webpackJsonp?.push==='function') {
+            const id='floating_lyrics_playback_runtime';
+            host.webpackJsonp.push([[id],{[id]:(_module,_exports,require)=>{runtime=require;}},[[id]]]);
+        }
+        // Subscribe through the client's own command instance. A separate legacy
+        // instance has its own callback map and can replace the client's native slot.
+        return Object.values(runtime?.c||{}).map(module=>module.exports).find(exports=>
+            typeof exports?.audioPlayerPlayProgress$?.subscribe==='function' &&
+            typeof exports?.audioPlayerSeek$?.subscribe==='function') || null;
+    }
     class PlaybackEvents {
-        constructor(getNative,getPlaying,onUpdate) {
-            this.getNative=getNative;this.getPlaying=getPlaying;this.onUpdate=onUpdate;this.bound=null;
+        constructor(getStreams,getPlaying,onUpdate,onError=()=>{}) {
+            this.getStreams=getStreams;this.getPlaying=getPlaying;this.onUpdate=onUpdate;this.onError=onError;
+            this.bound=null;this.subscriptions=[];
         }
         attach() {
-            // 3.1.41 replaces the early bridge while its React application starts.
             if(!this.getPlaying()) return;
-            const native=this.getNative();
-            if(!native || native===this.bound || typeof native.appendRegisterCall!=='function') return;
-            this.bound=native;
-            native.appendRegisterCall('PlayProgress','audioplayer',(id,seconds)=>{
-                const playing=this.getPlaying();
-                // Native callbacks queued before pause can arrive after the pause state.
-                if(playing?.playId===id && playing.playingState===2 && Number.isFinite(seconds)) this.onUpdate(id,seconds*1000,false);
-            });
-            native.appendRegisterCall('Seek','audioplayer',(id,_seek,code,seconds)=>{
-                if(code===0 && this.getPlaying()?.playId===id && Number.isFinite(seconds)) this.onUpdate(id,seconds*1000,true);
-            });
+            const streams=this.getStreams();
+            if(!streams || streams===this.bound) return;
+            this.close();this.bound=streams;
+            const guarded=handler=>args=>{try{handler(args);}catch(error){this.onError(error);}};
+            try {
+                this.subscriptions.push(streams.audioPlayerPlayProgress$.subscribe(guarded(([id,seconds])=>{
+                    const playing=this.getPlaying();
+                    // Native callbacks queued before pause can arrive after the pause state.
+                    if(playing?.playId===id && playing.playingState===2 && Number.isFinite(seconds)) this.onUpdate(id,seconds*1000,false);
+                }),this.onError));
+                this.subscriptions.push(streams.audioPlayerSeek$.subscribe(guarded(([id,_seek,code,seconds])=>{
+                    if(code===0 && this.getPlaying()?.playId===id && Number.isFinite(seconds)) this.onUpdate(id,seconds*1000,true);
+                }),this.onError));
+            } catch(error) {this.close();this.onError(error);}
+        }
+        close() {
+            for(const subscription of this.subscriptions) subscription.unsubscribe();
+            this.subscriptions=[];this.bound=null;
         }
     }
-    const api={findStore,lyricsFor,snapshot,PlaybackEvents};
+    const api={findStore,lyricsFor,snapshot,playbackStreams,PlaybackEvents};
     if (typeof module!=='undefined' && module.exports) module.exports=api;
     else root.FloatingLyricsAdapter=api;
 })(typeof window==='undefined' ? globalThis : window);

@@ -19,11 +19,12 @@ const store={getState:()=>state,subscribe:()=>{}};
 const element={'__reactInternalInstance$test':{memoizedProps:{},return:{memoizedProps:{value:{store}}}}};
 assert.equal(adapter.findStore(element),store);
 assert.throws(()=>adapter.snapshot({playing:{}},0,true),/接口/);
-let native={appendRegisterCall:()=>{throw new Error('bound before the player was ready')}},playing=null;
+let streams=null,playing=null;
 const callbacks={},updates=[];
-const reader=new adapter.PlaybackEvents(()=>native,()=>playing,(...args)=>updates.push(args));
+const reader=new adapter.PlaybackEvents(()=>streams,()=>playing,(...args)=>updates.push(args));
 reader.attach();
-native={appendRegisterCall:(name,_prefix,callback)=>{callbacks[name]=callback;}};
+streams={audioPlayerPlayProgress$:{subscribe:callback=>{callbacks.PlayProgress=(...args)=>callback(args);return {unsubscribe:()=>{}};}},
+    audioPlayerSeek$:{subscribe:callback=>{callbacks.Seek=(...args)=>callback(args);return {unsubscribe:()=>{}};}}};
 playing={playId:'current',playingState:2};
 reader.attach();
 callbacks.PlayProgress('stale',10);

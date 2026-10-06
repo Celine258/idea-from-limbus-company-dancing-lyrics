@@ -4,7 +4,7 @@
 
 ## 使用
 
-本次适配网易云 **3.1.41.205529（64 位）**，插件框架使用 **BetterNCM 1.3.4**。
+本次适配网易云 **3.1.41.205529（64 位）**，插件版本 **0.1.1**，插件框架使用 **BetterNCM 1.3.4**。
 
 安装后重新启动网易云，在底部播放栏的“词”按钮旁会出现红色 **跳动的词** 按钮：
 
@@ -42,7 +42,8 @@
 
 ## 技术边界
 
-- [插件](plugins/netease/index.js)通过 3.1.41 播放组件取得 Redux store，只选取当前歌曲及歌词字段；通过 `audioplayer` 的 `PlayProgress`、`Seek` 回调取得秒级原始时间，并转换为毫秒。客户端歌词已经包含自身偏移，适配器不重复应用该偏移。
+- [插件](plugins/netease/index.js)通过 3.1.41 播放组件取得 Redux store，只选取当前歌曲及歌词字段；订阅应用已有的 `audioPlayerPlayProgress$`、`audioPlayerSeek$` 事件流，取得秒级时间并转换为毫秒。只检查已加载模块的事件导出，不主动加载客户端其他模块。客户端歌词已经包含自身偏移，适配器不重复应用该偏移。
+- 不通过独立的 `window.legacyNativeCmder` 实例注册播放回调：该实例的回调表与实际播放器分离，重新注册可能覆盖网易云的原生事件槽。插件读取或发送失败不会中断宿主的事件处理，退出页面时只取消自己的订阅。
 - 插件复用网易云自己的歌词获取流程，切歌时清除旧歌词，只接受属于当前歌曲的歌词。无需额外网易云账号、Cookie、第三方歌词服务器或本地音乐文件。
 - [本地桥接](netease.py)使用 `127.0.0.1:38473` 的 WebSocket 和每次安装生成的随机连接令牌；拒绝错误令牌、不兼容协议、无效时间或过大歌词。连接断开或超过四秒无数据时停止动画并清空歌词。
 - [音频助手](native/process_energy.cpp)使用 Windows 的 [进程音频回环接口](https://learn.microsoft.com/en-us/samples/microsoft/windows-classic-samples/applicationloopbackaudio-sample/)，只计算网易云进程及其子进程的 RMS，向界面传递一个强度数值，不录制麦克风或保存音频。此接口需要 Windows build 20348 或更新版本；不可用时面板提示切换“轻波浪”。
@@ -64,3 +65,12 @@
 ```
 
 报告记录歌曲编号、进度、歌词数量、声音强度和画面验证，不保存完整歌词或音频。只有真实操作满足全部检查，报告才会显示 `passed: true`；接口单元测试不能替代真实客户端验证。
+
+还需单独检查网易云自己的进度条及连续切歌，避免歌词引擎正常而宿主播放器异常。完全退出网易云后，仅在验证期间通过调试端口启动原客户端：
+
+```powershell
+& 'C:\Program Files\NetEase\CloudMusic\cloudmusic.exe' --remote-debugging-port=9229
+node tools\verify_netease_host.mjs artifacts\netease-host-regression
+```
+
+[宿主验证工具](tools/verify_netease_host.mjs)通过外部定时驱动真实客户端，检查进度移动、暂停、跳转完成、连续三次切歌后保持播放和歌词所属歌曲。它会操作播放与切歌，输出 `host-report.json`；结束后退出客户端，再正常启动即可关闭调试端口。界面截图另行检查，避免后台截图接口等待帧绘制而影响验证时序。

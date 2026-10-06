@@ -78,10 +78,10 @@
         try {
             if(betterncm.ncm.getNCMVersion()!=='3.1.41') throw new Error('跳动的歌词目前适配网易云 3.1.41');
             config=JSON.parse(await betterncm.fs.readFileText(plugin.pluginPath+'/bridge-config.json'));
-            const events=new FloatingLyricsAdapter.PlaybackEvents(()=>window.legacyNativeCmder,
+            const events=new FloatingLyricsAdapter.PlaybackEvents(()=>FloatingLyricsAdapter.playbackStreams(),
                 ()=>store?.getState().playing,(id,milliseconds,seek)=>{
                     playId=id;position=milliseconds;send(seek,seek);
-                });
+                },reportError);
             const attach=()=>{
                 if(!store) {
                     store=FloatingLyricsAdapter.findStore(document.querySelector('[data-testid="tid_playbar_play_btn"]'));
@@ -98,7 +98,7 @@
             observer.observe(document.body,{childList:true,subtree:true});
             attach();installButtons();connect();
             setInterval(()=>{attach();installButtons();if(enabled||pendingShow)connect();send();},1000);
-            window.addEventListener('beforeunload',()=>socket?.close());
+            window.addEventListener('beforeunload',()=>{events.close();socket?.close();});
         } catch(error) {reportError(error);}
     });
     plugin.onConfig(()=>{
