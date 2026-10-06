@@ -1,0 +1,120 @@
+from dataclasses import dataclass
+import math
+import random
+from PySide6.QtCore import QPointF, QRectF, QTextBoundaryFinder
+from PySide6.QtGui import QFont, QFontMetricsF, QPainterPath
+from settings import Preferences
+
+
+def graphemes(text: str) -> list[str]:
+    """Do not split combining marks or joined emoji in the middle."""
+    finder = QTextBoundaryFinder(QTextBoundaryFinder.BoundaryType.Grapheme, text)
+    result = []
+    start = 0
+    # QTextBoundaryFinder indexes UTF-16; slice the same representation.
+    raw = text.encode("utf-16-le")
+    while (end := finder.toNextBoundary()) >= 0:
+        result.append(raw[start * 2:end * 2].decode("utf-16-le"))
+        start = end
+    return result
+
+
+@dataclass
+class Glyph:
+    path: QPainterPath
+    x: float
+    baseline: float
+    index: int
+
+
+@dataclass
+class LineLayout:
+    glyphs: list[Glyph]
+    center: QPointF
+    angle: float
+    bounds: QRectF
+    font_size: int
+
+
+def display_regions(width: int, height: int, mode: str) -> list[QRectF]:
+    pad = min(24, width * 0.02, height * 0.03)
+    if mode == "edges":
+        band = max(1.0, width * 0.22 - 2 * pad)
+        return [QRectF(pad, pad, band, height - 2 * pad),
+                QRectF(width - pad - band, pad, band, height - 2 * pad)]
+    return [QRectF(pad, pad, width - 2 * pad, height - 2 * pad)]
+
+
+def _glyph_layout(text: str, pixels: int, max_width: float):
+    font = QFont("Microsoft YaHei UI")
+    font.setPixelSize(pixels)
+    font.setWeight(QFont.Weight.DemiBold)
+    metrics = QFontMetricsF(font)
+    rows: list[list[str]] = [[]]
+    row_width = 0.0
+    for char in graphemes(text):
+        if char in ("\n", "\r\n"):
+            rows.append([])
+            row_width = 0.0
+            continue
+        advance = metrics.horizontalAdvance(char)
+        if rows[-1] and row_width + advance > max_width:
+            rows.append([])
+            row_width = 0.0
+        rows[-1].append(char)
+        row_width += advance
+    widths = [sum(metrics.horizontalAdvance(char) for char in row) for row in rows]
+    glyphs = []
+    index = 0
+    height = metrics.height() * len(rows)
+    for row_index, row in enumerate(rows):
+        x = -widths[row_index] / 2
+        baseline = -height / 2 + metrics.ascent() + row_index * metrics.height()
+        for char in row:
+            advance = metrics.horizontalAdvance(char)
+            path = QPainterPath()
+            path.addText(QPointF(-advance / 2, 0), font, char)
+            glyphs.append(Glyph(path, x + advance / 2, baseline, index))
+            x += advance
+            index += 1
+    return glyphs, max(widths, default=0), height
+
+
+def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRectF],
+                 prefs: Preferences) -> LineLayout | None:
+    rng = random.Random(seed)
+    regions = list(regions)
+    rng.shuffle(regions)
+    fallback = None
+    for region in regions:
+        angle = rng.uniform(-prefs.angle, prefs.angle)
+        for pixels in range(prefs.font_size, 9, -1):
+            glyphs, width, height = _glyph_layout(text, pixels, max(10, region.width() - 50))
+            # Include stroke, character scale, jumping and fade-out drift.
+            box_w = width * 1.04 + 16
+            box_h = height * 1.04 + 2 * prefs.jump + 36
+            rad = math.radians(angle)
+            rotated_w = abs(box_w * math.cos(rad)) + abs(box_h * math.sin(rad))
+            rotated_h = abs(box_w * math.sin(rad)) + abs(box_h * math.cos(rad))
+            if rotated_w > region.width() or rotated_h > region.height():
+                continue
+            x_low, x_high = region.left() + rotated_w / 2, region.right() - rotated_w / 2
+            y_low, y_high = region.top() + rotated_h / 2, region.bottom() - rotated_h / 2
+            for _ in range(12):
+                center = QPointF(rng.uniform(x_low, x_high), rng.uniform(y_low, y_high))
+                bounds = QRectF(center.x() - rotated_w / 2, center.y() - rotated_h / 2,
+                                rotated_w, rotated_h)
+                item = LineLayout(glyphs, center, angle, bounds, pixels)
+                if not any(bounds.intersects(rect.adjusted(-12, -12, 12, 12)) for rect in occupied):
+                    return item
+            # Try fixed empty slots before using a smaller font or dropping the older sentence.
+            for fraction in (0.18, 0.5, 0.82):
+                center = QPointF((x_low + x_high) / 2, y_low + (y_high - y_low) * fraction)
+                bounds = QRectF(center.x() - rotated_w / 2, center.y() - rotated_h / 2,
+                                rotated_w, rotated_h)
+                item = LineLayout(glyphs, center, angle, bounds, pixels)
+                fallback = fallback or item
+                if not any(bounds.intersects(rect.adjusted(-12, -12, 12, 12)) for rect in occupied):
+                    return item
+            break
+    return fallback  # Overlay drops conflicting older instances in this rare case.

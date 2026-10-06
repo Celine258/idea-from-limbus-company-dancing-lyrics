@@ -1,0 +1,58 @@
+from dataclasses import dataclass, asdict
+from pathlib import Path
+import sys
+from PySide6.QtCore import QSettings
+from PySide6.QtGui import QColor
+
+
+def app_directory() -> Path:
+    return Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+
+
+def resource_path(name: str) -> Path:
+    return Path(getattr(sys, "_MEIPASS", Path(__file__).parent)) / name
+
+
+@dataclass
+class Preferences:
+    font_size: int = 32
+    color: str = "#a9f4dc"
+    opacity: int = 80
+    jump: int = 10
+    angle: int = 12
+    region: str = "edges"
+    delay_ms: int = 0
+    volume: int = 45
+    motion: str = "audio"
+
+
+class SettingsStore:
+    def __init__(self, path: Path | None = None):
+        target = path or app_directory() / ".state" / "settings.ini"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        self.store = QSettings(str(target), QSettings.Format.IniFormat)
+
+    def load(self) -> Preferences:
+        prefs = Preferences()
+        for key, default in asdict(prefs).items():
+            value = self.store.value(key, default)
+            try:
+                setattr(prefs, key, int(value) if isinstance(default, int) else str(value))
+            except (ValueError, TypeError):
+                pass
+        for key, low, high in (("font_size", 18, 64), ("opacity", 10, 100),
+                               ("jump", 0, 30), ("angle", 0, 25),
+                               ("delay_ms", -10000, 10000), ("volume", 0, 100)):
+            setattr(prefs, key, max(low, min(high, getattr(prefs, key))))
+        if prefs.region not in ("edges", "full"):
+            prefs.region = "edges"
+        if prefs.motion not in ("audio", "wave"):
+            prefs.motion = "audio"
+        if not QColor(prefs.color).isValid():
+            prefs.color = "#a9f4dc"
+        return prefs
+
+    def save(self, prefs: Preferences):
+        for key, value in asdict(prefs).items():
+            self.store.setValue(key, value)
+        self.store.sync()
