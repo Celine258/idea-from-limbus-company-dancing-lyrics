@@ -31,6 +31,7 @@ def main():
     app.setApplicationName("跳动的歌词")
     app.setOrganizationName("FloatingLyrics")
     app.setWindowIcon(app_icon())
+    app.setStyle("Fusion")
     app.setFont(QFont("Microsoft YaHei UI", 10))
     app.setQuitOnLastWindowClosed(False)
 
@@ -49,11 +50,9 @@ def main():
     app.aboutToQuit.connect(lambda: store.save(prefs))
     app.aboutToQuit.connect(player.media.stop)
     app.aboutToQuit.connect(panel.tray.hide)
+    panel.fit_to_screen(app.primaryScreen().availableGeometry())
     overlay.show()
     panel.show()
-    screen = app.primaryScreen().availableGeometry()
-    panel.resize(panel.width(), min(830, screen.height() - 60))
-    panel.move(screen.center().x() - panel.width() // 2, screen.top() + 30)
     logging.info("Control panel initialized; Qt visible=%s", panel.isVisible())
     if args.smoke:
         from validation import SmokeCheck

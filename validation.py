@@ -5,7 +5,7 @@ import json
 import platform
 import sys
 from PySide6 import __version__ as qt_version
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import QPoint, QRect, QTimer, Qt
 from PySide6.QtGui import QColor, QImage, QPainter
 from settings import Preferences
 
@@ -28,6 +28,7 @@ class SmokeCheck:
 
     def start(self):
         self.results["qt_control_panel_visible"] = self.panel.isVisible()
+        self.panel.grab().save(str(self.report_dir / "control-panel-empty.png"))
         if sys.platform == "win32" and self.app.platformName() == "windows":
             user32 = ctypes.windll.user32
             user32.IsWindowVisible.argtypes = [wintypes.HWND]
@@ -61,6 +62,7 @@ class SmokeCheck:
         visible = self.overlay.timeline.visible(self.player.position(), self.player.duration)
         self.results["seek_rebuilds_lyrics"] = [line.text for line in visible] == ["陪你写下一行代码"]
         self.panel.grab().save(str(self.report_dir / "control-panel.png"))
+        self._capture_interface()
         image = self.overlay.grab().toImage()
         image.save(str(self.report_dir / "overlay-transparent.png"))
         preview = QImage(image.size(), QImage.Format.Format_ARGB32)
@@ -89,6 +91,58 @@ class SmokeCheck:
         self.results["show_while_paused_keeps_timer_stopped"] = not self.overlay.timer.isActive()
         self.player.media.play()
         QTimer.singleShot(500, self._check_resume)
+
+    def _capture_interface(self):
+        """Check reachable controls on both pages at normal and minimum sizes."""
+        panel = self.panel
+        original_size, original_page = panel.size(), panel.pages.currentIndex()
+        snapshots = (("default", original_size), ("minimum", panel.minimumSize()))
+        footer_ok = True
+        effects_ok = True
+        unreachable = []
+        navigation_ok = True
+        for name, size in snapshots:
+            panel.resize(size)
+            self.app.processEvents()
+            panel.nav_buttons[0].click()
+            self.app.processEvents()
+            panel.music_scroll.verticalScrollBar().setValue(0)
+            panel.grab().save(str(self.report_dir / f"music-{name}.png"))
+            bar = panel.player_bar.geometry()
+            for control in (panel.play_button, panel.visibility_button, panel.volume_slider):
+                rectangle = QRect(control.mapTo(panel, QPoint()), control.size())
+                footer_ok &= panel.rect().contains(rectangle) and control.isVisibleTo(panel)
+            paused_position = self.player.position()
+            panel.nav_buttons[1].click()
+            self.app.processEvents()
+            navigation_ok &= (not self.player.playing and self.player.position() == paused_position
+                              and panel.player_bar.geometry() == bar)
+            panel.effects_scroll.verticalScrollBar().setValue(0)
+            panel.grab().save(str(self.report_dir / f"effects-{name}-top.png"))
+            for control in (panel.region, panel.color_button, panel.motion, *panel.spins.values()):
+                # Spin boxes expose the edit cursor to ensureWidgetVisible;
+                # scroll the entire field into view, including its arrow buttons.
+                center = control.mapTo(panel.effects_scroll.widget(), control.rect().center())
+                panel.effects_scroll.ensureVisible(center.x(), center.y(), 0, control.height() // 2 + 16)
+                self.app.processEvents()
+                rectangle = QRect(control.mapTo(panel.effects_scroll.viewport(), QPoint()), control.size())
+                reachable = panel.effects_scroll.viewport().rect().contains(rectangle)
+                effects_ok &= reachable
+                if not reachable:
+                    unreachable.append({"size": name, "control": type(control).__name__,
+                                        "bounds": [rectangle.x(), rectangle.y(), rectangle.width(), rectangle.height()],
+                                        "viewport": [panel.effects_scroll.viewport().width(), panel.effects_scroll.viewport().height()]})
+            panel.effects_scroll.verticalScrollBar().setValue(panel.effects_scroll.verticalScrollBar().maximum())
+            panel.grab().save(str(self.report_dir / f"effects-{name}-bottom.png"))
+        panel.resize(original_size)
+        panel.nav_buttons[original_page].click()
+        self.app.processEvents()
+        self.results["player_controls_within_window"] = bool(footer_ok)
+        self.results["effect_controls_reachable_by_scrolling"] = bool(effects_ok)
+        self.results["unreachable_effect_controls"] = unreachable
+        self.results["navigation_preserves_playback_and_player_bar"] = bool(navigation_ok)
+        self.results["control_panel_size"] = [original_size.width(), original_size.height()]
+        self.results["device_pixel_ratio"] = panel.devicePixelRatioF()
 
     def _check_resume(self):
         self.results["resume_advances_clock"] = self.player.position() > 9900

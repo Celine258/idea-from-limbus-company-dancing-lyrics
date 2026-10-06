@@ -5,7 +5,7 @@ import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-DOCUMENTS = (ROOT / "AGENTS.md", ROOT / "CHANGELOG.md")
+DOCUMENTS = tuple(ROOT / name for name in ("AGENTS.md", "CHANGELOG.md", "README.md", "验证记录.md"))
 
 
 class WorkflowDocumentationTests(unittest.TestCase):
@@ -39,7 +39,8 @@ class WorkflowDocumentationTests(unittest.TestCase):
     def test_runtime_files_ignored_and_source_files_trackable(self):
         ignored = [".venv/probe.txt", ".state/probe.txt", "build/probe.txt",
                    "dist/probe.txt", "artifacts/probe.txt", "__pycache__/probe.pyc"]
-        sources = ["AGENTS.md", "CHANGELOG.md", "main.py", "tests/test_workflow_docs.py"]
+        sources = ["AGENTS.md", "CHANGELOG.md", "main.py", "controls.py", "validation.py",
+                   "assets/app.ico", "tests/test_controls.py", "tests/test_workflow_docs.py"]
         result = subprocess.run(
             ["git", "-c", f"safe.directory={ROOT.as_posix()}", "check-ignore", "--no-index", "--stdin", "-z"],
             cwd=ROOT, input="\0".join(ignored + sources) + "\0", text=True,
