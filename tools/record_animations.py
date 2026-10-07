@@ -5,19 +5,20 @@ from ctypes import wintypes
 import json
 from pathlib import Path
 import sys
+from dataclasses import replace
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from PySide6.QtCore import QRectF, QTimer
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import QApplication, QWidget
 from animation import _glyph_layout
 from glyph_motion import glyph_states
-from lrc import LyricTimeline, parse_lrc
+from lrc import LyricTimeline, parse_lrc, TimedWord
 from settings import ANIMATION_STYLES, Preferences
 from text_effects import TextEffects
 
 
 class RecordingWindow(QWidget):
-    def __init__(self, directory):
+    def __init__(self, directory, singing=False):
         super().__init__()
         self.directory = directory
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -27,11 +28,18 @@ class RecordingWindow(QWidget):
         self.setWindowTitle("跳动的歌词 · 四种动画预览")
         self.styles = [style for style in ANIMATION_STYLES if style != "classic"]
         self.position, self.frame = 0., 0
+        self.singing = singing
         self.renderer = TextEffects()
         document = parse_lrc("[00:00]给今天一点节奏\n[00:00]Hello music · 123\n[00:03.400]让工作多一点乐趣\n[00:05]")
+        if singing:
+            words = tuple(TimedWord(800+i*160, 960+i*160, i, i+1) for i in range(7)) + (
+                TimedWord(2000,2400,8,13), TimedWord(2500,2900,14,19), TimedWord(2950,3200,22,25))
+            document.lines[0] = replace(document.lines[0], words=words)
+            document.lines[1] = replace(document.lines[1], words=tuple(TimedWord(3700+i*120,3820+i*120,i,i+1)
+                                                                        for i in range(len(document.lines[1].text))))
         self.scenes = []
         for style in self.styles:
-            prefs = Preferences(animation_style=style, color="#ff6a9c", font_size=32, jump=16, opacity=100)
+            prefs = Preferences(animation_style=style, color="#ff6a9c", font_size=32, jump=16, opacity=100, singing_sync=singing)
             timeline = LyricTimeline(document, animation_style=style)
             surfaces = []
             for line in document.lines[:2]:
@@ -53,7 +61,7 @@ class RecordingWindow(QWidget):
             painter.setFont(QFont("Microsoft YaHei UI", 13))
             painter.drawText(24, 32, ANIMATION_STYLES[prefs.animation_style])
             painter.setPen(QColor("#73869b"))
-            painter.drawText(24, 262, "逐字入场 → 律动停留 → 逐字退场")
+            painter.drawText(24, 262, "演唱强调 · 中英文演示时间" if self.singing else "逐字入场 → 律动停留 → 逐字退场")
             for item in timeline.visible(self.position, 5500):
                 surface = surfaces[item.index]
                 states = glyph_states(surface.glyphs, prefs, item, self.position, .55, 32, 730 + item.index)
@@ -79,7 +87,8 @@ class RecordingWindow(QWidget):
                 native_visible = bool(user.IsWindowVisible(int(self.winId())))
             manifest = {"frames": self.frame, "fps": 30, "durationSeconds": 5.5, "styles": self.styles,
                         "logicalSize": [self.width(), self.height()], "devicePixelRatio": self.devicePixelRatioF(),
-                        "nativeWindowVisible": native_visible, "capture": "QWidget.grab", "musicControlled": False}
+                        "nativeWindowVisible": native_visible, "capture": "QWidget.grab", "musicControlled": False,
+                        "singingSync": self.singing, "wordTimingSource": "synthetic preview" if self.singing else None}
             (self.directory / "recording.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
             QApplication.instance().quit()
 
@@ -87,9 +96,10 @@ class RecordingWindow(QWidget):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("directory", type=Path)
+    parser.add_argument("--singing-sync", action="store_true")
     args = parser.parse_args()
     app = QApplication([])
-    window = RecordingWindow(args.directory)
+    window = RecordingWindow(args.directory, args.singing_sync)
     window.show()
     QTimer.singleShot(300, window.timer.start)
     return app.exec()

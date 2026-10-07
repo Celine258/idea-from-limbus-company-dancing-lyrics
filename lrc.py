@@ -1,6 +1,6 @@
 """LRC parsing and stateless lyric lookup, with no GUI dependency."""
 from bisect import bisect_right
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 import re
 
@@ -10,9 +10,18 @@ META = re.compile(r"^\[(?:ar|al|ti|au|by|re|ve|length|offset)\s*:", re.I)
 
 
 @dataclass(frozen=True)
+class TimedWord:
+    start_ms: int
+    end_ms: int
+    text_start: int
+    text_end: int
+
+
+@dataclass(frozen=True)
 class LyricLine:
     start_ms: int
     text: str
+    words: tuple[TimedWord, ...] = ()
 
 
 @dataclass
@@ -75,6 +84,7 @@ class ActiveLine:
     opacity: float
     entry_end_ms: float = 0
     exit_start_ms: float = 0
+    words: tuple[TimedWord, ...] = ()
 
 
 class LyricTimeline:
@@ -83,7 +93,9 @@ class LyricTimeline:
                  entry_speed: int = 100, exit_speed: int = 100):
         # A positive LRC offset advances timestamps; a positive UI delay postpones them.
         shift = delay_ms - document.offset_ms
-        self.lines = [LyricLine(line.start_ms + shift, line.text) for line in document.lines]
+        self.lines = [replace(line, start_ms=line.start_ms + shift,
+                              words=tuple(replace(word, start_ms=word.start_ms + shift, end_ms=word.end_ms + shift)
+                                          for word in line.words)) for line in document.lines]
         self.starts = [line.start_ms for line in self.lines]
         self.animation_style = animation_style
         self.entry_duration = 700 * 100 / entry_speed
@@ -108,7 +120,7 @@ class LyricTimeline:
         else:
             end = boundary
             exit_start = end - min(self.exit_duration, interval * .3)
-        return ActiveLine(index, line.text, line.start_ms, end, 1, entry_end, exit_start)
+        return ActiveLine(index, line.text, line.start_ms, end, 1, entry_end, exit_start, line.words)
 
     def visible(self, position_ms: float, duration_ms: int = 0) -> list[ActiveLine]:
         index = bisect_right(self.starts, position_ms) - 1
@@ -134,5 +146,17 @@ class LyricTimeline:
             fade_in = min(self.classic_entry, life / 2)
             fade_out = min(self.exit_duration, life / 2)
             opacity = max(0.0, min(1.0, age / fade_in, (end - position_ms) / fade_out))
-            active.append(ActiveLine(i, line.text, line.start_ms, end, opacity))
+            active.append(ActiveLine(i, line.text, line.start_ms, end, opacity, words=line.words))
         return active
+
+
+def word_timing_status(document, waiting=False):
+    if waiting:
+        return "等待歌词"
+    lines = [line for line in document.lines if line.text.strip()] if document else []
+    timed = sum(bool(line.words) for line in lines)
+    if not timed:
+        return "本曲无逐字时间"
+    complete = all(all(char.isspace() or any(word.text_start <= index < word.text_end for word in line.words)
+                       for index, char in enumerate(line.text)) for line in lines)
+    return "逐字时间可用" if complete else "部分歌词可用"

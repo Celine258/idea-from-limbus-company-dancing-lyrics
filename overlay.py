@@ -53,10 +53,13 @@ class LyricsOverlay(QWidget):
         self.clear_layouts()
 
     def set_document(self, document: LyricDocument | None):
+        same_text = bool(document and self.document and [(line.start_ms, line.text) for line in document.lines]
+                         == [(line.start_ms, line.text) for line in self.document.lines])
         self.document = document
         self.timeline = self._timeline(document) if document else None
-        self.seed = random.randrange(1_000_000)
-        self.clear_layouts()
+        if not same_text:
+            self.seed = random.randrange(1_000_000)
+            self.clear_layouts()
         self._sync_timer()
 
     def refresh_preferences(self):
@@ -164,7 +167,7 @@ class LyricsOverlay(QWidget):
                                                       self.devicePixelRatioF(), self.prefs.jump, layout.angle)
             states = (glyph_states(layout.glyphs, self.prefs, item, position, energy, layout.font_size,
                                    self.seed + item.index * 7919, layout.angle)
-                      if self.prefs.animation_style != "classic" else None)
+                      if self.prefs.animation_style != "classic" or self.prefs.singing_sync else None)
             image = TEXT_EFFECTS.render(layout.surface, self.prefs, seconds, energy, moving=True, states=states)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
             painter.drawImage(layout.surface.origin, image)

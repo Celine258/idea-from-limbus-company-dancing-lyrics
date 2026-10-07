@@ -59,6 +59,10 @@ class PresetTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 store.save("新的", Preferences())
             self.assertEqual(self.path.read_bytes(), raw)
+            backup = self.path.with_suffix(".backup")
+            self.path.replace(backup)
+            self.assertIsNotNone(store.save("恢复保存", Preferences()))
+            self.assertEqual(backup.read_bytes(), raw)
 
     def test_failed_atomic_replace_keeps_file_and_in_memory_presets(self):
         saved = self.store.save("Current", Preferences())

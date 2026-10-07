@@ -7,10 +7,10 @@ from PySide6.QtCore import QPointF, QRect, QRectF, QSize, Qt, QTimer, QElapsedTi
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPalette, QPen, QPixmap, QPolygonF
 from PySide6.QtWidgets import (
     QApplication, QButtonGroup, QColorDialog, QComboBox, QFileDialog, QFormLayout,
-    QFrame, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QSizePolicy, QInputDialog, QMessageBox,
+    QFrame, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QSizePolicy, QInputDialog, QMessageBox, QCheckBox,
     QSlider, QSpinBox, QStackedWidget, QStyle, QStyleOptionSlider, QSystemTrayIcon, QVBoxLayout, QWidget,
 )
-from lrc import load_lrc, ActiveLine
+from lrc import load_lrc, ActiveLine, TimedWord, word_timing_status
 from fonts import FontLibrary
 from animation import _glyph_layout
 from text_effects import TEXT_EFFECTS
@@ -261,7 +261,7 @@ class FontPreview(QWidget):
         self.dark = True
         self._key = None
         self._surface = None
-        self._running = prefs.animation_style != "classic"
+        self._running = prefs.animation_style != "classic" or prefs.singing_sync
         self._position = 0
         self._elapsed = QElapsedTimer()
         self.timer = QTimer(self)
@@ -283,7 +283,9 @@ class FontPreview(QWidget):
 
     def _preview_item(self):
         end = 3800 if self.prefs.animation_style == "classic" else 3200 + min(600 * 100 / self.prefs.exit_speed, 4400 * .45)
-        return ActiveLine(0, "", 0, end, 1, min(700 * 100 / self.prefs.entry_speed, 3200 * .35), 3200)
+        words = tuple(TimedWord(800+i*160, 960+i*160, i, i+1) for i in range(7)) + (
+            TimedWord(2000, 2400, 8, 13), TimedWord(2500, 2900, 14, 19), TimedWord(2950, 3200, 22, 25))
+        return ActiveLine(0, "", 0, end, 1, min(700 * 100 / self.prefs.entry_speed, 3200 * .35), 3200, words)
 
     def _stop_preview(self):
         self._position = self._preview_position()
@@ -314,7 +316,7 @@ class FontPreview(QWidget):
         painter.drawRoundedRect(QRectF(self.rect()).adjusted(.5, .5, -.5, -.5), 8, 8)
         pixels = min(28, self.prefs.font_size)
         key = (self.width(), pixels, self.prefs.font_family, self.prefs.color, self.prefs.text_style,
-               self.devicePixelRatioF(), self.prefs.animation_style, self.prefs.jump, self.prefs.fall_distance)
+               self.devicePixelRatioF(), self.prefs.animation_style, self.prefs.jump, self.prefs.fall_distance, self.prefs.singing_sync)
         if key != self._key:
             glyphs, _, _ = _glyph_layout("给今天一点节奏\nHello music · 123", pixels,
                                          max(1, self.width() - 48), self.prefs.font_family)
@@ -323,7 +325,7 @@ class FontPreview(QWidget):
         position = self._preview_position()
         states = (glyph_states(self._surface.glyphs, self.prefs,
                               self._preview_item(), position, .5, pixels, 730)
-                  if self.prefs.animation_style != "classic" else None)
+                  if self.prefs.animation_style != "classic" or self.prefs.singing_sync else None)
         image = TEXT_EFFECTS.render(self._surface, self.prefs, states=states)
         width = 2 * max(abs(self._surface.origin.x()), abs(self._surface.origin.x() + image.width() / image.devicePixelRatio()))
         height = 2 * max(abs(self._surface.origin.y()), abs(self._surface.origin.y() + image.height() / image.devicePixelRatio()))
@@ -583,6 +585,12 @@ class ControlPanel(QWidget):
         self.animation_combo.setCurrentIndex(self.animation_combo.findData(self.prefs.animation_style))
         self.animation_combo.setAccessibleName("歌词动画")
         self.animation_combo.currentIndexChanged.connect(lambda _: self._set_preference("animation_style", self.animation_combo.currentData()))
+        self.singing_checkbox = QCheckBox("开启逐字演唱强调")
+        self.singing_checkbox.setChecked(self.prefs.singing_sync)
+        self.singing_checkbox.setAccessibleName("逐字演唱同步")
+        self.singing_checkbox.toggled.connect(lambda value: self._set_preference("singing_sync", value))
+        self.word_status = label("等待歌词", "muted")
+        self.word_status.setWordWrap(True)
         self.spins = {}
         for name, minimum, maximum, suffix in (
             ("font_size", 18, 64, " px"), ("jump", 0, 30, " px"),
@@ -674,6 +682,7 @@ class ControlPanel(QWidget):
                           ("入场速度", self.parameter_fields["entry_speed"]), ("退场速度", self.parameter_fields["exit_speed"]),
                           ("抖动频率", self.parameter_fields["shake_frequency"]), ("跌落距离（32px 字号）", self.parameter_fields["fall_distance"]),
                           ("预览背景", self.preview_background), ("效果预览", self.font_preview), ("动画预览", self.replay_button),
+                          ("逐字演唱同步", self.singing_checkbox), ("歌曲逐字时间", self.word_status),
                           ("运动方式", self.motion), ("律动幅度", self.spins["jump"]),
                           ("倾斜范围", self.spins["angle"]), ("同步偏移", self.spins["delay_ms"]))),
         ):
@@ -691,6 +700,9 @@ class ControlPanel(QWidget):
                 section_body.addWidget(self.white_hint)
                 section_body.addWidget(self.font_status)
             if title == "律动与同步":
+                singing_hint = label("预览使用中英文演示时间；歌曲需提供真实逐字时间，无数据时保留原动画。", "muted")
+                singing_hint.setWordWrap(True)
+                section_body.addWidget(singing_hint)
                 hint = label("速度 100% 为原有效果；数值越高越快。短句会自动压缩动画时长。", "muted")
                 hint.setWordWrap(True)
                 section_body.addWidget(hint)
@@ -869,6 +881,7 @@ class ControlPanel(QWidget):
 
     def _external_document(self, document):
         self.overlay.set_document(document)
+        self._refresh_word_status()
         self.lyric_label.setText(f"网易云歌词已同步 · {len(document.lines)} 句" if document else
                                 "等待网易云歌词；纯音乐或暂无歌词时保持空白。")
 
@@ -922,6 +935,7 @@ class ControlPanel(QWidget):
             return
         self.overlay.set_document(document)
         count = sum(bool(line.text) for line in document.lines)
+        self._refresh_word_status()
         self.lyric_label.setText(f"{Path(path).name}  ·  {count} 句歌词已就绪")
         self.lyric_label.setToolTip(str(path))
         self.show_notice(f"已跳过 {len(document.warnings)} 个错误标签或行。" if document.warnings else "")
@@ -955,7 +969,7 @@ class ControlPanel(QWidget):
         self.overlay.refresh_preferences()
         self._update_effect_controls()
         self.font_preview.update()
-        if key in ("animation_style", "entry_speed", "exit_speed", "shake_frequency", "fall_distance"):
+        if key in ("animation_style", "entry_speed", "exit_speed", "shake_frequency", "fall_distance", "singing_sync"):
             self.font_preview.replay()
 
     def _update_effect_controls(self):
@@ -967,6 +981,11 @@ class ControlPanel(QWidget):
         self.glow_value.setText(f"{self.prefs.glow_strength}%")
         self.parameter_fields["shake_frequency"].setEnabled(self.prefs.animation_style.endswith("_shake"))
         self.parameter_fields["fall_distance"].setEnabled(self.prefs.animation_style.startswith("fall_"))
+        self._refresh_word_status()
+
+    def _refresh_word_status(self):
+        waiting = not getattr(self.player, "lyrics_received", False) if self.external else self.player.path is None
+        self.word_status.setText(word_timing_status(self.overlay.document, waiting))
 
     def _reload_presets(self):
         blocker = QSignalBlocker(self.preset_combo)
@@ -986,6 +1005,7 @@ class ControlPanel(QWidget):
 
     def _sync_effect_widgets(self):
         widgets = [self.animation_combo, self.text_style, self.motion, self.font_combo, self.glow_slider,
+                   self.singing_checkbox,
                    *self.spins.values(), *self.parameter_sliders.values()]
         blockers = [QSignalBlocker(widget) for widget in widgets]
         for widget, key in ((self.animation_combo, "animation_style"), (self.text_style, "text_style"), (self.motion, "motion")):
@@ -995,6 +1015,7 @@ class ControlPanel(QWidget):
         for key, slider in self.parameter_sliders.items():
             slider.setValue(getattr(self.prefs, key))
         self.glow_slider.setValue(self.prefs.glow_strength)
+        self.singing_checkbox.setChecked(self.prefs.singing_sync)
         self._reload_fonts()
         self._update_color_button()
         self._update_effect_controls()
@@ -1128,6 +1149,7 @@ class ControlPanel(QWidget):
         return f"{seconds // 60:02d}:{seconds % 60:02d}"
 
     def _refresh_state(self):
+        self._refresh_word_status()
         if self.external:
             self.play_button.setEnabled(False)
             self.play_button.setIcon(symbol_icon("pause" if self.player.playing else "play", "#ffffff"))

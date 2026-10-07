@@ -139,12 +139,16 @@ class NeteasePlayerTests(unittest.TestCase):
             prefs = root / "settings.ini"
             prefs.write_bytes(b"[General]\ncolor=#ffffff\nvolume=24\n")
             before = prefs.read_bytes()
+            presets = root / "effect-presets.json"
+            preset_bytes = b'{"version":1,"presets":[]}'
+            presets.write_bytes(preset_bytes)
             output = root / "FloatingLyrics.plugin"
             package_plugin(root, output, '"C:/app/FloatingLyrics.exe" --netease --background')
             config = read_bridge_config(root / "netease-bridge.json")
             package_plugin(root, output, '"C:/new/FloatingLyrics.exe" --netease --background')
             self.assertEqual(read_bridge_config(root / "netease-bridge.json")["token"], config["token"])
             self.assertEqual(prefs.read_bytes(), before)
+            self.assertEqual(presets.read_bytes(), preset_bytes)
             with zipfile.ZipFile(output) as archive:
                 self.assertEqual(set(archive.namelist()), {"manifest.json", "adapter.js", "index.js", "bridge-config.json"})
                 self.assertEqual(json.loads(archive.read("bridge-config.json"))["token"], config["token"])
@@ -167,6 +171,11 @@ class NeteasePlayerTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js 用于真实客户端验证器测试")
     def test_host_validator_rejects_frozen_progress_and_unrequested_skips(self):
         result = subprocess.run(["node", str(ROOT / "tests/test_netease_host_validation.cjs")], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js 用于真实逐字验证器测试")
+    def test_word_validator_requires_real_words_audio_and_completed_seek(self):
+        result = subprocess.run(["node", str(ROOT / "tests/test_netease_words_validation.cjs")], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 

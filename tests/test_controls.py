@@ -118,6 +118,7 @@ class ControlPanelTests(unittest.TestCase):
     def test_empty_state_and_persistent_player_bar(self):
         self.assertIn("还没有", self.panel.song_label.text())
         self.assertIn("LRC", self.panel.lyric_label.text())
+
         self.assertFalse(self.panel.play_button.isEnabled())
         self.assertFalse(self.panel.progress.isEnabled())
         self.assertFalse(self.panel.tray_button.isEnabled())
@@ -128,6 +129,17 @@ class ControlPanelTests(unittest.TestCase):
         self.assertFalse(self.panel.nav_buttons[0].isChecked())
         self.assertEqual(self.panel.player_bar.geometry(), bar)
         self.assertTrue(self.panel.play_button.isVisibleTo(self.panel))
+
+    def test_native_singing_check_saves_an_already_enabled_choice(self):
+        from netease_validation import NeteaseSmokeCheck
+        self.panel.singing_checkbox.setChecked(True)
+        self.player._anchor, self.player._at, self.player.song_id = 1, 2, "demo"
+        self.player.playing = True
+        checker = NeteaseSmokeCheck.__new__(NeteaseSmokeCheck)
+        checker.panel, checker.player, checker.jumps = self.panel, self.player, 0
+        checker._check_singing()
+        self.assertTrue(all(checker.singing_checks.values()))
+        self.assertTrue(self.store.load().singing_sync)
 
     def test_effects_entry_restores_hidden_minimized_panel_without_changing_playback(self):
         self.player.playing = True
@@ -332,6 +344,21 @@ class ControlPanelTests(unittest.TestCase):
         with patch("controls.QMessageBox.question", return_value=QMessageBox.StandardButton.Yes):
             self.assertTrue(self.panel.delete_preset())
         self.assertEqual(self.prefs.entry_speed, 200)
+
+    def test_singing_switch_status_and_presets_keep_transport(self):
+        from lrc import LyricDocument, LyricLine, TimedWord
+        self.panel.open_music(self.music())
+        self.player.clock, self.player.playing = 1800, True
+        self.overlay.set_document(LyricDocument([LyricLine(1000, "你好", (TimedWord(1200, 2200, 0, 2),))], []))
+        self.panel.singing_checkbox.setChecked(True)
+        self.assertIs(self.store.load().singing_sync, True)
+        self.assertEqual(self.panel.word_status.text(), "逐字时间可用")
+        self.panel.apply_preset("builtin:quiet")
+        self.assertFalse(self.panel.singing_checkbox.isChecked())
+        self.assertEqual((self.player.clock, self.player.playing, self.player.seeks), (1800, True, []))
+        self.overlay.set_document(None)
+        self.panel._refresh_word_status()
+        self.assertEqual(self.panel.word_status.text(), "本曲无逐字时间")
 
     def test_animation_parameter_pairs_save_and_enable_only_relevant_controls(self):
         self.panel.spins["entry_speed"].setValue(180)

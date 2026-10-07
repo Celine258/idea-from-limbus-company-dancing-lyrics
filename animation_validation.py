@@ -8,23 +8,24 @@ from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QApplication
 from animation import build_layout, display_regions
 from glyph_motion import glyph_states
-from lrc import ActiveLine
+from lrc import ActiveLine, TimedWord
 from settings import ANIMATION_STYLES
 from text_effects import TextEffects, transparent_image
 
 
-def validate_animations(directory, prefs, dpr):
+def validate_animations(directory, prefs, dpr, include_singing=False):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     area = QApplication.primaryScreen().availableGeometry()
     regions = display_regions(area.width(), area.height(), "edges")
     metrics, cache_ok, reuse_ok = {}, True, True
-    for style in ANIMATION_STYLES:
-        if style == "classic":
-            continue
+    modes = [(style, singing) for style in ANIMATION_STYLES if style != "classic"
+             for singing in ((False, True) if include_singing else (False,))]
+    for style, singing in modes:
+        name = style + ("-singing" if singing else "")
         renderer = TextEffects()
         benchmark = replace(prefs, animation_style=style, font_size=32, jump=10, angle=12,
-                            region="edges", text_style="glow")
+                            region="edges", text_style="glow", singing_sync=singing)
         started = time.perf_counter()
         layouts = []
         for index, text in enumerate(("给今天一点节奏，让文字随音乐跳动", "from the elevator you · Hello music")):
@@ -35,7 +36,8 @@ def validate_animations(directory, prefs, dpr):
             layouts.append(layout)
         cold_ms = (time.perf_counter() - started) * 1000
         canvas = transparent_image(QRectF(0, 0, area.width(), area.height()), dpr)
-        item = ActiveLine(0, "", 0, 3800, 1, 700, 3200)
+        # Synthetic long sustained units stress the simultaneous scale/halo peak.
+        item = ActiveLine(0, "", 0, 3800, 1, 700, 3200, (TimedWord(700, 3800, 0, 100),))
 
         def paint(position):
             canvas.fill(0)
@@ -61,14 +63,14 @@ def validate_animations(directory, prefs, dpr):
             paint(800 + index * 33)
             samples.append((time.perf_counter() - started) * 1000)
         p95 = float(np.percentile(samples, 95))
-        metrics[style] = {"samples": 90, "glyphs": sum(len(line.glyphs) for line in layouts),
+        metrics[name] = {"samples": 90, "glyphs": sum(len(line.glyphs) for line in layouts), "singingSync": singing,
                           "devicePixelRatio": dpr, "physicalCanvas": [canvas.width(), canvas.height()],
                           "coldPrepareMs": round(cold_ms, 3), "warmMedianMs": round(float(np.median(samples)), 3),
                           "warmP95Ms": round(p95, 3), "cacheBytes": renderer.cache_bytes}
         reuse_ok &= renderer.misses == misses
         cache_ok &= renderer.cache_bytes <= renderer.limit_bytes
         paint(3450)
-        canvas.save(str(directory / f"animation-{style}-transparent.png"))
+        canvas.save(str(directory / f"animation-{name}-transparent.png"))
     return {"animation_p95_under_33ms": all(metric["warmP95Ms"] <= 33 for metric in metrics.values()),
             "animation_warm_frames_reuse_blur": bool(reuse_ok), "animation_glow_cache_within_64mib": bool(cache_ok),
             "animation_benchmarks": metrics}

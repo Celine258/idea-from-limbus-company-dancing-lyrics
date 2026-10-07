@@ -10,7 +10,8 @@ from fonts import FontLibrary, PRESET_FONTS, lyric_font
 
 
 class NeteaseSmokeCheck:
-    def __init__(self, app, panel, directory, require_settings=False, font_fixture=None, require_effects=False, require_animations=False):
+    def __init__(self, app, panel, directory, require_settings=False, font_fixture=None, require_effects=False,
+                 require_animations=False, require_singing=False):
         self.app, self.panel, self.player = app, panel, panel.player
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -29,6 +30,9 @@ class NeteaseSmokeCheck:
         self.animation_checks = {}
         self.animation_evidence = {}
         self.original_animation = panel.prefs.animation_style
+        self.require_singing = require_singing
+        self.singing_checks = {}
+        self.original_singing = panel.prefs.singing_sync
         self.jumps = 0
         self.player.discontinuity.connect(self._jump)
         self.timer = QTimer(panel)
@@ -76,12 +80,23 @@ class NeteaseSmokeCheck:
             self._check_effects()
         if self.require_animations and not self.animation_checks and settings_visible and player.playing and active:
             self._check_animations()
+        if self.require_singing and not self.singing_checks and settings_visible and player.playing and active:
+            self._check_singing()
         sample = {"seconds": round(time.monotonic()-self.started, 2), "connected": player.connected,
                   "song": player.song_id, "playing": player.playing, "position": round(player.position(), 1),
                   "lyricCount": len(document.lines) if document else 0, "activeCount": len(active),
                   "energy": round(player.energy_at(player.position()), 4), "minimized": minimized,
                   "overlayVisible": overlay.isVisible(), "overlayTimer": overlay.timer.isActive(), "settingsVisible": settings_visible,
                   "overlayHash": overlay.grab().toImage().cacheKey() if not player.playing else 0}
+        if self.require_singing:
+            from glyph_motion import glyph_states
+            sample["timedLines"] = sum(bool(line.words) for line in document.lines) if document else 0
+            sample["wordStatus"] = panel.word_status.text()
+            sample["singingEnabled"] = panel.prefs.singing_sync
+            sample["emphasis"] = max((state.emphasis for item in active for layout in [overlay.layouts.get(item.index)]
+                if layout for state in glyph_states(layout.glyphs, panel.prefs, item, player.position(), 0, layout.font_size)), default=0)
+            if sample["emphasis"] > 0 and not (self.directory / "netease-singing-overlay.png").exists():
+                overlay.grab().save(str(self.directory / "netease-singing-overlay.png"))
         # cacheKey changes per grab; compare pixel bytes for pause verification instead.
         if not player.playing and player.connected:
             picture = overlay.grab().toImage()
@@ -94,7 +109,7 @@ class NeteaseSmokeCheck:
             panel.grab().save(str(self.directory / "netease-panel.png"))
             overlay.grab().save(str(self.directory / "netease-overlay.png"))
             self.saved = True
-        if sample["seconds"] >= 45:
+        if sample["seconds"] >= (75 if self.require_singing else 45):
             self.finish()
 
     def _check_fonts(self):
@@ -170,6 +185,12 @@ class NeteaseSmokeCheck:
             checks.update(self.effect_checks or {"effectSettingsPersist": False, "effectChangesKeepTransport": False})
         if self.require_animations:
             checks.update(self.animation_checks or {"animationSettingsPersist": False, "animationChangesKeepTransport": False})
+        if self.require_singing:
+            checks.update(self.singing_checks or {"singingSwitchKeepsTransport": False})
+            checks["realWordTimesReceived"] = any(sample.get("timedLines", 0) > 0 for sample in connected)
+            checks["realSingingEmphasisObserved"] = any(sample.get("emphasis", 0) > 0 for sample in connected)
+            checks["missingWordTimesKeepOrdinaryLyrics"] = any(sample.get("timedLines", 0) == 0 and sample["lyricCount"] > 0
+                                                             and sample["activeCount"] > 0 for sample in connected)
         report = {"passed": all(checks.values()), "checks": checks, "jumps": self.jumps,
                   "sampleCount": len(samples), "samples": samples}
         if self.font_fixture:
@@ -179,6 +200,8 @@ class NeteaseSmokeCheck:
         if self.require_animations:
             report["animationVerification"] = self.animation_evidence
             self.panel.animation_combo.setCurrentIndex(self.panel.animation_combo.findData(self.original_animation))
+        if self.require_singing:
+            self.panel.singing_checkbox.setChecked(self.original_singing)
         (self.directory / "netease-report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
         self.app.exit(0 if report["passed"] else 1)
 
@@ -194,10 +217,31 @@ class NeteaseSmokeCheck:
             panel.animation_combo.setCurrentIndex(panel.animation_combo.findData(style))
             saved &= panel.store.load().animation_style == style
             panel.overlay.grab().save(str(self.directory / f"netease-animation-{style}.png"))
-        result = validate_animations(self.directory, panel.prefs, panel.devicePixelRatioF())
+        result = validate_animations(self.directory, panel.prefs, panel.devicePixelRatioF(), include_singing=self.require_singing)
         self.animation_evidence = result.pop("animation_benchmarks")
         self.animation_checks.update(result)
         self.animation_checks["animationSettingsPersist"] = bool(saved)
         self.animation_checks["animationChangesKeepTransport"] = transport == (
             player._anchor, player._at, player.song_id, player.playing, self.jumps)
         # Keep fall_shake active through the subsequent real pause/seek/song actions.
+
+    def _check_singing(self):
+        from dataclasses import replace
+        panel, player = self.panel, self.player
+        original = replace(panel.prefs)
+        transport = (player._anchor, player._at, player.song_id, player.playing, self.jumps)
+        for key, value in (("entry_speed", 150), ("exit_speed", 75), ("shake_frequency", 10), ("fall_distance", 96)):
+            panel.spins[key].setValue(value)
+        for identifier in ("builtin:quiet", "builtin:lively"):
+            panel.apply_preset(identifier)
+        for key, value in vars(original).items():
+            setattr(panel.prefs, key, value)
+        panel._sync_effect_widgets()
+        panel.singing_checkbox.setChecked(True)
+        # It may already be checked in a reused isolated validation configuration.
+        panel.store.save(panel.prefs)
+        self.singing_checks = {
+            "singingSwitchPersists": panel.store.load().singing_sync is True,
+            "singingSwitchKeepsTransport": transport == (player._anchor, player._at, player.song_id, player.playing, self.jumps),
+            "parametersAndPresetsKeepPlayback": player.playing and transport == (player._anchor, player._at, player.song_id, player.playing, self.jumps)}
+        panel.overlay.refresh_preferences()

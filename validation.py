@@ -39,6 +39,7 @@ class SmokeCheck:
             self.results["native_control_panel_visible"] = bool(user32.IsWindowVisible(int(self.panel.winId())))
         for key, value in vars(Preferences()).items():
             setattr(self.panel.prefs, key, value)
+        self.panel._sync_effect_widgets()
         self.panel.text_style.setCurrentIndex(self.panel.text_style.findData(self.panel.prefs.text_style))
         self.panel.glow_slider.setValue(self.panel.prefs.glow_strength)
         self.panel.animation_combo.setCurrentIndex(self.panel.animation_combo.findData(self.panel.prefs.animation_style))
@@ -73,6 +74,7 @@ class SmokeCheck:
         self._capture_animations()
         self._capture_parameters()
         self._capture_presets()
+        self._capture_singing()
         self._capture_interface()
         image = self.overlay.grab().toImage()
         image.save(str(self.report_dir / "overlay-transparent.png"))
@@ -169,6 +171,7 @@ class SmokeCheck:
                             panel.text_style, panel.preview_background, panel.glow_field,
                             panel.color_button, panel.motion, panel.animation_combo, panel.replay_button,
                             panel.preset_combo, panel.preset_save_button, panel.preset_update_button, panel.preset_delete_button,
+                            panel.singing_checkbox, panel.word_status,
                             *panel.parameter_fields.values(), *panel.spins.values()):
                 # Spin boxes expose the edit cursor to ensureWidgetVisible;
                 # scroll the entire field into view, including its arrow buttons.
@@ -255,7 +258,7 @@ class SmokeCheck:
             panel.grab().save(str(self.report_dir / f"settings-{style}.png"))
         self.results["all_animation_settings_saved"] = bool(saved)
         self.results["all_animations_freeze_while_paused"] = bool(frozen)
-        self.results.update(validate_animations(self.report_dir, panel.prefs, panel.devicePixelRatioF()))
+        self.results.update(validate_animations(self.report_dir, panel.prefs, panel.devicePixelRatioF(), include_singing=True))
         panel.animation_combo.setCurrentIndex(panel.animation_combo.findData(original))
         self.results["animation_changes_preserve_transport"] = transport == (
             self.player._anchor_ms, self.player._anchor_time, self.player.playing)
@@ -306,6 +309,36 @@ class SmokeCheck:
         panel._reload_presets()
         panel.store.save(panel.prefs)
         panel.overlay.refresh_preferences()
+
+    def _capture_singing(self):
+        from dataclasses import replace
+        from lrc import LyricDocument, TimedWord
+        panel, overlay = self.panel, self.overlay
+        original, document, position = replace(panel.prefs), overlay.document, self.player.position()
+        demo = LyricDocument([replace(line, words=(TimedWord(line.start_ms+100, line.start_ms+3000, 0, len(line.text)),)
+                                      if line.text else ()) for line in document.lines], [], document.offset_ms)
+        overlay.set_document(demo)
+        panel.animation_combo.setCurrentIndex(panel.animation_combo.findData("fall_shake"))
+        panel.singing_checkbox.setChecked(True)
+        first = overlay.grab().toImage()
+        self.app.processEvents()
+        self.results["singing_freezes_on_paused_song_clock"] = first == overlay.grab().toImage() and not overlay.timer.isActive()
+        self.results["singing_switch_saved"] = panel.store.load().singing_sync is True
+        for index, name in enumerate(("dark", "light")):
+            panel.preview_background.setCurrentIndex(index)
+            panel.font_preview._stop_preview()
+            panel.font_preview._running = False
+            panel.font_preview._position = 2250
+            panel.font_preview.grab().save(str(self.report_dir / f"singing-preview-{name}.png"))
+        self.results["singing_preview_uses_demo_timing"] = True
+        self.results["singing_controls_preserve_paused_position"] = not self.player.playing and self.player.position() == position
+        for key, value in vars(original).items():
+            setattr(panel.prefs, key, value)
+        panel._sync_effect_widgets()
+        panel.store.save(panel.prefs)
+        overlay.set_document(document)
+        overlay.refresh_preferences()
+        panel._refresh_word_status()
 
     def _finish(self):
         self.results["end_of_song_clears_overlay"] = self.player.ended

@@ -77,8 +77,9 @@ class PresetStore:
         return next((preset for preset in self.all() if preset.name.casefold() == name.strip().casefold()), None)
 
     def _write(self, presets):
-        if self.error:
+        if self.error and self.path.exists():
             raise ValueError(self.error)
+        self.error = ""
         document = {"version": 1, "presets": [asdict(preset) for preset in presets.values()]}
         self.path.parent.mkdir(parents=True, exist_ok=True)
         temporary = None

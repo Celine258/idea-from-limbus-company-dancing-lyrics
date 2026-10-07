@@ -7,7 +7,7 @@ import time
 from PySide6.QtCore import QObject, QTimer, Signal
 from PySide6.QtNetwork import QHostAddress
 from PySide6.QtWebSockets import QWebSocketServer
-from lrc import LyricDocument, LyricLine
+from lrc import LyricDocument, LyricLine, TimedWord
 
 PORT = 38473
 PROTOCOL = 1
@@ -52,7 +52,26 @@ def validate_snapshot(data: dict) -> dict:
         for line in lines:
             if not isinstance(line, dict) or not isinstance(line.get("text"), str) or len(line["text"]) > 2048:
                 raise ValueError("歌词内容无效")
-            cleaned.append(LyricLine(int(_number(line.get("time_ms"), 24 * 3600 * 1000)), line["text"]))
+            words = []
+            raw_words = line.get("words", [])
+            if isinstance(raw_words, list) and len(raw_words) <= 2048:
+                for word in raw_words:
+                    try:
+                        if not isinstance(word, dict):
+                            continue
+                        start, end = word.get("text_start"), word.get("text_end")
+                        if type(start) is not int or type(end) is not int or not 0 <= start < end <= len(line["text"]):
+                            continue
+                        begin, finish = word.get("start_ms"), word.get("end_ms")
+                        if (isinstance(begin, bool) or isinstance(finish, bool) or not isinstance(begin, (int, float))
+                            or not isinstance(finish, (int, float)) or not math.isfinite(begin) or not math.isfinite(finish)
+                            or not 0 <= begin < finish <= 24 * 3600 * 1000):
+                            continue
+                        if int(finish) > int(begin):
+                            words.append(TimedWord(int(begin), int(finish), start, end))
+                    except (TypeError, ValueError):
+                        continue
+            cleaned.append(LyricLine(int(_number(line.get("time_ms"), 24 * 3600 * 1000)), line["text"], tuple(words)))
         result["document"] = LyricDocument(sorted(cleaned, key=lambda line: line.start_ms), []) if cleaned else None
     return result
 
@@ -72,6 +91,7 @@ class NeteasePlayer(QObject):
         self.duration = 0
         self.playing = self.ended = self.connected = False
         self.enabled = True
+        self.lyrics_received = False
         self.status = "等待网易云插件连接"
         self._anchor = 0.0
         self._at = clock()
@@ -91,6 +111,7 @@ class NeteasePlayer(QObject):
         jumped = switched or bool(snapshot.get("seek")) or abs(snapshot["position_ms"] - self.position()) > 750
         if switched:
             self.document_changed.emit(None)
+            self.lyrics_received = False
             self._energy = 0
         self.song_id, self.title, self.artist = song["id"], song["title"], song["artist"]
         self.duration = snapshot["duration_ms"]
@@ -103,6 +124,7 @@ class NeteasePlayer(QObject):
         if jumped:
             self.discontinuity.emit()
         if "document" in snapshot:
+            self.lyrics_received = True
             self.document_changed.emit(snapshot["document"])
         self.changed.emit()
 
@@ -110,6 +132,7 @@ class NeteasePlayer(QObject):
         self._anchor = self.position()
         self.playing = self.connected = False
         self.status = "连接已断开，请在网易云中启用跳动的歌词"
+        self.lyrics_received = False
         self.document_changed.emit(None)
         self.changed.emit()
 

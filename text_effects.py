@@ -119,13 +119,13 @@ class TextEffects:
                 ink = glyph.path.boundingRect().adjusted(-margin, -margin, margin, margin)
                 if asset:
                     ink = ink.united(QRectF(asset[1], asset[0].deviceIndependentSize()))
-                ink = motion_bounds(ink, pixels, jump_limit, prefs.animation_style, angle, prefs.fall_distance)
+                ink = motion_bounds(ink, pixels, jump_limit, prefs.animation_style, angle, prefs.fall_distance, prefs.singing_sync)
                 ink.translate(glyph.x, glyph.baseline)
                 bounds = bounds.united(ink)
             assets.append(asset)
         bounds = bounds.toAlignedRect()
         surface = LineSurface(glyphs, transparent_image(bounds, dpr), QPointF(bounds.x(), bounds.y()), assets, pixels)
-        if prefs.animation_style != "classic":
+        if prefs.animation_style != "classic" or prefs.singing_sync:
             self._materials(surface, prefs)
         return surface
 
@@ -135,7 +135,7 @@ class TextEffects:
         Disjoint halo/body pixels allow all halos to precede the white cores.
         A body knockout excludes neighbouring halos underneath fading white ink.
         """
-        key = (prefs.text_style, prefs.color, prefs.glow_strength)
+        key = (prefs.text_style, prefs.color, prefs.glow_strength, prefs.singing_sync)
         if surface.material_key == key:
             return surface.materials
         materials = []
@@ -181,6 +181,14 @@ class TextEffects:
             halo, body = image.copy(), image.copy()
             pixels_view(halo)[body_pixels] = 0
             pixels_view(body)[~body_pixels] = 0
+            if glow and prefs.singing_sync and prefs.glow_strength:
+                # Cache the peak halo once; singing intensity is a composition weight.
+                halo.fill(Qt.GlobalColor.transparent)
+                painter = QPainter(halo)
+                painter.setOpacity(min(100, prefs.glow_strength * 1.4) / 100)
+                painter.drawImage(QPointF(), glow[0])
+                painter.end()
+                pixels_view(halo)[body_pixels] = 0
             materials.append((halo, body, origin))
         surface.materials, surface.material_key = materials, key
         return materials
@@ -205,7 +213,11 @@ class TextEffects:
             painter.restore()
 
         for index, state in enumerate(states):
-            draw(index, 0, state.opacity)
+            gain = 1
+            if prefs.singing_sync and prefs.text_style == "glow" and prefs.glow_strength:
+                peak = min(100, prefs.glow_strength * 1.4)
+                gain = (prefs.glow_strength + (peak - prefs.glow_strength) * state.emphasis) / peak
+            draw(index, 0, state.opacity * gain)
         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationOut)
         for index in range(len(states)):
             draw(index, 1, 1)

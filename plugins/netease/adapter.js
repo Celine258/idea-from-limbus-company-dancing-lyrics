@@ -9,11 +9,54 @@
         }
         return null;
     }
+    function parseYrc(raw, offsetMs=0) {
+        if (typeof raw!=='string' || raw.length>262144 || !Number.isFinite(offsetMs)) return [];
+        const rows=[];
+        for (const line of raw.split(/\r?\n/)) {
+            const prefix=line.trim().match(/^\[(\d+),(\d+)\]/);
+            if(!prefix)continue;
+            const body=line.trim().slice(prefix[0].length), tokens=[...body.matchAll(/\((\d+),(\d+),0\)/g)];
+            if(!tokens.length || tokens.length>2048)continue;
+            let text=body.slice(0,tokens[0].index), words=[];
+            for(let i=0;i<tokens.length;i++){
+                const token=tokens[i], part=body.slice(token.index+token[0].length,tokens[i+1]?.index??body.length);
+                const start=Array.from(text).length;
+                text+=part;
+                const begin=Math.max(0,Number(token[1])-offsetMs),end=Math.max(0,Number(token[1])+Number(token[2])-offsetMs);
+                if(part.trim()&&Number.isFinite(begin)&&end>begin&&end<=86400000)
+                    words.push({start_ms:Math.round(begin),end_ms:Math.round(end),text_start:start,text_end:Array.from(text).length});
+            }
+            const leading=Array.from(text).length-Array.from(text.trimStart()).length, trimmed=text.trim();
+            words=words.map(word=>({...word,text_start:Math.max(0,word.text_start-leading),
+                text_end:Math.min(Array.from(trimmed).length,word.text_end-leading)})).filter(word=>word.text_end>word.text_start);
+            rows.push({time_ms:Math.max(0,Number(prefix[1])-offsetMs),text:trimmed,words});
+        }
+        return rows;
+    }
+    function attachWordTimings(lines, raw, offsetMs=0) {
+        const rows=parseYrc(raw,offsetMs), byText=new Map();
+        for(const row of rows){const list=byText.get(row.text)||[];list.push(row);byText.set(row.text,list);}
+        return lines.map(line=>{
+            const candidates=(byText.get(line.text.trim())||[]).filter(row=>Math.abs(row.time_ms-line.time_ms)<=250)
+                .sort((a,b)=>Math.abs(a.time_ms-line.time_ms)-Math.abs(b.time_ms-line.time_ms));
+            if(!candidates.length || candidates[1]&&Math.abs(candidates[0].time_ms-line.time_ms)===Math.abs(candidates[1].time_ms-line.time_ms))return line;
+            const row=candidates[0],leading=Array.from(line.text).length-Array.from(line.text.trimStart()).length;
+            const words=row.words.map(word=>({...word,text_start:word.text_start+leading,text_end:word.text_end+leading}));
+            return words.length?{...line,words}:line;
+        });
+    }
+    let lyricCache=null, lyricSong='', lyricResult=[], lyricFields=[];
     function lyricsFor(state, songId) {
         const lyric=state['async:lyric'];
         if (!lyric || String(lyric.resourceTrackId) !== songId || lyric.displayType !== 'default') return [];
-        return (lyric.lyricLines || []).filter(x => Number.isFinite(x.time) && typeof x.lyric === 'string')
+        const fields=[lyric.lyricLines,lyric.yrcInfo?.yrc,lyric.offset,lyric.scrollable];
+        if(lyric===lyricCache&&songId===lyricSong&&fields.every((field,index)=>field===lyricFields[index]))return lyricResult;
+        const lines=(lyric.lyricLines || []).filter(x => Number.isFinite(x.time) && typeof x.lyric === 'string')
             .map(x => ({time_ms: Math.round(Math.max(0,x.time*1000)), text:x.lyric}));
+        const offset=lyric.scrollable&&Number.isFinite(lyric.offset)?Math.round(lyric.offset*1000):0;
+        lyricResult=attachWordTimings(lines,lyric.yrcInfo?.yrc,offset);
+        lyricCache=lyric;lyricSong=songId;lyricFields=fields;
+        return lyricResult;
     }
     function snapshot(state, position, enabled) {
         const p=state.playing;
@@ -64,7 +107,7 @@
             this.subscriptions=[];this.bound=null;
         }
     }
-    const api={findStore,lyricsFor,snapshot,playbackStreams,PlaybackEvents};
+    const api={findStore,lyricsFor,snapshot,playbackStreams,PlaybackEvents,parseYrc,attachWordTimings};
     if (typeof module!=='undefined' && module.exports) module.exports=api;
     else root.FloatingLyricsAdapter=api;
 })(typeof window==='undefined' ? globalThis : window);

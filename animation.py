@@ -29,6 +29,8 @@ class Glyph:
     baseline: float
     index: int
     effect_key: tuple | None = None
+    text_start: int = 0
+    text_end: int = 0
 
 
 @dataclass
@@ -53,9 +55,11 @@ def display_regions(width: int, height: int, mode: str) -> list[QRectF]:
 def _glyph_layout(text: str, pixels: int, max_width: float, family: str = DEFAULT_FONT_FAMILY):
     font = lyric_font(family, pixels)
     metrics = QFontMetricsF(font)
-    rows: list[list[str]] = [[]]
+    rows = [[]]
     row_width = 0.0
+    offset = 0
     for char in graphemes(text):
+        start, offset = offset, offset + len(char)
         if char in ("\n", "\r\n"):
             rows.append([])
             row_width = 0.0
@@ -64,21 +68,21 @@ def _glyph_layout(text: str, pixels: int, max_width: float, family: str = DEFAUL
         if rows[-1] and row_width + advance > max_width:
             rows.append([])
             row_width = 0.0
-        rows[-1].append(char)
+        rows[-1].append((char, start, offset))
         row_width += advance
-    widths = [sum(metrics.horizontalAdvance(char) for char in row) for row in rows]
+    widths = [sum(metrics.horizontalAdvance(char) for char, _, _ in row) for row in rows]
     glyphs = []
     index = 0
     height = metrics.height() * len(rows)
     for row_index, row in enumerate(rows):
         x = -widths[row_index] / 2
         baseline = -height / 2 + metrics.ascent() + row_index * metrics.height()
-        for char in row:
+        for char, start, end in row:
             advance = metrics.horizontalAdvance(char)
             path = QPainterPath()
             if not char.isspace():
                 path.addText(QPointF(-advance / 2, 0), font, char)
-            glyphs.append(Glyph(path, x + advance / 2, baseline, index))
+            glyphs.append(Glyph(path, x + advance / 2, baseline, index, text_start=start, text_end=end))
             x += advance
             index += 1
     width = max(widths, default=0)
@@ -115,10 +119,14 @@ def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRe
                 for glyph in glyphs:
                     if not glyph.path.isEmpty():
                         ink = glyph.path.boundingRect().adjusted(-margin, -margin, margin, margin)
-                        animated = animated.united(motion_bounds(ink, pixels, prefs.jump, prefs.animation_style, angle, prefs.fall_distance)
+                        animated = animated.united(motion_bounds(ink, pixels, prefs.jump, prefs.animation_style, angle,
+                                                                prefs.fall_distance, prefs.singing_sync)
                                                    .translated(glyph.x, glyph.baseline))
                 box_w = 2 * max(abs(animated.left()), abs(animated.right())) + 16
                 box_h = 2 * max(abs(animated.top()), abs(animated.bottom())) + 16
+            elif prefs.singing_sync:
+                box_w *= 1.08
+                box_h *= 1.08
             rad = math.radians(angle)
             rotated_w = abs(box_w * math.cos(rad)) + abs(box_h * math.sin(rad))
             rotated_h = abs(box_w * math.sin(rad)) + abs(box_h * math.cos(rad))
