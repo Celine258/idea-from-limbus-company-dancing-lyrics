@@ -114,6 +114,7 @@ class SettingsTests(unittest.TestCase):
             store.store.setValue("color", "#f4ea5d")
             store.store.setValue("jump", 9)
             prefs = store.load()
+            self.assertEqual((prefs.text_style, prefs.glow_strength), ("glow", 60))
             self.assertEqual((prefs.font_family, prefs.font_size, prefs.color, prefs.jump),
                              ("Microsoft YaHei UI", 41, "#f4ea5d", 9))
             prefs.font_family = "SimSun"
@@ -138,6 +139,18 @@ class SettingsTests(unittest.TestCase):
             self.assertEqual(repaired.opacity, 100)
             self.assertEqual(repaired.region, "edges")
             self.assertEqual(repaired.color, "#a9f4dc")
+
+    def test_effect_preferences_persist_and_invalid_values_are_repaired(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = SettingsStore(Path(directory) / "settings.ini")
+            prefs = Preferences(text_style="solid", glow_strength=97, color="#ffa0cc")
+            store.save(prefs)
+            self.assertEqual(store.load(), prefs)
+            store.store.setValue("text_style", "unknown")
+            store.store.setValue("glow_strength", 900)
+            self.assertEqual((store.load().text_style, store.load().glow_strength), ("glow", 100))
+            store.store.setValue("glow_strength", -40)
+            self.assertEqual(store.load().glow_strength, 0)
 
 
 if __name__ == "__main__":

@@ -27,6 +27,8 @@ class Preferences:
     delay_ms: int = 0
     volume: int = 45
     motion: str = "audio"
+    text_style: str = "glow"
+    glow_strength: int = 60
 
 
 class SettingsStore:
@@ -45,12 +47,14 @@ class SettingsStore:
                 pass
         for key, low, high in (("font_size", 18, 64), ("opacity", 10, 100),
                                ("jump", 0, 30), ("angle", 0, 25),
-                               ("delay_ms", -10000, 10000), ("volume", 0, 100)):
+                               ("delay_ms", -10000, 10000), ("volume", 0, 100), ("glow_strength", 0, 100)):
             setattr(prefs, key, max(low, min(high, getattr(prefs, key))))
         if prefs.region not in ("edges", "full"):
             prefs.region = "edges"
         if prefs.motion not in ("audio", "wave"):
             prefs.motion = "audio"
+        if prefs.text_style not in ("glow", "solid"):
+            prefs.text_style = "glow"
         if not QColor(prefs.color).isValid():
             prefs.color = "#a9f4dc"
         prefs.font_family = prefs.font_family.strip()

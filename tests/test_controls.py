@@ -229,6 +229,50 @@ class ControlPanelTests(unittest.TestCase):
         self.assertEqual(self.panel.styleSheet(), style)
         self.assertGreater(self.overlay.refreshes, 0)
 
+    def test_effect_controls_save_and_keep_transport_and_color(self):
+        self.click(self.panel.nav_buttons[1])
+        self.player.playing, self.player.clock = True, 6500
+        original_color = self.prefs.color
+        self.assertEqual(self.panel.text_style.currentData(), "glow")
+        self.assertEqual(self.panel.color_label.text(), "描边颜色")
+        self.assertTrue(self.panel.glow_slider.isEnabled())
+        self.panel.glow_slider.setValue(95)
+        self.panel.text_style.setCurrentIndex(self.panel.text_style.findData("solid"))
+        self.assertEqual(self.panel.color_label.text(), "文字颜色")
+        self.assertFalse(self.panel.glow_slider.isEnabled())
+        self.assertFalse(self.panel.white_hint.isVisibleTo(self.panel))
+        self.assertEqual((self.store.load().text_style, self.store.load().glow_strength), ("solid", 95))
+        self.panel.text_style.setCurrentIndex(self.panel.text_style.findData("glow"))
+        self.assertTrue(self.panel.white_hint.isVisibleTo(self.panel))
+        self.assertEqual(self.prefs.color, original_color)
+        self.assertEqual((self.player.playing, self.player.clock, self.player.seeks), (True, 6500, []))
+
+    def test_preview_background_does_not_modify_preferences_or_desktop(self):
+        self.click(self.panel.nav_buttons[1])
+        self.panel.glow_slider.setValue(61)
+        saved = self.store.load()
+        refreshes = self.overlay.refreshes
+        dark = self.panel.font_preview.grab().toImage()
+        self.panel.preview_background.setCurrentIndex(1)
+        light = self.panel.font_preview.grab().toImage()
+        self.assertFalse(self.panel.font_preview.dark)
+        self.assertNotEqual(bytes(dark.constBits()), bytes(light.constBits()))
+        self.assertEqual(self.store.load(), saved)
+        self.assertEqual(self.overlay.refreshes, refreshes)
+
+    def test_smoke_resets_effect_controls_from_saved_classic_settings(self):
+        from validation import SmokeCheck
+        self.panel.text_style.setCurrentIndex(self.panel.text_style.findData("solid"))
+        self.panel.glow_slider.setValue(0)
+        check = object.__new__(SmokeCheck)
+        check.app, check.panel, check.player = APP, self.panel, self.player
+        check.report_dir, check.results = self.root, {}
+        with patch.object(self.panel, "play_demo"), patch("validation.QTimer.singleShot"):
+            check.start()
+        self.assertEqual(self.panel.text_style.currentData(), "glow")
+        self.assertEqual(self.panel.glow_slider.value(), 60)
+        self.assertEqual((self.prefs.text_style, self.prefs.glow_strength), ("glow", 60))
+
     def test_font_import_button_copies_selects_and_restores_after_restart(self):
         fixture = Path(__file__).parent / "fixtures/lyrics-test.ttf"
         source = self.root / "自定义 字体.TTF"
@@ -326,6 +370,7 @@ class ControlPanelTests(unittest.TestCase):
         scroll = self.panel.effects_scroll
         self.assertGreater(scroll.verticalScrollBar().maximum(), 0)
         for widget in (self.panel.region, self.panel.font_combo, self.panel.import_font_button, self.panel.font_preview,
+                       self.panel.text_style, self.panel.preview_background, self.panel.glow_field,
                        self.panel.color_button, self.panel.motion, *self.panel.spins.values()):
             center = widget.mapTo(scroll.widget(), widget.rect().center())
             scroll.ensureVisible(center.x(), center.y(), 0, widget.height() // 2 + 16)

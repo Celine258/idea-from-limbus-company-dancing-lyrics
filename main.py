@@ -24,6 +24,7 @@ def main():
     parser.add_argument("--background", action="store_true", help="联动模式启动到托盘")
     parser.add_argument("--netease-smoke", action="store_true", help="采集 45 秒真实网易云联动验证并退出")
     parser.add_argument("--settings-smoke", action="store_true", help="联动验证同时要求实际打开歌词效果窗口")
+    parser.add_argument("--effects-smoke", action="store_true", help="联动验证同时检查发光样式、设置及绘制性能")
     parser.add_argument("--font-smoke-file", type=Path, help="本地或网易云验证时用于测试导入的字体文件")
     parser.add_argument("--report-dir", type=Path, default=app_directory() / "artifacts")
     args = parser.parse_args()
@@ -83,7 +84,7 @@ def main():
     if args.netease_smoke and args.netease:
         from netease_validation import NeteaseSmokeCheck
         check = NeteaseSmokeCheck(app, panel, args.report_dir, require_settings=args.settings_smoke,
-                                 font_fixture=args.font_smoke_file)
+                                 font_fixture=args.font_smoke_file, require_effects=args.effects_smoke)
     elif args.smoke and not args.netease:
         from validation import SmokeCheck
         check = SmokeCheck(app, panel, args.report_dir, font_fixture=args.font_smoke_file)

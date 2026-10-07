@@ -39,6 +39,8 @@ class SmokeCheck:
             self.results["native_control_panel_visible"] = bool(user32.IsWindowVisible(int(self.panel.winId())))
         for key, value in vars(Preferences()).items():
             setattr(self.panel.prefs, key, value)
+        self.panel.text_style.setCurrentIndex(self.panel.text_style.findData(self.panel.prefs.text_style))
+        self.panel.glow_slider.setValue(self.panel.prefs.glow_strength)
         self.panel.prefs.volume = 0
         self.panel.volume_slider.setValue(0)
         self.player.set_volume(0)
@@ -66,6 +68,7 @@ class SmokeCheck:
         self.results["seek_rebuilds_lyrics"] = [line.text for line in visible] == ["陪你写下一行代码"]
         self.panel.grab().save(str(self.report_dir / "control-panel.png"))
         self._capture_fonts()
+        self._capture_effects()
         self._capture_interface()
         image = self.overlay.grab().toImage()
         image.save(str(self.report_dir / "overlay-transparent.png"))
@@ -159,6 +162,7 @@ class SmokeCheck:
             panel.effects_scroll.verticalScrollBar().setValue(0)
             panel.grab().save(str(self.report_dir / f"effects-{name}-top.png"))
             for control in (panel.region, panel.font_combo, panel.import_font_button, panel.font_preview,
+                            panel.text_style, panel.preview_background, panel.glow_field,
                             panel.color_button, panel.motion, *panel.spins.values()):
                 # Spin boxes expose the edit cursor to ensureWidgetVisible;
                 # scroll the entire field into view, including its arrow buttons.
@@ -183,6 +187,38 @@ class SmokeCheck:
         self.results["navigation_preserves_playback_and_player_bar"] = bool(navigation_ok)
         self.results["control_panel_size"] = [original_size.width(), original_size.height()]
         self.results["device_pixel_ratio"] = panel.devicePixelRatioF()
+
+    def _capture_effects(self):
+        import hashlib
+        from effect_validation import validate_effects
+        panel = self.panel
+        original = (panel.prefs.text_style, panel.prefs.glow_strength, panel.preview_background.currentIndex())
+        position = self.player.position()
+        shapes = set()
+        for style in ("solid", "glow"):
+            panel.text_style.setCurrentIndex(panel.text_style.findData(style))
+            panel.glow_slider.setValue(60)
+            self.app.processEvents()
+            picture = self.overlay.grab().toImage()
+            shapes.add(hashlib.sha256(bytes(picture.constBits())).hexdigest())
+            picture.save(str(self.report_dir / f"effect-{style}.png"))
+        for index, name in enumerate(("dark", "light")):
+            panel.preview_background.setCurrentIndex(index)
+            self.app.processEvents()
+            panel.font_preview.grab().save(str(self.report_dir / f"effect-preview-{name}.png"))
+            center = panel.font_preview.mapTo(panel.effects_scroll.widget(), panel.font_preview.rect().center())
+            panel.effects_scroll.ensureVisible(center.x(), center.y(), 0, 60)
+            self.app.processEvents()
+            panel.grab().save(str(self.report_dir / f"effect-settings-{name}.png"))
+        saved = panel.store.load()
+        self.results["effect_style_changes_rendered_lyrics"] = len(shapes) == 2
+        self.results["effect_settings_saved"] = saved.text_style == "glow" and saved.glow_strength == 60
+        self.results.update(validate_effects(self.report_dir, panel.prefs, panel.devicePixelRatioF()))
+        panel.text_style.setCurrentIndex(panel.text_style.findData(original[0]))
+        panel.glow_slider.setValue(original[1])
+        panel.preview_background.setCurrentIndex(original[2])
+        self.app.processEvents()
+        self.results["effect_changes_preserve_paused_clock"] = not self.player.playing and self.player.position() == position
 
     def _check_resume(self):
         self.results["resume_advances_clock"] = self.player.position() > 9900

@@ -5,6 +5,7 @@ from PySide6.QtCore import QPointF, QRectF, QTextBoundaryFinder
 from PySide6.QtGui import QFontMetricsF, QPainterPath
 from fonts import lyric_font
 from settings import DEFAULT_FONT_FAMILY, Preferences
+from text_effects import effect_geometry
 
 
 def graphemes(text: str) -> list[str]:
@@ -26,6 +27,7 @@ class Glyph:
     x: float
     baseline: float
     index: int
+    effect_key: tuple | None = None
 
 
 @dataclass
@@ -35,6 +37,7 @@ class LineLayout:
     angle: float
     bounds: QRectF
     font_size: int
+    surface: object = None
 
 
 def display_regions(width: int, height: int, mode: str) -> list[QRectF]:
@@ -96,8 +99,10 @@ def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRe
         for pixels in range(prefs.font_size, 9, -1):
             glyphs, width, height = _glyph_layout(text, pixels, max(10, region.width() - 50), prefs.font_family)
             # Include stroke, character scale, jumping and fade-out drift.
-            box_w = width * 1.04 + 16
-            box_h = height * 1.04 + 2 * prefs.jump + 36
+            stroke, glow = effect_geometry(pixels, prefs.text_style)
+            margin = stroke + glow + 4
+            box_w = (width + 2 * margin) * 1.04 + 16
+            box_h = (height + 2 * margin) * 1.04 + 2 * prefs.jump + 36
             rad = math.radians(angle)
             rotated_w = abs(box_w * math.cos(rad)) + abs(box_h * math.sin(rad))
             rotated_h = abs(box_w * math.sin(rad)) + abs(box_h * math.cos(rad))

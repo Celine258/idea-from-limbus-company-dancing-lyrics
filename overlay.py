@@ -1,12 +1,12 @@
-import math
 import random
 import sys
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QColor, QPainter, QPen
+from PySide6.QtCore import Qt, QTimer, QEvent
+from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QApplication, QWidget
 from animation import build_layout, display_regions
 from lrc import LyricTimeline, LyricDocument
 from settings import Preferences
+from text_effects import TEXT_EFFECTS
 
 
 class LyricsOverlay(QWidget):
@@ -104,6 +104,12 @@ class LyricsOverlay(QWidget):
         self.timer.stop()
         super().hideEvent(event)
 
+    def event(self, event):
+        if event.type() == QEvent.Type.DevicePixelRatioChange and hasattr(self, "layouts"):
+            TEXT_EFFECTS.clear()
+            self.clear_layouts()
+        return super().event(event)
+
     def paintEvent(self, _event):
         painter = QPainter(self)
         # Explicitly erase the previous frame in the alpha surface.
@@ -145,15 +151,10 @@ class LyricsOverlay(QWidget):
             painter.translate(layout.center)
             painter.rotate(layout.angle)
             painter.translate(0, drift)
-            for glyph in layout.glyphs:
-                wave = 0.6 + 0.4 * math.sin(seconds * 8 - glyph.index * 0.6)
-                jump = -self.prefs.jump * energy * wave
-                painter.save()
-                painter.translate(glyph.x, glyph.baseline + jump)
-                painter.scale(1 + 0.04 * energy, 1 + 0.04 * energy)
-                painter.setPen(QPen(QColor(10, 22, 26, 210), 2.4,
-                                    Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-                painter.setBrush(QColor(self.prefs.color))
-                painter.drawPath(glyph.path)
-                painter.restore()
+            if layout.surface is None:
+                layout.surface = TEXT_EFFECTS.prepare(layout.glyphs, layout.font_size, self.prefs,
+                                                      self.devicePixelRatioF(), self.prefs.jump)
+            image = TEXT_EFFECTS.render(layout.surface, self.prefs, seconds, energy, moving=True)
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+            painter.drawImage(layout.surface.origin, image)
             painter.restore()

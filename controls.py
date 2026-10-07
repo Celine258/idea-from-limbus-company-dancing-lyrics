@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 from lrc import load_lrc
 from fonts import FontLibrary
 from animation import _glyph_layout
+from text_effects import TEXT_EFFECTS
 from settings import resource_path
 
 
@@ -255,25 +256,43 @@ class FontPreview(QWidget):
     def __init__(self, prefs):
         super().__init__()
         self.prefs = prefs
+        self.dark = True
+        self._key = None
+        self._surface = None
         self.setFixedHeight(88)
-        self.setAccessibleName("中英文字体预览")
+        self.setAccessibleName("中英文字体效果预览")
+
+    def set_background(self, dark):
+        self.dark = dark
+        self.update()
 
     def paintEvent(self, _event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setPen(QPen(QColor("#e0e5ed"), 1))
-        painter.setBrush(QColor("#f7f8fa"))
+        painter.setBrush(QColor("#18232f" if self.dark else "#f7f8fa"))
         painter.drawRoundedRect(QRectF(self.rect()).adjusted(.5, .5, -.5, -.5), 8, 8)
-        glyphs, width, height = _glyph_layout("给今天一点节奏\nHello music · 123",
-                                             min(28, self.prefs.font_size), max(1, self.width() - 24),
-                                             self.prefs.font_family)
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor("#293449"))
+        pixels = min(28, self.prefs.font_size)
+        key = (self.width(), pixels, self.prefs.font_family, self.prefs.color, self.prefs.text_style,
+               self.devicePixelRatioF())
+        if key != self._key:
+            glyphs, _, _ = _glyph_layout("给今天一点节奏\nHello music · 123", pixels,
+                                         max(1, self.width() - 48), self.prefs.font_family)
+            self._surface = TEXT_EFFECTS.prepare(glyphs, pixels, self.prefs, self.devicePixelRatioF())
+            self._key = key
+        image = TEXT_EFFECTS.render(self._surface, self.prefs)
+        width = 2 * max(abs(self._surface.origin.x()), abs(self._surface.origin.x() + image.width() / image.devicePixelRatio()))
+        height = 2 * max(abs(self._surface.origin.y()), abs(self._surface.origin.y() + image.height() / image.devicePixelRatio()))
         painter.translate(self.rect().center())
         scale = min(1, max(1, self.width() - 24) / max(1, width), (self.height() - 16) / max(1, height))
         painter.scale(scale, scale)
-        for glyph in glyphs:
-            painter.drawPath(glyph.path.translated(glyph.x, glyph.baseline))
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        painter.setOpacity(self.prefs.opacity / 100)
+        painter.drawImage(self._surface.origin, image)
+
+    def invalidate(self):
+        self._key = None
+        self.update()
 
 
 class ControlPanel(QWidget):
@@ -500,6 +519,25 @@ class ControlPanel(QWidget):
         self.color_button = QPushButton()
         self.color_button.clicked.connect(self.choose_color)
         self._update_color_button()
+        self.text_style = QComboBox()
+        self.text_style.addItem("白芯发光", "glow")
+        self.text_style.addItem("经典纯色", "solid")
+        self.text_style.setCurrentIndex(self.text_style.findData(self.prefs.text_style))
+        self.text_style.currentIndexChanged.connect(lambda _: self._set_preference("text_style", self.text_style.currentData()))
+        self.glow_slider = QSlider(Qt.Orientation.Horizontal)
+        self.glow_slider.setRange(0, 100)
+        self.glow_slider.setValue(self.prefs.glow_strength)
+        self.glow_slider.setAccessibleName("发光强度")
+        self.glow_value = label(f"{self.prefs.glow_strength}%", "muted")
+        self.glow_field = QWidget()
+        glow_row = QHBoxLayout(self.glow_field)
+        glow_row.setContentsMargins(0, 0, 0, 0)
+        glow_row.addWidget(self.glow_slider, 1)
+        glow_row.addWidget(self.glow_value)
+        self.glow_slider.valueChanged.connect(lambda value: self._set_preference("glow_strength", value))
+        self.color_label = label("描边颜色")
+        self.white_hint = label("字芯固定白色，描边与光晕使用所选颜色。", "muted")
+        self.white_hint.setWordWrap(True)
         font_field = QWidget()
         font_row = QHBoxLayout(font_field)
         font_row.setContentsMargins(0, 0, 0, 0)
@@ -513,15 +551,21 @@ class ControlPanel(QWidget):
         font_row.addWidget(self.font_combo, 1)
         font_row.addWidget(self.import_font_button)
         self.font_preview = FontPreview(self.prefs)
+        self.preview_background = QComboBox()
+        self.preview_background.addItem("深色背景", True)
+        self.preview_background.addItem("浅色背景", False)
+        self.preview_background.currentIndexChanged.connect(lambda _: self.font_preview.set_background(self.preview_background.currentData()))
         self.font_status = label(self._font_message or ("部分导入字体无法加载，可重新导入。" if self.font_library.errors else
                                  "支持 TTF、OTF、TTC；选择后立即生效并自动保存。"), "muted")
         self.font_status.setWordWrap(True)
         self._reload_fonts()
         self.font_combo.currentIndexChanged.connect(self._font_selected)
         for title, fields in (
-            ("显示与文字", (("显示区域", self.region), ("歌词字体", font_field), ("字体预览", self.font_preview),
+            ("显示与文字", (("显示区域", self.region), ("歌词字体", font_field), ("文字样式", self.text_style),
+                          ("预览背景", self.preview_background), ("效果预览", self.font_preview),
                           ("文字大小", self.spins["font_size"]),
-                          ("文字颜色", self.color_button), ("歌词透明度", self.spins["opacity"]))),
+                          (self.color_label, self.color_button), ("发光强度", self.glow_field),
+                          ("歌词透明度", self.spins["opacity"]))),
             ("律动与同步", (("运动方式", self.motion), ("跳动幅度", self.spins["jump"]),
                           ("倾斜范围", self.spins["angle"]), ("同步偏移", self.spins["delay_ms"]))),
         ):
@@ -536,11 +580,13 @@ class ControlPanel(QWidget):
                 form.addRow(text, widget)
             section_body.addLayout(form)
             if title == "显示与文字":
+                section_body.addWidget(self.white_hint)
                 section_body.addWidget(self.font_status)
             if title == "律动与同步":
                 section_body.addWidget(label("偏移为正：歌词晚一点出现；为负：早一点出现。", "muted"))
             body.addWidget(section)
         body.addStretch(1)
+        self._update_effect_controls()
         return scroll
 
     def _build_player_bar(self):
@@ -793,7 +839,16 @@ class ControlPanel(QWidget):
         setattr(self.prefs, key, value)
         self.store.save(self.prefs)
         self.overlay.refresh_preferences()
+        self._update_effect_controls()
         self.font_preview.update()
+
+    def _update_effect_controls(self):
+        glowing = self.prefs.text_style == "glow"
+        self.color_label.setText("描边颜色" if glowing else "文字颜色")
+        self.color_button.setToolTip("选择描边和光晕颜色" if glowing else "选择文字填充颜色")
+        self.white_hint.setVisible(glowing)
+        self.glow_slider.setEnabled(glowing)
+        self.glow_value.setText(f"{self.prefs.glow_strength}%")
 
     def _reload_fonts(self):
         self.font_combo.blockSignals(True)
@@ -824,6 +879,7 @@ class ControlPanel(QWidget):
             self.font_status.setText(str(error))
             return False
         self._set_preference("font_family", families[0])
+        self.font_preview.invalidate()
         self._reload_fonts()
         self.font_status.setText(("已导入" if added else "该字体已导入") + "，已切换到 " + families[0] + "。")
         return True

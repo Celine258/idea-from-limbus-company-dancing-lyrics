@@ -10,7 +10,7 @@ from fonts import FontLibrary, PRESET_FONTS, lyric_font
 
 
 class NeteaseSmokeCheck:
-    def __init__(self, app, panel, directory, require_settings=False, font_fixture=None):
+    def __init__(self, app, panel, directory, require_settings=False, font_fixture=None, require_effects=False):
         self.app, self.panel, self.player = app, panel, panel.player
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -22,6 +22,9 @@ class NeteaseSmokeCheck:
         self.font_fixture = font_fixture
         self.font_checks = {}
         self.font_evidence = {}
+        self.require_effects = require_effects
+        self.effect_checks = {}
+        self.effect_evidence = {}
         self.jumps = 0
         self.player.discontinuity.connect(self._jump)
         self.timer = QTimer(panel)
@@ -65,6 +68,8 @@ class NeteaseSmokeCheck:
         active = overlay.timeline.visible(player.position(), player.duration) if overlay.timeline else []
         if self.font_fixture and not self.font_checks and settings_visible and player.playing and active:
             self._check_fonts()
+        if self.require_effects and not self.effect_checks and settings_visible and player.playing and active:
+            self._check_effects()
         sample = {"seconds": round(time.monotonic()-self.started, 2), "connected": player.connected,
                   "song": player.song_id, "playing": player.playing, "position": round(player.position(), 1),
                   "lyricCount": len(document.lines) if document else 0, "activeCount": len(active),
@@ -110,6 +115,28 @@ class NeteaseSmokeCheck:
         self.font_checks = {"fontPresetsResolve": all(matches), "fontImportPersists": persistent,
                             "fontSwitchKeepsPlayback": player.playing and unchanged}
 
+    def _check_effects(self):
+        from effect_validation import validate_effects
+        panel, player = self.panel, self.player
+        original = (panel.prefs.text_style, panel.prefs.glow_strength, panel.preview_background.currentIndex())
+        transport = (player._anchor, player._at, player.song_id, player.playing, self.jumps)
+        for style in ("solid", "glow"):
+            panel.text_style.setCurrentIndex(panel.text_style.findData(style))
+            panel.glow_slider.setValue(80)
+            panel.font_preview.grab().save(str(self.directory / f"netease-effect-{style}.png"))
+        saved = panel.store.load()
+        self.effect_checks["effectSettingsPersist"] = saved.text_style == "glow" and saved.glow_strength == 80
+        for index, name in enumerate(("dark", "light")):
+            panel.preview_background.setCurrentIndex(index)
+            panel.font_preview.grab().save(str(self.directory / f"netease-preview-{name}.png"))
+        result = validate_effects(self.directory, panel.prefs, panel.devicePixelRatioF())
+        self.effect_evidence = result.pop("effect_benchmark")
+        self.effect_checks.update(result)
+        panel.text_style.setCurrentIndex(panel.text_style.findData(original[0]))
+        panel.glow_slider.setValue(original[1])
+        panel.preview_background.setCurrentIndex(original[2])
+        self.effect_checks["effectChangesKeepTransport"] = transport == (player._anchor, player._at, player.song_id, player.playing, self.jumps)
+
     def finish(self):
         self.timer.stop()
         samples = self.samples
@@ -133,9 +160,13 @@ class NeteaseSmokeCheck:
         if self.font_fixture:
             checks.update(self.font_checks or {"fontPresetsResolve": False, "fontImportPersists": False,
                                               "fontSwitchKeepsPlayback": False})
+        if self.require_effects:
+            checks.update(self.effect_checks or {"effectSettingsPersist": False, "effectChangesKeepTransport": False})
         report = {"passed": all(checks.values()), "checks": checks, "jumps": self.jumps,
                   "sampleCount": len(samples), "samples": samples}
         if self.font_fixture:
             report["fontVerification"] = self.font_evidence
+        if self.require_effects:
+            report["effectVerification"] = self.effect_evidence
         (self.directory / "netease-report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
         self.app.exit(0 if report["passed"] else 1)
