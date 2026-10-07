@@ -14,6 +14,7 @@ from overlay import LyricsOverlay
 from player import MusicPlayer
 from settings import SettingsStore, app_directory
 from fonts import FontLibrary
+from app_info import APP_VERSION
 
 
 def main():
@@ -38,6 +39,7 @@ def main():
                  getattr(sys, "frozen", False), args.smoke)
     app = QApplication(sys.argv[:1])
     app.setApplicationName("跳动的歌词")
+    app.setApplicationVersion(APP_VERSION)
     app.setOrganizationName("FloatingLyrics")
     app.setWindowIcon(app_icon())
     app.setStyle("Fusion")

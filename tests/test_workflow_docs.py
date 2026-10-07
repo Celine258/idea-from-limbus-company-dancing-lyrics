@@ -2,6 +2,7 @@
 from pathlib import Path
 import re
 import subprocess
+import shutil
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -10,6 +11,21 @@ DOCUMENTS = tuple(ROOT / name for name in ("AGENTS.md", "CHANGELOG.md", "README.
 
 
 class WorkflowDocumentationTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which("powershell.exe"), "Windows 启动脚本语法验证")
+    def test_launcher_diagnostic_wait_is_bounded_and_powershell_syntax_valid(self):
+        script = ROOT / "start.ps1"
+        text = script.read_text(encoding="utf-8-sig")
+        self.assertIn("$taskWatch.ElapsedMilliseconds -lt 30000", text)
+        self.assertIn("$taskSmokeWatch.ElapsedMilliseconds -lt 120000", text)
+        self.assertIn("$taskProcess.WaitForExit(1000)", text)
+        command = ("$taskTokens=$null;$taskErrors=$null;"
+                   f"[System.Management.Automation.Language.Parser]::ParseFile('{str(script).replace(chr(39), chr(39)*2)}',"
+                   "[ref]$taskTokens,[ref]$taskErrors)|Out-Null;"
+                   "if($taskErrors.Count){$taskErrors|Out-String;exit 1}")
+        result = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", command],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_documents_are_readable_and_local_links_resolve(self):
         for path in DOCUMENTS:
             with self.subTest(document=path.name):
@@ -40,8 +56,8 @@ class WorkflowDocumentationTests(unittest.TestCase):
     def test_runtime_files_ignored_and_source_files_trackable(self):
         ignored = [".venv/probe.txt", ".state/probe.txt", "build/probe.txt",
                    "dist/probe.txt", "artifacts/probe.txt", "__pycache__/probe.pyc", "debug.log"]
-        sources = ["AGENTS.md", "CHANGELOG.md", "main.py", "controls.py", "validation.py",
-                   "assets/app.ico", "tests/test_controls.py", "tests/test_workflow_docs.py"]
+        sources = ["AGENTS.md", "CHANGELOG.md", "main.py", "controls.py", "validation.py", "themes.py", "app_info.py",
+                   "assets/app.ico", "assets/check-white.svg", "tests/test_controls.py", "tests/test_workflow_docs.py"]
         result = subprocess.run(
             ["git", "-c", f"safe.directory={ROOT.as_posix()}", "check-ignore", "--no-index", "--stdin", "-z"],
             cwd=ROOT, input="\0".join(ignored + sources) + "\0", text=True,

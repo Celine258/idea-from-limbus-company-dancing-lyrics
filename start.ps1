@@ -130,7 +130,13 @@ public static class LyricsLauncherWindows {
     }
     Write-Output ('Control panel is visible. Process ID: ' + $taskProcess.Id)
     if ($Smoke) {
-        if (-not $taskProcess.WaitForExit(30000)) { throw 'The integration check timed out.' }
+        # Screenshot and warm-cache checks cover both themes and all animation modes.
+        # Keep the ordinary visible-window deadline above at 30 seconds.
+        $taskSmokeWatch = [Diagnostics.Stopwatch]::StartNew()
+        while (-not $taskProcess.HasExited -and $taskSmokeWatch.ElapsedMilliseconds -lt 120000) {
+            $taskProcess.WaitForExit(1000) | Out-Null
+        }
+        if (-not $taskProcess.HasExited) { throw 'The integration check timed out.' }
         $taskProcess.Refresh()
         if ($taskProcess.ExitCode -ne 0) { throw ('The integration check failed. Exit code: ' + $taskProcess.ExitCode) }
     }

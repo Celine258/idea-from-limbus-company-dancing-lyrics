@@ -23,7 +23,7 @@ class PresetTests(unittest.TestCase):
         self.assertEqual((quiet.name, quiet.values["font_family"], quiet.values["entry_speed"]), ("安静办公", "SimSun", 80))
         self.assertEqual((lively.name, lively.values["animation_style"], lively.values["color"]), ("轻快律动", "ripple_wave", "#ff4080"))
         self.assertFalse(lively.values["singing_sync"])
-        self.assertTrue(set(EFFECT_KEYS).isdisjoint(("region", "delay_ms", "volume")))
+        self.assertTrue(set(EFFECT_KEYS).isdisjoint(("region", "delay_ms", "volume", "theme")))
         with self.assertRaises(ValueError):
             self.store.delete(quiet.id)
         with self.assertRaises(ValueError):

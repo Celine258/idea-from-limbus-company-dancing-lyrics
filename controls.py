@@ -17,68 +17,8 @@ from text_effects import TEXT_EFFECTS
 from settings import resource_path, ANIMATION_STYLES
 from glyph_motion import glyph_states
 from presets import PresetStore, EFFECT_KEYS
-
-
-STYLE = """
-QWidget { background: #f7f8fa; color: #293449; font-family: 'Microsoft YaHei UI'; font-size: 13px; }
-QLabel { background: transparent; }
-QFrame#sidebar { background: #f0f3f6; border-right: 1px solid #e9edf2; }
-QLabel#brand { font-size: 20px; font-weight: 700; }
-QLabel#heading { font-size: 30px; font-weight: 700; }
-QLabel#muted, QLabel#eyebrow { color: #7b8597; }
-QLabel#eyebrow { font-size: 11px; letter-spacing: 2px; }
-QLabel#section { font-size: 16px; font-weight: 600; }
-QLabel#song { font-size: 18px; font-weight: 600; }
-QLabel#footerSong { font-size: 16px; }
-QLabel#badge { background: #eef1f5; color: #788396; border-radius: 12px; padding: 4px 12px; font-size: 12px; }
-QLabel#notice { background: #fff3e8; color: #955224; border: 1px solid #f2dcc4; border-radius: 8px; padding: 10px 14px; }
-QFrame#card, QFrame#songRow { background: #ffffff; border: 1px solid #edf0f4; border-radius: 14px; }
-QPushButton { background: #ffffff; border: 1px solid #e0e5ed; border-radius: 10px; padding: 10px 16px; }
-QPushButton:hover { background: #f0f2f6; border-color: #c9d1df; }
-QPushButton:pressed { background: #e8ecf2; }
-QPushButton:focus { border: 1px solid #ff3656; }
-QPushButton:disabled { color: #a5acb9; background: #f0f2f5; border-color: #e7ebf0; }
-QPushButton#primary { background: #ff3656; color: #ffffff; border: 1px solid #ff3656; font-weight: 600; }
-QPushButton#primary:hover { background: #f42648; }
-QPushButton#primary:pressed { background: #de2342; }
-QPushButton#nav { background: transparent; color: #626d80; border: 1px solid transparent; text-align: left; padding: 12px 14px; font-size: 15px; }
-QPushButton#nav:hover { background: #e7ecf2; }
-QPushButton#nav:checked { background: #ff3656; color: #ffffff; }
-QPushButton#nav:checked:hover { background: #f42648; }
-QPushButton#nav:focus { border-color: #c62845; }
-QPushButton#quiet { background: transparent; color: #6b7688; border: 1px solid transparent; text-align: left; }
-QPushButton#quiet:hover { background: #e7ecf2; }
-QPushButton#quiet:focus { border-color: #ff3656; }
-QFrame#playerBar { background: #ffffff; border-top: 1px solid #e5e9ee; }
-QWidget#footerGroup { background: transparent; }
-QPushButton#playRound { background: #ff3656; border: 1px solid #ff3656; border-radius: 26px; padding: 0; }
-QPushButton#playRound:hover { background: #f42648; }
-QPushButton#playRound:pressed { background: #de2342; }
-QPushButton#playRound:focus { border: 2px solid #ad1833; }
-QPushButton#playRound:disabled { background: #f4b7c2; border-color: #f4b7c2; }
-QPushButton#visibility { background: #ffffff; border: 1px solid #e2e7ee; padding: 7px 10px; font-size: 12px; }
-QPushButton#visibility:hover { background: #f2f4f8; }
-QComboBox, QSpinBox { background: #ffffff; border: 1px solid #dce2eb; border-radius: 8px; padding: 7px 10px; min-height: 22px; }
-QComboBox:focus, QSpinBox:focus { border-color: #ff3656; }
-QComboBox::drop-down { border: none; width: 24px; }
-QComboBox QAbstractItemView { background: #ffffff; color: #293449; selection-background-color: #ffe6eb; selection-color: #b7213c; }
-QSpinBox::up-button, QSpinBox::down-button { width: 20px; }
-QSlider { background: transparent; }
-QSlider::groove:horizontal { height: 4px; background: #e4e8ee; border: none; border-radius: 2px; }
-QSlider::sub-page:horizontal { background: #ff3656; border: none; border-radius: 2px; }
-QSlider::add-page:horizontal { background: #e4e8ee; border: none; border-radius: 2px; }
-QSlider::handle:horizontal { background: #ff3656; width: 12px; margin: -4px 0; border-radius: 6px; }
-QSlider:disabled::sub-page:horizontal { background: #d5dae3; }
-QSlider#progress::groove:horizontal { height: 3px; }
-QSlider#progress::handle:horizontal { width: 8px; margin: -3px 0; border-radius: 4px; }
-QScrollArea { border: none; background: transparent; }
-QScrollBar:vertical { background: #f7f8fa; width: 8px; }
-QScrollBar::handle:vertical { background: #cfd6e1; border-radius: 4px; min-height: 30px; }
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-QMenu { background: #ffffff; border: 1px solid #dce2eb; padding: 6px; }
-QMenu::item { padding: 8px 18px; }
-QMenu::item:selected { background: #ffe6eb; color: #b7213c; }
-"""
+from app_info import APP_VERSION, CREATOR, MOTTO
+from themes import theme_colors, theme_stylesheet, theme_palette
 
 
 def symbol_icon(kind: str, color: str = "#7b8597") -> QIcon:
@@ -225,7 +165,7 @@ class ThinSlider(QSlider):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor("#e4e8ee"))
+        painter.setBrush(QColor(theme_colors(self.window().property("interfaceTheme"))["track"]))
         painter.drawRoundedRect(groove, height / 2, height / 2)
         if self.isEnabled() and self.maximum() > self.minimum():
             painter.setBrush(QColor("#ff3656"))
@@ -361,7 +301,8 @@ class ControlPanel(QWidget):
         self._shown_tray_hint = False
         self.setWindowTitle("跳动的歌词")
         self.setWindowIcon(app_icon())
-        self.setStyleSheet(STYLE)
+        self.setStyleSheet(theme_stylesheet(prefs.theme))
+        self.setPalette(theme_palette(prefs.theme))
         self.resize(1100, 760)
         self.setMinimumSize(900, 560)
         root = QVBoxLayout(self)
@@ -388,6 +329,7 @@ class ControlPanel(QWidget):
         root.addWidget(self._build_player_bar())
         self._select_page(0)
         self._setup_tray()
+        self._apply_theme()
         if self.external:
             for widget in (self.import_button, self.lyrics_button, self.demo_button,
                            self.volume_slider, self.volume_label, self.volume_icon, self.play_button):
@@ -414,8 +356,8 @@ class ControlPanel(QWidget):
         self.sidebar.setObjectName("sidebar")
         self.sidebar.setFixedWidth(200)
         body = QVBoxLayout(self.sidebar)
-        body.setContentsMargins(16, 30, 16, 20)
-        body.setSpacing(10)
+        body.setContentsMargins(16, 20, 16, 14)
+        body.setSpacing(6)
         brand = QHBoxLayout()
         brand.setSpacing(8)
         icon = QLabel()
@@ -424,8 +366,11 @@ class ControlPanel(QWidget):
         brand.addWidget(icon)
         brand.addWidget(label("跳动的歌词", "brand"))
         body.addLayout(brand)
-        body.addWidget(label("音乐在耳边，歌词在桌面。", "muted"))
-        body.addSpacing(32)
+        self.creator_label = label(CREATOR.replace("：", "：\n", 1), "creator")
+        self.version_label = label(f"版本 {APP_VERSION}", "version")
+        body.addWidget(self.creator_label)
+        body.addWidget(self.version_label)
+        body.addSpacing(20)
         self.navigation = QButtonGroup(self)
         self.navigation.setExclusive(True)
         self.nav_buttons = []
@@ -439,18 +384,27 @@ class ControlPanel(QWidget):
             self.nav_buttons.append(button)
             body.addWidget(button)
         body.addStretch(1)
-        body.addWidget(label("让工作，有一点节奏。", "muted"))
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItem("默认主题", "light")
+        self.theme_combo.addItem("深色主题", "dark")
+        self.theme_combo.setCurrentIndex(self.theme_combo.findData(self.prefs.theme))
+        self.theme_combo.setAccessibleName("界面主题")
+        self.theme_combo.setToolTip("切换控制面板主题，自动保存。")
+        self.theme_combo.currentIndexChanged.connect(self._theme_changed)
+        body.addWidget(self.theme_combo)
+        self.motto_label = label(MOTTO.replace(". SAVE", ".\nSAVE"), "motto")
+        body.addWidget(self.motto_label)
         body.addSpacing(10)
         self.tray_button = QPushButton("收起到托盘")
         self.tray_button.setObjectName("quiet")
         self.tray_button.setIcon(symbol_icon("tray"))
         self.tray_button.clicked.connect(self.hide)
         body.addWidget(self.tray_button)
-        quit_button = QPushButton("退出")
-        quit_button.setObjectName("quiet")
-        quit_button.setIcon(symbol_icon("exit"))
-        quit_button.clicked.connect(QApplication.instance().quit)
-        body.addWidget(quit_button)
+        self.exit_button = QPushButton("退出")
+        self.exit_button.setObjectName("quiet")
+        self.exit_button.setIcon(symbol_icon("exit"))
+        self.exit_button.clicked.connect(QApplication.instance().quit)
+        body.addWidget(self.exit_button)
         return self.sidebar
 
     def _select_page(self, index):
@@ -458,7 +412,27 @@ class ControlPanel(QWidget):
         for page, button in enumerate(self.nav_buttons):
             button.setChecked(page == index)
             button.setIcon(symbol_icon("music" if page == 0 else "wave",
-                                       "#ffffff" if page == index else "#7b8597"))
+                                       "#ffffff" if page == index else theme_colors(self.prefs.theme)["muted"]))
+
+    def _theme_changed(self):
+        self.prefs.theme = self.theme_combo.currentData()
+        self._apply_theme()
+        self.store.save(self.prefs)
+
+    def _apply_theme(self):
+        style, palette = theme_stylesheet(self.prefs.theme), theme_palette(self.prefs.theme)
+        self.setProperty("interfaceTheme", self.prefs.theme)
+        self.setPalette(palette)
+        self.setStyleSheet(style)
+        self.tray_menu.setPalette(palette)
+        self.tray_menu.setStyleSheet(style)
+        color = theme_colors(self.prefs.theme)["muted"]
+        for button, kind in ((self.tray_button, "tray"), (self.exit_button, "exit"),
+                             (self.lyrics_button, "lyrics"), (self.demo_button, "play"),
+                             (self.visibility_button, "lyrics")):
+            button.setIcon(symbol_icon(kind, color))
+        self.volume_icon.setPixmap(symbol_icon("volume", color).pixmap(20, 20))
+        self._select_page(self.pages.currentIndex())
 
     @staticmethod
     def _scroll_page():
@@ -743,7 +717,7 @@ class ControlPanel(QWidget):
         titles = QVBoxLayout()
         titles.setSpacing(5)
         self.footer_song = ElidedLabel("等待音乐", "footerSong")
-        self.footer_detail = ElidedLabel("让工作，有一点节奏。", "muted")
+        self.footer_detail = ElidedLabel(MOTTO, "muted")
         titles.addWidget(self.footer_song)
         titles.addWidget(self.footer_detail)
         track_body.addLayout(titles, 1)
@@ -1005,7 +979,7 @@ class ControlPanel(QWidget):
 
     def _sync_effect_widgets(self):
         widgets = [self.animation_combo, self.text_style, self.motion, self.font_combo, self.glow_slider,
-                   self.singing_checkbox,
+                   self.singing_checkbox, self.theme_combo,
                    *self.spins.values(), *self.parameter_sliders.values()]
         blockers = [QSignalBlocker(widget) for widget in widgets]
         for widget, key in ((self.animation_combo, "animation_style"), (self.text_style, "text_style"), (self.motion, "motion")):
@@ -1016,6 +990,9 @@ class ControlPanel(QWidget):
             slider.setValue(getattr(self.prefs, key))
         self.glow_slider.setValue(self.prefs.glow_strength)
         self.singing_checkbox.setChecked(self.prefs.singing_sync)
+        self.theme_combo.setCurrentIndex(self.theme_combo.findData(self.prefs.theme))
+        if self.styleSheet() != theme_stylesheet(self.prefs.theme):
+            self._apply_theme()
         self._reload_fonts()
         self._update_color_button()
         self._update_effect_controls()

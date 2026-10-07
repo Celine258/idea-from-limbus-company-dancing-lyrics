@@ -33,6 +33,7 @@ class NeteaseSmokeCheck:
         self.require_singing = require_singing
         self.singing_checks = {}
         self.original_singing = panel.prefs.singing_sync
+        self.theme_checks = {}
         self.jumps = 0
         self.player.discontinuity.connect(self._jump)
         self.timer = QTimer(panel)
@@ -74,6 +75,8 @@ class NeteaseSmokeCheck:
                 self.settings_opened = True
         document = overlay.document
         active = overlay.timeline.visible(player.position(), player.duration) if overlay.timeline else []
+        if self.require_settings and not self.theme_checks and settings_visible and player.playing and active:
+            self._check_themes()
         if self.font_fixture and not self.font_checks and settings_visible and player.playing and active:
             self._check_fonts()
         if self.require_effects and not self.effect_checks and settings_visible and player.playing and active:
@@ -178,6 +181,7 @@ class NeteaseSmokeCheck:
                   "noSecondAudioPlayer": not hasattr(self.player,"media")}
         if self.require_settings:
             checks["nativeEffectsSettingsOpened"] = self.settings_opened
+            checks.update(self.theme_checks or {"themeSwitchKeepsPlayback": False})
         if self.font_fixture:
             checks.update(self.font_checks or {"fontPresetsResolve": False, "fontImportPersists": False,
                                               "fontSwitchKeepsPlayback": False})
@@ -245,3 +249,22 @@ class NeteaseSmokeCheck:
             "singingSwitchKeepsTransport": transport == (player._anchor, player._at, player.song_id, player.playing, self.jumps),
             "parametersAndPresetsKeepPlayback": player.playing and transport == (player._anchor, player._at, player.song_id, player.playing, self.jumps)}
         panel.overlay.refresh_preferences()
+
+    def _check_themes(self):
+        from dataclasses import asdict
+        panel, player = self.panel, self.player
+        original = panel.prefs.theme
+        effects = {key: value for key, value in asdict(panel.prefs).items() if key != "theme"}
+        transport = (player._anchor, player._at, player.song_id, player.playing, self.jumps)
+        document, preview = panel.overlay.document, panel.font_preview.dark
+        saved = True
+        for theme in ("dark", "light"):
+            panel.theme_combo.setCurrentIndex(panel.theme_combo.findData(theme))
+            saved &= panel.store.load().theme == theme
+            panel.grab().save(str(self.directory / f"netease-theme-{theme}.png"))
+        panel.theme_combo.setCurrentIndex(panel.theme_combo.findData(original))
+        self.theme_checks = {
+            "themeSwitchPersists": bool(saved),
+            "themeSwitchKeepsPlayback": transport == (player._anchor, player._at, player.song_id, player.playing, self.jumps),
+            "themeSwitchKeepsLyricsAndPreview": document is panel.overlay.document and preview == panel.font_preview.dark
+                and effects == {key: value for key, value in asdict(panel.prefs).items() if key != "theme"}}

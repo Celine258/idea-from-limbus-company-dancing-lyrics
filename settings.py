@@ -40,6 +40,7 @@ class Preferences:
     shake_frequency: int = 6
     fall_distance: int = 48
     singing_sync: bool = False
+    theme: str = "light"
 
 
 class SettingsStore:
@@ -83,6 +84,8 @@ def normalize_preferences(prefs):
         prefs.text_style = "glow"
     if prefs.animation_style not in ANIMATION_STYLES:
         prefs.animation_style = "classic"
+    if prefs.theme not in ("light", "dark"):
+        prefs.theme = "light"
     if not QColor(prefs.color).isValid():
         prefs.color = "#a9f4dc"
     prefs.font_family = prefs.font_family.strip()

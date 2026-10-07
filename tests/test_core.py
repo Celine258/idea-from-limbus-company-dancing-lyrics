@@ -152,6 +152,19 @@ class SettingsTests(unittest.TestCase):
             store.store.setValue("glow_strength", -40)
             self.assertEqual(store.load().glow_strength, 0)
 
+    def test_theme_defaults_to_light_and_invalid_or_old_settings_keep_effects(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = SettingsStore(Path(directory) / "settings.ini")
+            self.assertEqual(store.load().theme, "light")
+            store.save(Preferences(theme="dark", color="#ffa0cc", singing_sync=True))
+            self.assertEqual(store.load().theme, "dark")
+            store.store.setValue("theme", "missing")
+            self.assertEqual(store.load().theme, "light")
+            self.assertEqual(store.load().color, "#ffa0cc")
+            self.assertTrue(store.load().singing_sync)
+            store.store.remove("theme")
+            self.assertEqual(store.load().theme, "light")
+
 
 if __name__ == "__main__":
     unittest.main()

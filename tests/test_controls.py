@@ -141,6 +141,84 @@ class ControlPanelTests(unittest.TestCase):
         self.assertTrue(all(checker.singing_checks.values()))
         self.assertTrue(self.store.load().singing_sync)
 
+    def test_branding_and_version_are_below_creator_with_no_old_slogans(self):
+        from app_info import APP_VERSION, CREATOR, MOTTO
+        from PySide6.QtWidgets import QLabel
+        self.assertEqual(self.panel.creator_label.text().replace("\n", ""), CREATOR)
+        self.assertEqual(self.panel.version_label.text(), f"版本 {APP_VERSION}")
+        self.assertEqual(self.panel.motto_label.text().replace("\n", " "), MOTTO)
+        self.assertEqual([self.panel.theme_combo.itemText(i) for i in range(2)], ["默认主题", "深色主题"])
+        self.assertLess(self.panel.creator_label.geometry().bottom(), self.panel.version_label.geometry().top())
+        texts = [widget.text() for widget in self.panel.findChildren(QLabel)]
+        self.assertNotIn("音乐在耳边，歌词在桌面。", texts)
+        self.assertNotIn("让工作，有一点节奏。", texts)
+
+    def test_themes_persist_and_keep_transport_lyric_preferences_preview_and_preset(self):
+        from dataclasses import asdict
+        self.panel.open_music(self.music())
+        self.panel.apply_preset("builtin:lively")
+        self.player.playing, self.player.clock = True, 6500
+        self.panel.preview_background.setCurrentIndex(1)
+        original = {key: value for key, value in asdict(self.prefs).items() if key != "theme"}
+        refreshes = self.overlay.refreshes
+        for theme in ("dark", "light", "dark"):
+            self.panel.theme_combo.setCurrentIndex(self.panel.theme_combo.findData(theme))
+            APP.processEvents()
+
+            self.assertEqual(self.store.load().theme, theme)
+            self.assertEqual({key: value for key, value in asdict(self.prefs).items() if key != "theme"}, original)
+            self.assertTrue(self.player.playing)
+            self.assertEqual(self.player.clock, 6500)
+            self.assertEqual(self.player.seeks, [])
+            self.assertEqual(self.overlay.refreshes, refreshes)
+            self.assertFalse(self.panel.font_preview.dark)
+            self.assertEqual(self.panel.pages.currentIndex(), 0)
+            self.assertFalse(self.panel._preset_modified)
+            color = self.panel.palette().color(QPalette.ColorRole.Window)
+            self.assertEqual(color.lightness() < 80, theme == "dark")
+            self.assertEqual(self.panel.tray_menu.styleSheet(), self.panel.styleSheet())
+        self.panel.apply_preset("builtin:quiet")
+        self.assertEqual(self.prefs.theme, "dark")
+        self.assertEqual(self.panel.theme_combo.currentData(), "dark")
+        # Recreate the window from the persisted setting, like an application restart.
+        with patch("controls.QSystemTrayIcon.isSystemTrayAvailable", return_value=False):
+            reopened = ControlPanel(FakePlayer(), FakeOverlay(), self.store.load(), self.store)
+        try:
+            self.assertEqual(reopened.theme_combo.currentData(), "dark")
+            self.assertLess(reopened.palette().color(QPalette.ColorRole.Window).lightness(), 80)
+        finally:
+            reopened.refresh_timer.stop()
+            reopened.font_library.close()
+            reopened.deleteLater()
+            APP.processEvents()
+
+    def test_both_themes_keep_red_slider_fill_and_adapt_empty_tracks(self):
+        from themes import theme_colors
+        self.panel.volume_slider.setValue(60)
+        for theme in ("dark", "light"):
+            self.panel.theme_combo.setCurrentIndex(self.panel.theme_combo.findData(theme))
+            APP.processEvents()
+            image = self.panel.volume_slider.grab().toImage()
+            dpr = image.devicePixelRatio()
+            self.assertEqual(image.pixelColor(round(12*dpr), image.height()//2).name(), "#ff3656")
+            self.assertEqual(image.pixelColor(image.width()-round(12*dpr), image.height()//2).name(), theme_colors(theme)["track"])
+
+    def test_checkbox_indicators_are_visible_and_show_checked_tick_in_both_themes(self):
+        from themes import theme_colors
+        for theme in ("dark", "light"):
+            self.panel.theme_combo.setCurrentIndex(self.panel.theme_combo.findData(theme))
+            for checked in (False, True):
+                self.panel.singing_checkbox.setChecked(checked)
+                APP.processEvents()
+                image = self.panel.singing_checkbox.grab().toImage()
+                colors = [image.pixelColor(x,y).name() for x in range(round(18*image.devicePixelRatio()))
+                          for y in range(image.height())]
+                if checked:
+                    self.assertGreater(colors.count("#ff3656"), 20)
+                    self.assertGreater(colors.count("#ffffff"), 2)
+                else:
+                    self.assertGreater(colors.count(theme_colors(theme)["muted"]), 10)
+
     def test_effects_entry_restores_hidden_minimized_panel_without_changing_playback(self):
         self.player.playing = True
         self.panel.showMinimized()

@@ -76,6 +76,7 @@ class SmokeCheck:
         self._capture_presets()
         self._capture_singing()
         self._capture_interface()
+        self._capture_themes()
         image = self.overlay.grab().toImage()
         image.save(str(self.report_dir / "overlay-transparent.png"))
         preview = QImage(image.size(), QImage.Format.Format_ARGB32)
@@ -228,6 +229,47 @@ class SmokeCheck:
         panel.preview_background.setCurrentIndex(original[2])
         self.app.processEvents()
         self.results["effect_changes_preserve_paused_clock"] = not self.player.playing and self.player.position() == position
+
+    def _capture_themes(self):
+        from dataclasses import asdict
+        from app_info import APP_VERSION, CREATOR, MOTTO
+        from settings import resource_path
+        panel, directory = self.panel, self.report_dir
+        original_theme = panel.prefs.theme
+        self.results["theme_checkmark_asset_available"] = not QImage(str(resource_path("assets/check-white.svg"))).isNull()
+        visual = {key: value for key, value in asdict(panel.prefs).items() if key != "theme"}
+        frame, position, preview = self.overlay.grab().toImage(), self.player.position(), panel.font_preview.dark
+        self.results["sidebar_branding_updated"] = (panel.creator_label.text().replace("\n", "") == CREATOR
+            and panel.version_label.text() == f"版本 {APP_VERSION}" and panel.motto_label.text().replace("\n", " ") == MOTTO)
+        sidebar_ok, saved, layouts = True, True, True
+        for theme in ("light", "dark"):
+            panel.theme_combo.setCurrentIndex(panel.theme_combo.findData(theme))
+            self.app.processEvents()
+            saved &= panel.store.load().theme == theme
+            self.report_dir = directory / f"theme-{theme}"
+            self.report_dir.mkdir(parents=True, exist_ok=True)
+            self._capture_interface()
+            layouts &= (self.results["player_controls_within_window"] and self.results["effect_controls_reachable_by_scrolling"]
+                        and self.results["navigation_preserves_playback_and_player_bar"])
+            original_size = panel.size()
+            panel.resize(panel.minimumSize())
+            self.app.processEvents()
+            for control in (panel.creator_label, panel.version_label, panel.motto_label, panel.theme_combo,
+                            *panel.nav_buttons, panel.tray_button, panel.exit_button):
+                rectangle = QRect(control.mapTo(panel.sidebar, QPoint()), control.size())
+                sidebar_ok &= panel.sidebar.rect().contains(rectangle) and control.isVisibleTo(panel)
+            sidebar_ok &= panel.creator_label.geometry().bottom() < panel.version_label.geometry().top()
+            panel.resize(original_size)
+        self.report_dir = directory
+        panel.theme_combo.setCurrentIndex(panel.theme_combo.findData(original_theme))
+        self.app.processEvents()
+        self.results["theme_switch_persists"] = bool(saved)
+        self.results["both_theme_layouts_accessible"] = bool(layouts)
+        self.results["both_theme_sidebars_fit_minimum_window"] = bool(sidebar_ok)
+        self.results["theme_keeps_lyrics_and_paused_clock"] = (not self.player.playing and self.player.position() == position
+            and self.overlay.grab().toImage() == frame
+            and {key: value for key, value in asdict(panel.prefs).items() if key != "theme"} == visual
+            and panel.font_preview.dark == preview)
 
     def _check_resume(self):
         self.results["resume_advances_clock"] = self.player.position() > 9900
