@@ -5,6 +5,11 @@ from PySide6.QtCore import QSettings
 from PySide6.QtGui import QColor
 
 DEFAULT_FONT_FAMILY = "Microsoft YaHei UI"
+ANIMATION_STYLES = {
+    "classic": "原有效果 · 整句渐隐",
+    "ripple_wave": "波纹·波动", "ripple_shake": "波纹·抖动",
+    "fall_wave": "跌落·波动", "fall_shake": "跌落·抖动",
+}
 
 
 def app_directory() -> Path:
@@ -29,6 +34,7 @@ class Preferences:
     motion: str = "audio"
     text_style: str = "glow"
     glow_strength: int = 60
+    animation_style: str = "classic"
 
 
 class SettingsStore:
@@ -55,6 +61,8 @@ class SettingsStore:
             prefs.motion = "audio"
         if prefs.text_style not in ("glow", "solid"):
             prefs.text_style = "glow"
+        if prefs.animation_style not in ANIMATION_STYLES:
+            prefs.animation_style = "classic"
         if not QColor(prefs.color).isValid():
             prefs.color = "#a9f4dc"
         prefs.font_family = prefs.font_family.strip()

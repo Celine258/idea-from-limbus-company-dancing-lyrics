@@ -73,15 +73,38 @@ class ActiveLine:
     start_ms: int
     end_ms: int
     opacity: float
+    entry_end_ms: float = 0
+    exit_start_ms: float = 0
 
 
 class LyricTimeline:
     """Position is authoritative: pause and seek need no event replay."""
-    def __init__(self, document: LyricDocument, delay_ms: int = 0):
+    def __init__(self, document: LyricDocument, delay_ms: int = 0, animation_style: str = "classic"):
         # A positive LRC offset advances timestamps; a positive UI delay postpones them.
         shift = delay_ms - document.offset_ms
         self.lines = [LyricLine(line.start_ms + shift, line.text) for line in document.lines]
         self.starts = [line.start_ms for line in self.lines]
+        self.animation_style = animation_style
+
+    def _animated_window(self, index, duration):
+        line = self.lines[index]
+        following = self.lines[index + 1] if index + 1 < len(self.lines) else None
+        boundary = following.start_ms if following else (duration or line.start_ms + 6000)
+        if duration > 0:
+            boundary = min(boundary, duration)
+        interval = max(0, boundary - line.start_ms)
+        entry_end = line.start_ms + min(700, interval * .35)
+        if following and following.text and boundary < (duration or float("inf")):
+            next_boundary = (self.lines[index + 2].start_ms if index + 2 < len(self.lines)
+                             else duration or following.start_ms + 6000)
+            if duration > 0:
+                next_boundary = min(next_boundary, duration)
+            tail = min(600, max(0, next_boundary - boundary) * .45)
+            exit_start, end = boundary, boundary + tail
+        else:
+            end = boundary
+            exit_start = end - min(600, interval * .3)
+        return ActiveLine(index, line.text, line.start_ms, end, 1, entry_end, exit_start)
 
     def visible(self, position_ms: float, duration_ms: int = 0) -> list[ActiveLine]:
         index = bisect_right(self.starts, position_ms) - 1
@@ -89,6 +112,11 @@ class LyricTimeline:
         for i in range(max(0, index - 1), index + 1):
             line = self.lines[i]
             if not line.text:
+                continue
+            if self.animation_style != "classic":
+                item = self._animated_window(i, duration_ms)
+                if item.start_ms <= position_ms < item.end_ms and item.end_ms > item.start_ms:
+                    active.append(item)
                 continue
             end = line.start_ms + 6000
             if i + 1 < len(self.lines):

@@ -41,6 +41,7 @@ class SmokeCheck:
             setattr(self.panel.prefs, key, value)
         self.panel.text_style.setCurrentIndex(self.panel.text_style.findData(self.panel.prefs.text_style))
         self.panel.glow_slider.setValue(self.panel.prefs.glow_strength)
+        self.panel.animation_combo.setCurrentIndex(self.panel.animation_combo.findData(self.panel.prefs.animation_style))
         self.panel.prefs.volume = 0
         self.panel.volume_slider.setValue(0)
         self.player.set_volume(0)
@@ -69,6 +70,7 @@ class SmokeCheck:
         self.panel.grab().save(str(self.report_dir / "control-panel.png"))
         self._capture_fonts()
         self._capture_effects()
+        self._capture_animations()
         self._capture_interface()
         image = self.overlay.grab().toImage()
         image.save(str(self.report_dir / "overlay-transparent.png"))
@@ -163,7 +165,7 @@ class SmokeCheck:
             panel.grab().save(str(self.report_dir / f"effects-{name}-top.png"))
             for control in (panel.region, panel.font_combo, panel.import_font_button, panel.font_preview,
                             panel.text_style, panel.preview_background, panel.glow_field,
-                            panel.color_button, panel.motion, *panel.spins.values()):
+                            panel.color_button, panel.motion, panel.animation_combo, panel.replay_button, *panel.spins.values()):
                 # Spin boxes expose the edit cursor to ensureWidgetVisible;
                 # scroll the entire field into view, including its arrow buttons.
                 center = control.mapTo(panel.effects_scroll.widget(), control.rect().center())
@@ -225,6 +227,34 @@ class SmokeCheck:
         self.results["resume_restarts_render_timer"] = self.overlay.timer.isActive()
         self.player.seek(23500)
         QTimer.singleShot(1300, self._finish)
+
+    def _capture_animations(self):
+        from animation_validation import validate_animations
+        from settings import ANIMATION_STYLES
+        panel = self.panel
+        original = panel.prefs.animation_style
+        transport = (self.player._anchor_ms, self.player._anchor_time, self.player.playing)
+        frozen, saved = True, True
+        for style in ANIMATION_STYLES:
+            if style == "classic":
+                continue
+            panel.animation_combo.setCurrentIndex(panel.animation_combo.findData(style))
+            self.app.processEvents()
+            first = self.overlay.grab().toImage()
+            self.app.processEvents()
+            frozen &= first == self.overlay.grab().toImage() and not self.overlay.timer.isActive()
+            saved &= panel.store.load().animation_style == style
+            first.save(str(self.report_dir / f"overlay-{style}.png"))
+            center = panel.animation_combo.mapTo(panel.effects_scroll.widget(), panel.animation_combo.rect().center())
+            panel.effects_scroll.ensureVisible(center.x(), center.y(), 0, 60)
+            self.app.processEvents()
+            panel.grab().save(str(self.report_dir / f"settings-{style}.png"))
+        self.results["all_animation_settings_saved"] = bool(saved)
+        self.results["all_animations_freeze_while_paused"] = bool(frozen)
+        self.results.update(validate_animations(self.report_dir, panel.prefs, panel.devicePixelRatioF()))
+        panel.animation_combo.setCurrentIndex(panel.animation_combo.findData(original))
+        self.results["animation_changes_preserve_transport"] = transport == (
+            self.player._anchor_ms, self.player._anchor_time, self.player.playing)
 
     def _finish(self):
         self.results["end_of_song_clears_overlay"] = self.player.ended

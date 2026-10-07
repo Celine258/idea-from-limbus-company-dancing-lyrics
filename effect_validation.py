@@ -14,7 +14,8 @@ def validate_effects(directory, prefs, dpr):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     renderer = TextEffects()
-    demo = replace(prefs, color="#ff6a9c", font_size=48, jump=0, opacity=100, text_style="glow", glow_strength=60)
+    demo = replace(prefs, color="#ff6a9c", font_size=48, jump=0, opacity=100, text_style="glow", glow_strength=60,
+                   animation_style="classic")
     glyphs, _, _ = _glyph_layout("给今天一点节奏\nfrom the elevator you", 48, 690, demo.font_family)
     surface = renderer.prepare(glyphs, 48, demo, dpr)
     source = renderer.render(surface, demo)
@@ -28,7 +29,7 @@ def validate_effects(directory, prefs, dpr):
         image.save(str(directory / f"glow-{name}.png"))
     source.save(str(directory / "glow-transparent.png"))
 
-    benchmark_prefs = replace(prefs, font_size=32, jump=10, angle=12, region="edges", text_style="glow")
+    benchmark_prefs = replace(prefs, font_size=32, jump=10, angle=12, region="edges", text_style="glow", animation_style="classic")
     area = QApplication.primaryScreen().availableGeometry()
     regions = display_regions(area.width(), area.height(), "edges")
     started = time.perf_counter()

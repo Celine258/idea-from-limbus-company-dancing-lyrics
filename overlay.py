@@ -7,6 +7,7 @@ from animation import build_layout, display_regions
 from lrc import LyricTimeline, LyricDocument
 from settings import Preferences
 from text_effects import TEXT_EFFECTS
+from glyph_motion import glyph_states
 
 
 class LyricsOverlay(QWidget):
@@ -53,14 +54,14 @@ class LyricsOverlay(QWidget):
 
     def set_document(self, document: LyricDocument | None):
         self.document = document
-        self.timeline = LyricTimeline(document, self.prefs.delay_ms) if document else None
+        self.timeline = LyricTimeline(document, self.prefs.delay_ms, self.prefs.animation_style) if document else None
         self.seed = random.randrange(1_000_000)
         self.clear_layouts()
         self._sync_timer()
 
     def refresh_preferences(self):
         if self.document:
-            self.timeline = LyricTimeline(self.document, self.prefs.delay_ms)
+            self.timeline = LyricTimeline(self.document, self.prefs.delay_ms, self.prefs.animation_style)
         self.clear_layouts()
 
     def clear_layouts(self):
@@ -146,6 +147,8 @@ class LyricsOverlay(QWidget):
             age = position - item.start_ms
             remaining = item.end_ms - position
             drift = 8 * (1 - min(1, remaining / 600)) - 5 * (1 - min(1, age / 300))
+            if self.prefs.animation_style != "classic":
+                drift = 0
             painter.save()
             painter.setOpacity(item.opacity * self.prefs.opacity / 100)
             painter.translate(layout.center)
@@ -153,8 +156,11 @@ class LyricsOverlay(QWidget):
             painter.translate(0, drift)
             if layout.surface is None:
                 layout.surface = TEXT_EFFECTS.prepare(layout.glyphs, layout.font_size, self.prefs,
-                                                      self.devicePixelRatioF(), self.prefs.jump)
-            image = TEXT_EFFECTS.render(layout.surface, self.prefs, seconds, energy, moving=True)
+                                                      self.devicePixelRatioF(), self.prefs.jump, layout.angle)
+            states = (glyph_states(layout.glyphs, self.prefs, item, position, energy, layout.font_size,
+                                   self.seed + item.index * 7919, layout.angle)
+                      if self.prefs.animation_style != "classic" else None)
+            image = TEXT_EFFECTS.render(layout.surface, self.prefs, seconds, energy, moving=True, states=states)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
             painter.drawImage(layout.surface.origin, image)
             painter.restore()

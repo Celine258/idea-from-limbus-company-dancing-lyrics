@@ -10,7 +10,7 @@ from fonts import FontLibrary, PRESET_FONTS, lyric_font
 
 
 class NeteaseSmokeCheck:
-    def __init__(self, app, panel, directory, require_settings=False, font_fixture=None, require_effects=False):
+    def __init__(self, app, panel, directory, require_settings=False, font_fixture=None, require_effects=False, require_animations=False):
         self.app, self.panel, self.player = app, panel, panel.player
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -25,6 +25,10 @@ class NeteaseSmokeCheck:
         self.require_effects = require_effects
         self.effect_checks = {}
         self.effect_evidence = {}
+        self.require_animations = require_animations
+        self.animation_checks = {}
+        self.animation_evidence = {}
+        self.original_animation = panel.prefs.animation_style
         self.jumps = 0
         self.player.discontinuity.connect(self._jump)
         self.timer = QTimer(panel)
@@ -70,6 +74,8 @@ class NeteaseSmokeCheck:
             self._check_fonts()
         if self.require_effects and not self.effect_checks and settings_visible and player.playing and active:
             self._check_effects()
+        if self.require_animations and not self.animation_checks and settings_visible and player.playing and active:
+            self._check_animations()
         sample = {"seconds": round(time.monotonic()-self.started, 2), "connected": player.connected,
                   "song": player.song_id, "playing": player.playing, "position": round(player.position(), 1),
                   "lyricCount": len(document.lines) if document else 0, "activeCount": len(active),
@@ -162,11 +168,36 @@ class NeteaseSmokeCheck:
                                               "fontSwitchKeepsPlayback": False})
         if self.require_effects:
             checks.update(self.effect_checks or {"effectSettingsPersist": False, "effectChangesKeepTransport": False})
+        if self.require_animations:
+            checks.update(self.animation_checks or {"animationSettingsPersist": False, "animationChangesKeepTransport": False})
         report = {"passed": all(checks.values()), "checks": checks, "jumps": self.jumps,
                   "sampleCount": len(samples), "samples": samples}
         if self.font_fixture:
             report["fontVerification"] = self.font_evidence
         if self.require_effects:
             report["effectVerification"] = self.effect_evidence
+        if self.require_animations:
+            report["animationVerification"] = self.animation_evidence
+            self.panel.animation_combo.setCurrentIndex(self.panel.animation_combo.findData(self.original_animation))
         (self.directory / "netease-report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
         self.app.exit(0 if report["passed"] else 1)
+
+    def _check_animations(self):
+        from animation_validation import validate_animations
+        from settings import ANIMATION_STYLES
+        panel, player = self.panel, self.player
+        transport = (player._anchor, player._at, player.song_id, player.playing, self.jumps)
+        saved = True
+        for style in ANIMATION_STYLES:
+            if style == "classic":
+                continue
+            panel.animation_combo.setCurrentIndex(panel.animation_combo.findData(style))
+            saved &= panel.store.load().animation_style == style
+            panel.overlay.grab().save(str(self.directory / f"netease-animation-{style}.png"))
+        result = validate_animations(self.directory, panel.prefs, panel.devicePixelRatioF())
+        self.animation_evidence = result.pop("animation_benchmarks")
+        self.animation_checks.update(result)
+        self.animation_checks["animationSettingsPersist"] = bool(saved)
+        self.animation_checks["animationChangesKeepTransport"] = transport == (
+            player._anchor, player._at, player.song_id, player.playing, self.jumps)
+        # Keep fall_shake active through the subsequent real pause/seek/song actions.

@@ -264,6 +264,7 @@ class ControlPanelTests(unittest.TestCase):
         from validation import SmokeCheck
         self.panel.text_style.setCurrentIndex(self.panel.text_style.findData("solid"))
         self.panel.glow_slider.setValue(0)
+        self.panel.animation_combo.setCurrentIndex(self.panel.animation_combo.findData("fall_shake"))
         check = object.__new__(SmokeCheck)
         check.app, check.panel, check.player = APP, self.panel, self.player
         check.report_dir, check.results = self.root, {}
@@ -272,6 +273,7 @@ class ControlPanelTests(unittest.TestCase):
         self.assertEqual(self.panel.text_style.currentData(), "glow")
         self.assertEqual(self.panel.glow_slider.value(), 60)
         self.assertEqual((self.prefs.text_style, self.prefs.glow_strength), ("glow", 60))
+        self.assertEqual(self.panel.animation_combo.currentData(), "classic")
 
     def test_font_import_button_copies_selects_and_restores_after_restart(self):
         fixture = Path(__file__).parent / "fixtures/lyrics-test.ttf"
@@ -292,6 +294,50 @@ class ControlPanelTests(unittest.TestCase):
             self.panel = ControlPanel(self.player, self.overlay, self.store.load(), self.store)
         self.assertEqual(self.panel.font_combo.currentData(), "Floating Lyrics Test")
         self.assertEqual(self.panel.prefs.font_family, "Floating Lyrics Test")
+
+    def test_four_animation_options_save_without_mutating_transport(self):
+        from settings import ANIMATION_STYLES
+        self.player.playing, self.player.clock = True, 6500
+        self.click(self.panel.nav_buttons[1])
+        self.assertEqual(self.panel.animation_combo.currentData(), "classic")
+        self.assertEqual(self.panel.animation_combo.count(), 5)
+        for style in ANIMATION_STYLES:
+            self.panel.animation_combo.setCurrentIndex(self.panel.animation_combo.findData(style))
+            self.assertEqual(self.store.load().animation_style, style)
+            self.assertTrue(self.player.playing)
+            self.assertEqual(self.player.clock, 6500)
+            self.assertFalse(self.player.seeks)
+
+    def test_preview_replay_is_independent_and_stops_when_hidden(self):
+        self.click(self.panel.nav_buttons[1])
+        self.panel.animation_combo.setCurrentIndex(self.panel.animation_combo.findData("fall_shake"))
+        scroll = self.panel.effects_scroll
+        scroll.ensureWidgetVisible(self.panel.font_preview)
+        APP.processEvents()
+        self.click(self.panel.replay_button)
+        QTest.qWait(180)
+        self.assertTrue(self.panel.font_preview.timer.isActive())
+        self.assertGreater(self.panel.font_preview._preview_position(), 100)
+        self.assertFalse(self.player.playing)
+        self.assertEqual(self.player.clock, 0)
+        self.click(self.panel.nav_buttons[0])
+        self.assertFalse(self.panel.font_preview.timer.isActive())
+
+    def test_preview_timer_stops_when_scrolled_out_and_restarts_on_reveal(self):
+        self.click(self.panel.nav_buttons[1])
+        self.panel.resize(900, 560)
+        self.panel.animation_combo.setCurrentIndex(self.panel.animation_combo.findData("ripple_wave"))
+        scroll = self.panel.effects_scroll
+        scroll.ensureWidgetVisible(self.panel.font_preview)
+        APP.processEvents()
+        self.panel.font_preview.replay()
+        self.assertTrue(self.panel.font_preview.timer.isActive())
+        scroll.verticalScrollBar().setValue(scroll.verticalScrollBar().maximum())
+        QTest.qWait(70)
+        self.assertFalse(self.panel.font_preview.timer.isActive())
+        scroll.ensureWidgetVisible(self.panel.font_preview)
+        APP.processEvents()
+        self.assertTrue(self.panel.font_preview.timer.isActive())
 
     def test_font_import_cancel_and_invalid_data_leave_existing_choice_unchanged(self):
         self.panel.font_combo.setCurrentIndex(self.panel.font_combo.findData("KaiTi"))
@@ -370,7 +416,7 @@ class ControlPanelTests(unittest.TestCase):
         scroll = self.panel.effects_scroll
         self.assertGreater(scroll.verticalScrollBar().maximum(), 0)
         for widget in (self.panel.region, self.panel.font_combo, self.panel.import_font_button, self.panel.font_preview,
-                       self.panel.text_style, self.panel.preview_background, self.panel.glow_field,
+                       self.panel.text_style, self.panel.preview_background, self.panel.glow_field, self.panel.animation_combo, self.panel.replay_button,
                        self.panel.color_button, self.panel.motion, *self.panel.spins.values()):
             center = widget.mapTo(scroll.widget(), widget.rect().center())
             scroll.ensureVisible(center.x(), center.y(), 0, widget.height() // 2 + 16)

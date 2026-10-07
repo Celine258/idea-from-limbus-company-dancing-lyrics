@@ -5,6 +5,7 @@ import math
 import numpy as np
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QImage, QPainter, QPen
+from glyph_motion import motion_bounds
 
 
 def effect_geometry(pixels, style):
@@ -49,6 +50,8 @@ class LineSurface:
     origin: QPointF
     assets: list
     pixels: int
+    materials: object = None
+    material_key: object = None
 
 
 class TextEffects:
@@ -104,7 +107,7 @@ class TextEffects:
             self.cache_bytes += size
         return asset
 
-    def prepare(self, glyphs, pixels, prefs, dpr, jump_limit=0):
+    def prepare(self, glyphs, pixels, prefs, dpr, jump_limit=0, angle=0):
         color = QColor(prefs.color)
         stroke, radius = effect_geometry(pixels, prefs.text_style)
         margin = stroke + radius + 3 / dpr
@@ -116,15 +119,105 @@ class TextEffects:
                 ink = glyph.path.boundingRect().adjusted(-margin, -margin, margin, margin)
                 if asset:
                     ink = ink.united(QRectF(asset[1], asset[0].deviceIndependentSize()))
-                # Every animated glyph can grow by 4% about its own baseline.
-                ink = QRectF(ink.x() * 1.04, ink.y() * 1.04, ink.width() * 1.04, ink.height() * 1.04)
+                ink = motion_bounds(ink, pixels, jump_limit, prefs.animation_style, angle)
                 ink.translate(glyph.x, glyph.baseline)
-                bounds = bounds.united(ink).united(ink.translated(0, -jump_limit))
+                bounds = bounds.united(ink)
             assets.append(asset)
         bounds = bounds.toAlignedRect()
-        return LineSurface(glyphs, transparent_image(bounds, dpr), QPointF(bounds.x(), bounds.y()), assets, pixels)
+        surface = LineSurface(glyphs, transparent_image(bounds, dpr), QPointF(bounds.x(), bounds.y()), assets, pixels)
+        if prefs.animation_style != "classic":
+            self._materials(surface, prefs)
+        return surface
 
-    def render(self, surface, prefs, seconds=0, energy=0, moving=False):
+    def _materials(self, surface, prefs):
+        """Cache complete glyph materials; fades multiply their final RGBA once.
+
+        Disjoint halo/body pixels allow all halos to precede the white cores.
+        A body knockout excludes neighbouring halos underneath fading white ink.
+        """
+        key = (prefs.text_style, prefs.color, prefs.glow_strength)
+        if surface.material_key == key:
+            return surface.materials
+        materials = []
+        dpr = surface.image.devicePixelRatio()
+        stroke, radius = effect_geometry(surface.pixels, prefs.text_style)
+        for index, glyph in enumerate(surface.glyphs):
+            if glyph.path.isEmpty():
+                materials.append(None)
+                continue
+            glow = surface.assets[index]
+            if glow:
+                origin = glow[1]
+                bounds = QRectF(origin, glow[0].deviceIndependentSize())
+            else:
+                bounds = glyph.path.boundingRect().adjusted(-stroke-3, -stroke-3, stroke+3, stroke+3).toAlignedRect()
+                origin = bounds.topLeft()
+            image, mask = transparent_image(bounds, dpr), transparent_image(bounds, dpr)
+            painter = QPainter(image)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            painter.translate(-origin)
+            if glow and prefs.glow_strength:
+                painter.setOpacity(prefs.glow_strength / 100)
+                painter.drawImage(origin, glow[0])
+            painter.setOpacity(1)
+            painter.setPen(QPen(QColor(prefs.color) if prefs.text_style == "glow" else QColor(10, 22, 26, 210),
+                                stroke * 2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+            painter.setBrush(Qt.BrushStyle.NoBrush if prefs.text_style == "glow" else QColor(prefs.color))
+            painter.drawPath(glyph.path)
+            if prefs.text_style == "glow":
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(Qt.GlobalColor.white)
+                painter.drawPath(glyph.path)
+            painter.end()
+            painter = QPainter(mask)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            painter.translate(-origin)
+            painter.setPen(QPen(Qt.GlobalColor.white, stroke * 2, Qt.PenStyle.SolidLine,
+                                Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+            painter.setBrush(Qt.GlobalColor.white)
+            painter.drawPath(glyph.path)
+            painter.end()
+            body_pixels = pixels_view(mask)[:, :, 3] > 0
+            halo, body = image.copy(), image.copy()
+            pixels_view(halo)[body_pixels] = 0
+            pixels_view(body)[~body_pixels] = 0
+            materials.append((halo, body, origin))
+        surface.materials, surface.material_key = materials, key
+        return materials
+
+    def _render_states(self, surface, prefs, states):
+        materials = self._materials(surface, prefs)
+        surface.image.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(surface.image)
+        painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform)
+        painter.translate(-surface.origin)
+
+        def draw(index, layer, opacity):
+            material, state = materials[index], states[index]
+            if material is None or state.opacity <= 0:
+                return
+            painter.save()
+            painter.translate(state.x, state.y)
+            painter.rotate(state.rotation)
+            painter.scale(state.scale, state.scale)
+            painter.setOpacity(opacity)
+            painter.drawImage(material[2], material[layer])
+            painter.restore()
+
+        for index, state in enumerate(states):
+            draw(index, 0, state.opacity)
+        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationOut)
+        for index in range(len(states)):
+            draw(index, 1, 1)
+        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
+        for index, state in enumerate(states):
+            draw(index, 1, state.opacity)
+        painter.end()
+        return surface.image
+
+    def render(self, surface, prefs, seconds=0, energy=0, moving=False, states=None):
+        if states is not None:
+            return self._render_states(surface, prefs, states)
         surface.image.fill(Qt.GlobalColor.transparent)
         painter = QPainter(surface.image)
         painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform)

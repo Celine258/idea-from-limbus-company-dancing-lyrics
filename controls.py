@@ -3,18 +3,19 @@ import ctypes
 from ctypes import wintypes
 import logging
 import sys
-from PySide6.QtCore import QPointF, QRect, QRectF, QSize, Qt, QTimer
+from PySide6.QtCore import QPointF, QRect, QRectF, QSize, Qt, QTimer, QElapsedTimer
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPalette, QPen, QPixmap, QPolygonF
 from PySide6.QtWidgets import (
     QApplication, QButtonGroup, QColorDialog, QComboBox, QFileDialog, QFormLayout,
     QFrame, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QSizePolicy,
     QSlider, QSpinBox, QStackedWidget, QStyle, QStyleOptionSlider, QSystemTrayIcon, QVBoxLayout, QWidget,
 )
-from lrc import load_lrc
+from lrc import load_lrc, ActiveLine
 from fonts import FontLibrary
 from animation import _glyph_layout
 from text_effects import TEXT_EFFECTS
-from settings import resource_path
+from settings import resource_path, ANIMATION_STYLES
+from glyph_motion import glyph_states
 
 
 STYLE = """
@@ -259,14 +260,48 @@ class FontPreview(QWidget):
         self.dark = True
         self._key = None
         self._surface = None
-        self.setFixedHeight(88)
+        self._running = prefs.animation_style != "classic"
+        self._position = 0
+        self._elapsed = QElapsedTimer()
+        self.timer = QTimer(self)
+        self.timer.setInterval(33)
+        self.timer.timeout.connect(self._tick)
+        self.setFixedHeight(150)
         self.setAccessibleName("中英文字体效果预览")
+
+    def replay(self):
+        self._position = 0
+        self._running = True
+        self._elapsed.restart()
+        if self.isVisible() and not self.visibleRegion().isEmpty():
+            self.timer.start()
+        self.update()
+
+    def _preview_position(self):
+        return (self._position + (self._elapsed.elapsed() if self.timer.isActive() else 0)) % 4200
+
+    def _stop_preview(self):
+        self._position = self._preview_position()
+        self.timer.stop()
+
+    def _tick(self):
+        if not self.isVisible() or self.visibleRegion().isEmpty():
+            self._stop_preview()
+        else:
+            self.update()
+
+    def hideEvent(self, event):
+        self._stop_preview()
+        super().hideEvent(event)
 
     def set_background(self, dark):
         self.dark = dark
         self.update()
 
     def paintEvent(self, _event):
+        if self._running and not self.timer.isActive() and not self.visibleRegion().isEmpty():
+            self._elapsed.restart()
+            self.timer.start()
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setPen(QPen(QColor("#e0e5ed"), 1))
@@ -274,20 +309,27 @@ class FontPreview(QWidget):
         painter.drawRoundedRect(QRectF(self.rect()).adjusted(.5, .5, -.5, -.5), 8, 8)
         pixels = min(28, self.prefs.font_size)
         key = (self.width(), pixels, self.prefs.font_family, self.prefs.color, self.prefs.text_style,
-               self.devicePixelRatioF())
+               self.devicePixelRatioF(), self.prefs.animation_style, self.prefs.jump)
         if key != self._key:
             glyphs, _, _ = _glyph_layout("给今天一点节奏\nHello music · 123", pixels,
                                          max(1, self.width() - 48), self.prefs.font_family)
-            self._surface = TEXT_EFFECTS.prepare(glyphs, pixels, self.prefs, self.devicePixelRatioF())
+            self._surface = TEXT_EFFECTS.prepare(glyphs, pixels, self.prefs, self.devicePixelRatioF(), self.prefs.jump)
             self._key = key
-        image = TEXT_EFFECTS.render(self._surface, self.prefs)
+        position = self._preview_position()
+        states = (glyph_states(self._surface.glyphs, self.prefs,
+                              ActiveLine(0, "", 0, 3800, 1, 700, 3200), position, .5, pixels, 730)
+                  if self.prefs.animation_style != "classic" else None)
+        image = TEXT_EFFECTS.render(self._surface, self.prefs, states=states)
         width = 2 * max(abs(self._surface.origin.x()), abs(self._surface.origin.x() + image.width() / image.devicePixelRatio()))
         height = 2 * max(abs(self._surface.origin.y()), abs(self._surface.origin.y() + image.height() / image.devicePixelRatio()))
         painter.translate(self.rect().center())
         scale = min(1, max(1, self.width() - 24) / max(1, width), (self.height() - 16) / max(1, height))
         painter.scale(scale, scale)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-        painter.setOpacity(self.prefs.opacity / 100)
+        opacity = self.prefs.opacity / 100
+        if self._running and self.prefs.animation_style == "classic":
+            opacity *= max(0, min(1, position / 300, (3800 - position) / 600))
+        painter.setOpacity(opacity)
         painter.drawImage(self._surface.origin, image)
 
     def invalidate(self):
@@ -503,6 +545,12 @@ class ControlPanel(QWidget):
         self.motion.addItem("轻波浪", "wave")
         self.motion.setCurrentIndex(self.motion.findData(self.prefs.motion))
         self.motion.currentIndexChanged.connect(lambda _: self._set_preference("motion", self.motion.currentData()))
+        self.animation_combo = QComboBox()
+        for value, text in ANIMATION_STYLES.items():
+            self.animation_combo.addItem(text, value)
+        self.animation_combo.setCurrentIndex(self.animation_combo.findData(self.prefs.animation_style))
+        self.animation_combo.setAccessibleName("歌词动画")
+        self.animation_combo.currentIndexChanged.connect(lambda _: self._set_preference("animation_style", self.animation_combo.currentData()))
         self.spins = {}
         for name, minimum, maximum, suffix in (
             ("font_size", 18, 64, " px"), ("jump", 0, 30, " px"),
@@ -551,6 +599,9 @@ class ControlPanel(QWidget):
         font_row.addWidget(self.font_combo, 1)
         font_row.addWidget(self.import_font_button)
         self.font_preview = FontPreview(self.prefs)
+        self.replay_button = QPushButton("重播动画")
+        self.replay_button.setToolTip("循环预览入场、停留和退场，不改变音乐播放。")
+        self.replay_button.clicked.connect(self.font_preview.replay)
         self.preview_background = QComboBox()
         self.preview_background.addItem("深色背景", True)
         self.preview_background.addItem("浅色背景", False)
@@ -563,10 +614,11 @@ class ControlPanel(QWidget):
         for title, fields in (
             ("显示与文字", (("显示区域", self.region), ("歌词字体", font_field), ("文字样式", self.text_style),
                           ("预览背景", self.preview_background), ("效果预览", self.font_preview),
+                          ("动画预览", self.replay_button),
                           ("文字大小", self.spins["font_size"]),
                           (self.color_label, self.color_button), ("发光强度", self.glow_field),
                           ("歌词透明度", self.spins["opacity"]))),
-            ("律动与同步", (("运动方式", self.motion), ("跳动幅度", self.spins["jump"]),
+            ("律动与同步", (("歌词动画", self.animation_combo), ("运动方式", self.motion), ("律动幅度", self.spins["jump"]),
                           ("倾斜范围", self.spins["angle"]), ("同步偏移", self.spins["delay_ms"]))),
         ):
             section, section_body = card(title)
@@ -841,6 +893,8 @@ class ControlPanel(QWidget):
         self.overlay.refresh_preferences()
         self._update_effect_controls()
         self.font_preview.update()
+        if key == "animation_style":
+            self.font_preview.replay()
 
     def _update_effect_controls(self):
         glowing = self.prefs.text_style == "glow"
