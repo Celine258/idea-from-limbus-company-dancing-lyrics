@@ -18,7 +18,7 @@ from settings import resource_path, ANIMATION_STYLES
 from glyph_motion import glyph_states
 from presets import PresetStore, EFFECT_KEYS
 from app_info import APP_VERSION, CREATOR, MOTTO
-from themes import theme_colors, theme_stylesheet, theme_palette
+from themes import theme_colors, theme_stylesheet, theme_palette, theme_accent, accent_text, ThemeFrame, ThemeCanvas
 
 
 def symbol_icon(kind: str, color: str = "#7b8597") -> QIcon:
@@ -74,7 +74,9 @@ def symbol_icon(kind: str, color: str = "#7b8597") -> QIcon:
     return QIcon(pixmap)
 
 
-def app_icon() -> QIcon:
+def app_icon(theme="light") -> QIcon:
+    if theme == "special":
+        return QIcon(str(resource_path("assets/dante-clock.svg")))
     pixmap = QPixmap(64, 64)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
@@ -168,7 +170,7 @@ class ThinSlider(QSlider):
         painter.setBrush(QColor(theme_colors(self.window().property("interfaceTheme"))["track"]))
         painter.drawRoundedRect(groove, height / 2, height / 2)
         if self.isEnabled() and self.maximum() > self.minimum():
-            painter.setBrush(QColor("#ff3656"))
+            painter.setBrush(QColor(theme_accent(self.window().property("interfaceTheme"))))
             filled = QRectF(groove)
             if option.upsideDown:
                 filled.setLeft(center.x())
@@ -179,13 +181,13 @@ class ThinSlider(QSlider):
             painter.drawEllipse(QPointF(center.x(), self.height() / 2), radius, radius)
             if self.hasFocus():
                 painter.setBrush(Qt.BrushStyle.NoBrush)
-                painter.setPen(QPen(QColor("#b7213c"), 1))
+                painter.setPen(QPen(QColor("#b98731" if self.window().property("interfaceTheme") == "special" else "#b7213c"), 1))
                 painter.drawEllipse(QPointF(center.x(), self.height() / 2), radius + 2, radius + 2)
         painter.end()
 
 
 def card(title: str):
-    frame = QFrame()
+    frame = ThemeFrame()
     frame.setObjectName("card")
     layout = QVBoxLayout(frame)
     layout.setContentsMargins(24, 20, 24, 22)
@@ -300,7 +302,7 @@ class ControlPanel(QWidget):
         self._updating = False
         self._shown_tray_hint = False
         self.setWindowTitle("跳动的歌词")
-        self.setWindowIcon(app_icon())
+        self.setWindowIcon(app_icon(prefs.theme))
         self.setStyleSheet(theme_stylesheet(prefs.theme))
         self.setPalette(theme_palette(prefs.theme))
         self.resize(1100, 760)
@@ -312,7 +314,7 @@ class ControlPanel(QWidget):
         shell.setContentsMargins(0, 0, 0, 0)
         shell.setSpacing(0)
         shell.addWidget(self._build_sidebar())
-        main = QWidget()
+        main = ThemeCanvas()
         main_body = QVBoxLayout(main)
         main_body.setContentsMargins(32, 28, 32, 22)
         main_body.setSpacing(14)
@@ -352,7 +354,7 @@ class ControlPanel(QWidget):
             self.show_notice(self.presets.error)
 
     def _build_sidebar(self):
-        self.sidebar = QFrame()
+        self.sidebar = ThemeFrame()
         self.sidebar.setObjectName("sidebar")
         self.sidebar.setFixedWidth(200)
         body = QVBoxLayout(self.sidebar)
@@ -360,8 +362,8 @@ class ControlPanel(QWidget):
         body.setSpacing(6)
         brand = QHBoxLayout()
         brand.setSpacing(8)
-        icon = QLabel()
-        icon.setPixmap(app_icon().pixmap(36, 36))
+        icon = self.brand_icon = QLabel()
+        icon.setPixmap(app_icon(self.prefs.theme).pixmap(36, 36))
         icon.setFixedSize(36, 36)
         brand.addWidget(icon)
         brand.addWidget(label("跳动的歌词", "brand"))
@@ -387,6 +389,7 @@ class ControlPanel(QWidget):
         self.theme_combo = QComboBox()
         self.theme_combo.addItem("默认主题", "light")
         self.theme_combo.addItem("深色主题", "dark")
+        self.theme_combo.addItem("特殊主题", "special")
         self.theme_combo.setCurrentIndex(self.theme_combo.findData(self.prefs.theme))
         self.theme_combo.setAccessibleName("界面主题")
         self.theme_combo.setToolTip("切换控制面板主题，自动保存。")
@@ -412,7 +415,8 @@ class ControlPanel(QWidget):
         for page, button in enumerate(self.nav_buttons):
             button.setChecked(page == index)
             button.setIcon(symbol_icon("music" if page == 0 else "wave",
-                                       "#ffffff" if page == index else theme_colors(self.prefs.theme)["muted"]))
+                                       ("#ffcd64" if self.prefs.theme == "special" else "#ffffff")
+                                       if page == index else theme_colors(self.prefs.theme)["muted"]))
 
     def _theme_changed(self):
         self.prefs.theme = self.theme_combo.currentData()
@@ -424,6 +428,11 @@ class ControlPanel(QWidget):
         self.setProperty("interfaceTheme", self.prefs.theme)
         self.setPalette(palette)
         self.setStyleSheet(style)
+        icon = app_icon(self.prefs.theme)
+        self.setWindowIcon(icon)
+        QApplication.instance().setWindowIcon(icon)
+        self.tray.setIcon(icon)
+        self.brand_icon.setPixmap(icon.pixmap(36, 36))
         self.tray_menu.setPalette(palette)
         self.tray_menu.setStyleSheet(style)
         color = theme_colors(self.prefs.theme)["muted"]
@@ -432,6 +441,8 @@ class ControlPanel(QWidget):
                              (self.visibility_button, "lyrics")):
             button.setIcon(symbol_icon(kind, color))
         self.volume_icon.setPixmap(symbol_icon("volume", color).pixmap(20, 20))
+        self.import_button.setIcon(symbol_icon("import", accent_text(self.prefs.theme)))
+        self.play_button.setIcon(symbol_icon("pause" if self.player.playing else "play", accent_text(self.prefs.theme)))
         self._select_page(self.pages.currentIndex())
 
     @staticmethod
@@ -439,7 +450,7 @@ class ControlPanel(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        content = QWidget()
+        content = ThemeCanvas()
         body = QVBoxLayout(content)
         body.setContentsMargins(0, 0, 8, 0)
         body.setSpacing(20)
@@ -485,7 +496,7 @@ class ControlPanel(QWidget):
             heading_label.setFixedWidth(width)
             columns.addWidget(heading_label)
         body.addLayout(columns)
-        self.song_row = QFrame()
+        self.song_row = ThemeFrame()
         self.song_row.setObjectName("songRow")
         song_body = QHBoxLayout(self.song_row)
         song_body.setContentsMargins(20, 22, 20, 22)
@@ -687,7 +698,7 @@ class ControlPanel(QWidget):
         return scroll
 
     def _build_player_bar(self):
-        self.player_bar = QFrame()
+        self.player_bar = ThemeFrame()
         self.player_bar.setObjectName("playerBar")
         body = QVBoxLayout(self.player_bar)
         body.setContentsMargins(0, 0, 0, 0)
@@ -1129,7 +1140,7 @@ class ControlPanel(QWidget):
         self._refresh_word_status()
         if self.external:
             self.play_button.setEnabled(False)
-            self.play_button.setIcon(symbol_icon("pause" if self.player.playing else "play", "#ffffff"))
+            self.play_button.setIcon(symbol_icon("pause" if self.player.playing else "play", accent_text(self.prefs.theme)))
             self.play_button.setToolTip("播放、暂停和音量请在网易云中操作。")
             self.play_button.setAccessibleName("由网易云控制播放")
             self.tray_play.setEnabled(False)
@@ -1146,7 +1157,7 @@ class ControlPanel(QWidget):
             return
         self.play_button.setEnabled(self.player.path is not None)
         action = "暂停音乐" if self.player.playing else "开始播放"
-        self.play_button.setIcon(symbol_icon("pause" if self.player.playing else "play", "#ffffff"))
+        self.play_button.setIcon(symbol_icon("pause" if self.player.playing else "play", accent_text(self.prefs.theme)))
         self.play_button.setToolTip(action)
         self.play_button.setAccessibleName(action)
         self.tray_play.setEnabled(self.player.path is not None)

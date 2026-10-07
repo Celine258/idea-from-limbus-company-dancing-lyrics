@@ -84,7 +84,7 @@ def normalize_preferences(prefs):
         prefs.text_style = "glow"
     if prefs.animation_style not in ANIMATION_STYLES:
         prefs.animation_style = "classic"
-    if prefs.theme not in ("light", "dark"):
+    if prefs.theme not in ("light", "dark", "special"):
         prefs.theme = "light"
     if not QColor(prefs.color).isValid():
         prefs.color = "#a9f4dc"

@@ -147,7 +147,7 @@ class ControlPanelTests(unittest.TestCase):
         self.assertEqual(self.panel.creator_label.text().replace("\n", ""), CREATOR)
         self.assertEqual(self.panel.version_label.text(), f"版本 {APP_VERSION}")
         self.assertEqual(self.panel.motto_label.text().replace("\n", " "), MOTTO)
-        self.assertEqual([self.panel.theme_combo.itemText(i) for i in range(2)], ["默认主题", "深色主题"])
+        self.assertEqual([self.panel.theme_combo.itemText(i) for i in range(3)], ["默认主题", "深色主题", "特殊主题"])
         self.assertLess(self.panel.creator_label.geometry().bottom(), self.panel.version_label.geometry().top())
         texts = [widget.text() for widget in self.panel.findChildren(QLabel)]
         self.assertNotIn("音乐在耳边，歌词在桌面。", texts)
@@ -161,7 +161,7 @@ class ControlPanelTests(unittest.TestCase):
         self.panel.preview_background.setCurrentIndex(1)
         original = {key: value for key, value in asdict(self.prefs).items() if key != "theme"}
         refreshes = self.overlay.refreshes
-        for theme in ("dark", "light", "dark"):
+        for theme in ("dark", "special", "light", "dark"):
             self.panel.theme_combo.setCurrentIndex(self.panel.theme_combo.findData(theme))
             APP.processEvents()
 
@@ -175,7 +175,7 @@ class ControlPanelTests(unittest.TestCase):
             self.assertEqual(self.panel.pages.currentIndex(), 0)
             self.assertFalse(self.panel._preset_modified)
             color = self.panel.palette().color(QPalette.ColorRole.Window)
-            self.assertEqual(color.lightness() < 80, theme == "dark")
+            self.assertEqual(color.lightness() < 80, theme != "light")
             self.assertEqual(self.panel.tray_menu.styleSheet(), self.panel.styleSheet())
         self.panel.apply_preset("builtin:quiet")
         self.assertEqual(self.prefs.theme, "dark")
@@ -204,8 +204,8 @@ class ControlPanelTests(unittest.TestCase):
             self.assertEqual(image.pixelColor(image.width()-round(12*dpr), image.height()//2).name(), theme_colors(theme)["track"])
 
     def test_checkbox_indicators_are_visible_and_show_checked_tick_in_both_themes(self):
-        from themes import theme_colors
-        for theme in ("dark", "light"):
+        from themes import theme_colors, theme_accent
+        for theme in ("dark", "light", "special"):
             self.panel.theme_combo.setCurrentIndex(self.panel.theme_combo.findData(theme))
             for checked in (False, True):
                 self.panel.singing_checkbox.setChecked(checked)
@@ -214,10 +214,68 @@ class ControlPanelTests(unittest.TestCase):
                 colors = [image.pixelColor(x,y).name() for x in range(round(18*image.devicePixelRatio()))
                           for y in range(image.height())]
                 if checked:
-                    self.assertGreater(colors.count("#ff3656"), 20)
+                    self.assertGreater(colors.count(theme_accent(theme)), 20)
                     self.assertGreater(colors.count("#ffffff"), 2)
                 else:
                     self.assertGreater(colors.count(theme_colors(theme)["muted"]), 10)
+
+    def test_special_theme_changes_window_application_brand_and_tray_icons_then_restores(self):
+        from controls import app_icon
+        from themes import ThemeFrame
+        frame = self.panel.findChild(ThemeFrame, "card")
+        original = app_icon().pixmap(32, 32).toImage()
+        clock = app_icon("special").pixmap(32, 32).toImage()
+        self.assertFalse(clock.isNull())
+        self.assertNotEqual(clock, original)
+        for size in (16, 32, 64, 128):
+            image = app_icon("special").pixmap(size, size).toImage()
+            self.assertEqual(image.pixelColor(0, 0).alpha(), 0)
+            self.assertEqual(image.pixelColor(image.width()//2, round(image.height()*.6)).alpha(), 255)
+        for theme in ("light", "dark"):
+            self.panel.theme_combo.setCurrentIndex(self.panel.theme_combo.findData(theme))
+            APP.processEvents()
+            normal_frame = frame.grab().toImage()
+            self.panel.theme_combo.setCurrentIndex(self.panel.theme_combo.findData("special"))
+            APP.processEvents()
+            self.assertNotEqual(frame.grab().toImage(), normal_frame)
+            for icon in (self.panel.windowIcon(), self.panel.tray.icon(), APP.windowIcon()):
+                self.assertEqual(icon.pixmap(32, 32).toImage(), clock)
+            self.assertEqual(self.panel.brand_icon.pixmap().toImage(), app_icon("special").pixmap(36, 36).toImage())
+            self.assertEqual(self.store.load().theme, "special")
+            self.panel.theme_combo.setCurrentIndex(self.panel.theme_combo.findData(theme))
+            APP.processEvents()
+            self.assertEqual(frame.grab().toImage(), normal_frame)
+            for icon in (self.panel.windowIcon(), self.panel.tray.icon(), APP.windowIcon()):
+                self.assertEqual(icon.pixmap(32, 32).toImage(), original)
+        self.panel.theme_combo.setCurrentIndex(self.panel.theme_combo.findData("special"))
+        with patch("controls.QSystemTrayIcon.isSystemTrayAvailable", return_value=False):
+            reopened = ControlPanel(FakePlayer(), FakeOverlay(), self.store.load(), self.store)
+        try:
+            self.assertEqual(reopened.theme_combo.currentData(), "special")
+            for icon in (reopened.windowIcon(), reopened.tray.icon(), APP.windowIcon()):
+                self.assertEqual(icon.pixmap(32, 32).toImage(), clock)
+        finally:
+            reopened.refresh_timer.stop()
+            reopened.font_library.close()
+            reopened.deleteLater()
+            APP.processEvents()
+
+    def test_special_theme_slider_and_minimum_window_keep_controls_reachable(self):
+        self.panel.theme_combo.setCurrentIndex(self.panel.theme_combo.findData("special"))
+        self.panel.volume_slider.setValue(60)
+        APP.processEvents()
+        image = self.panel.volume_slider.grab().toImage()
+        self.assertEqual(image.pixelColor(round(12*image.devicePixelRatio()), image.height()//2).name(), "#ffb526")
+        self.panel.resize(self.panel.minimumSize())
+        self.panel._select_page(1)
+        APP.processEvents()
+        for control in (self.panel.brand_icon, self.panel.creator_label, self.panel.theme_combo,
+                        self.panel.motto_label, self.panel.tray_button, self.panel.exit_button):
+            self.assertTrue(self.panel.sidebar.rect().contains(QRect(control.mapTo(self.panel.sidebar, QPoint()), control.size())))
+        self.panel.effects_scroll.ensureWidgetVisible(self.panel.singing_checkbox)
+        APP.processEvents()
+        self.assertTrue(self.panel.singing_checkbox.isVisibleTo(self.panel))
+        self.assertTrue(self.panel.rect().contains(QRect(self.panel.player_bar.mapTo(self.panel, QPoint()), self.panel.player_bar.size())))
 
     def test_effects_entry_restores_hidden_minimized_panel_without_changing_playback(self):
         self.player.playing = True

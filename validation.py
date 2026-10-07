@@ -2,6 +2,7 @@
 import ctypes
 from ctypes import wintypes
 import json
+import hashlib
 import platform
 import sys
 from PySide6 import __version__ as qt_version
@@ -10,6 +11,61 @@ from PySide6.QtGui import QColor, QImage, QPainter
 from settings import Preferences
 from fonts import FontLibrary, PRESET_FONTS, lyric_font
 from PySide6.QtGui import QFontInfo
+
+
+def native_app_id():
+    if sys.platform != "win32":
+        return None
+    value = ctypes.c_void_p()
+    getter = ctypes.windll.shell32.GetCurrentProcessExplicitAppUserModelID
+    getter.argtypes = [ctypes.POINTER(ctypes.c_void_p)]
+    getter.restype = ctypes.c_long
+    if getter(ctypes.byref(value)) != 0:
+        return None
+    try:
+        return ctypes.wstring_at(value)
+    finally:
+        ctypes.windll.ole32.CoTaskMemFree.argtypes = [ctypes.c_void_p]
+        ctypes.windll.ole32.CoTaskMemFree(value)
+
+
+def native_icon_fingerprint(hwnd):
+    """Read the window's actual Windows HICON, including its colour bitmap."""
+    if sys.platform != "win32":
+        return None
+    class IconInfo(ctypes.Structure):
+        _fields_ = [("icon", wintypes.BOOL), ("x", wintypes.DWORD), ("y", wintypes.DWORD),
+                    ("mask", wintypes.HBITMAP), ("color", wintypes.HBITMAP)]
+    class Bitmap(ctypes.Structure):
+        _fields_ = [("type", wintypes.LONG), ("width", wintypes.LONG), ("height", wintypes.LONG),
+                    ("stride", wintypes.LONG), ("planes", wintypes.WORD), ("bitsPixel", wintypes.WORD),
+                    ("bits", ctypes.c_void_p)]
+    user, gdi = ctypes.windll.user32, ctypes.windll.gdi32
+    user.SendMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
+    user.SendMessageW.restype = wintypes.LPARAM
+    user.GetIconInfo.argtypes = [wintypes.HICON, ctypes.POINTER(IconInfo)]
+    gdi.GetObjectW.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p]
+    gdi.GetBitmapBits.argtypes = [wintypes.HBITMAP, wintypes.LONG, ctypes.c_void_p]
+    gdi.DeleteObject.argtypes = [wintypes.HANDLE]
+    handle = user.SendMessageW(hwnd, 0x007f, 1, 0)  # WM_GETICON / ICON_BIG
+    info = IconInfo()
+    if not handle or not user.GetIconInfo(handle, ctypes.byref(info)):
+        return None
+    try:
+        bitmap = Bitmap()
+        if not info.color or not gdi.GetObjectW(info.color, ctypes.sizeof(bitmap), ctypes.byref(bitmap)):
+            return None
+        size = bitmap.stride * bitmap.height
+        if not 0 < size < 1024 * 1024:
+            return None
+        pixels = ctypes.create_string_buffer(size)
+        if gdi.GetBitmapBits(info.color, size, pixels) != size:
+            return None
+        return hashlib.sha256(pixels.raw).hexdigest()
+    finally:
+        for bitmap in (info.color, info.mask):
+            if bitmap:
+                gdi.DeleteObject(bitmap)
 
 
 class SmokeCheck:
@@ -37,6 +93,8 @@ class SmokeCheck:
             user32.IsWindowVisible.argtypes = [wintypes.HWND]
             user32.IsWindowVisible.restype = wintypes.BOOL
             self.results["native_control_panel_visible"] = bool(user32.IsWindowVisible(int(self.panel.winId())))
+            from app_info import WINDOWS_APP_ID
+            self.results["native_taskbar_application_identity"] = native_app_id() == WINDOWS_APP_ID
         for key, value in vars(Preferences()).items():
             setattr(self.panel.prefs, key, value)
         self.panel._sync_effect_widgets()
@@ -234,6 +292,7 @@ class SmokeCheck:
         from dataclasses import asdict
         from app_info import APP_VERSION, CREATOR, MOTTO
         from settings import resource_path
+        from controls import app_icon
         panel, directory = self.panel, self.report_dir
         original_theme = panel.prefs.theme
         self.results["theme_checkmark_asset_available"] = not QImage(str(resource_path("assets/check-white.svg"))).isNull()
@@ -241,14 +300,28 @@ class SmokeCheck:
         frame, position, preview = self.overlay.grab().toImage(), self.player.position(), panel.font_preview.dark
         self.results["sidebar_branding_updated"] = (panel.creator_label.text().replace("\n", "") == CREATOR
             and panel.version_label.text() == f"版本 {APP_VERSION}" and panel.motto_label.text().replace("\n", " ") == MOTTO)
-        sidebar_ok, saved, layouts = True, True, True
-        for theme in ("light", "dark"):
+        sidebar_ok, saved, layouts, icons_ok = True, True, True, True
+        native_icons = {}
+        for theme in ("light", "dark", "special"):
             panel.theme_combo.setCurrentIndex(panel.theme_combo.findData(theme))
             self.app.processEvents()
+            if self.app.platformName() == "windows":
+                native_icons[theme] = native_icon_fingerprint(int(panel.winId()))
             saved &= panel.store.load().theme == theme
+            expected_icon = app_icon(theme).pixmap(32, 32).toImage()
+            icons_ok &= (not expected_icon.isNull() and panel.windowIcon().pixmap(32, 32).toImage() == expected_icon
+                         and panel.tray.icon().pixmap(32, 32).toImage() == expected_icon
+                         and self.app.windowIcon().pixmap(32, 32).toImage() == expected_icon)
+            panel.windowIcon().pixmap(64, 64).save(str(directory / f"theme-{theme}-icon.png"))
             self.report_dir = directory / f"theme-{theme}"
             self.report_dir.mkdir(parents=True, exist_ok=True)
             self._capture_interface()
+            if theme == "special" and self.app.platformName() == "windows":
+                from PySide6.QtTest import QTest
+                QTest.qWait(150)  # Give Explorer time to repaint its separate taskbar window.
+                screen = panel.screen()
+                geometry = screen.geometry()
+                screen.grabWindow(0, geometry.x(), geometry.bottom()-59, geometry.width(), 60).save(str(directory / "theme-special-taskbar.png"))
             layouts &= (self.results["player_controls_within_window"] and self.results["effect_controls_reachable_by_scrolling"]
                         and self.results["navigation_preserves_playback_and_player_bar"])
             original_size = panel.size()
@@ -266,6 +339,14 @@ class SmokeCheck:
         self.results["theme_switch_persists"] = bool(saved)
         self.results["both_theme_layouts_accessible"] = bool(layouts)
         self.results["both_theme_sidebars_fit_minimum_window"] = bool(sidebar_ok)
+        self.results["theme_window_application_and_tray_icons_match"] = bool(icons_ok)
+        if native_icons:
+            self.results["native_windows_theme_icon_changes_and_restores"] = bool(
+                all(native_icons.values()) and native_icons["light"] == native_icons["dark"]
+                and native_icons["special"] != native_icons["light"]
+                and native_icon_fingerprint(int(panel.winId())) == native_icons[original_theme])
+        self.results["special_icon_and_blueprint_assets_available"] = all(
+            not QImage(str(resource_path(name))).isNull() for name in ("assets/dante-clock.svg", "assets/special-blueprint.svg"))
         self.results["theme_keeps_lyrics_and_paused_clock"] = (not self.player.playing and self.player.position() == position
             and self.overlay.grab().toImage() == frame
             and {key: value for key, value in asdict(panel.prefs).items() if key != "theme"} == visual

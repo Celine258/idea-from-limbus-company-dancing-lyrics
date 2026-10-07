@@ -14,7 +14,7 @@ from overlay import LyricsOverlay
 from player import MusicPlayer
 from settings import SettingsStore, app_directory
 from fonts import FontLibrary
-from app_info import APP_VERSION
+from app_info import APP_VERSION, set_taskbar_identity
 
 
 def main():
@@ -37,6 +37,8 @@ def main():
                         format="%(asctime)s %(levelname)s %(message)s", encoding="utf-8")
     logging.info("Starting desktop app; pid=%s; frozen=%s; smoke=%s", os.getpid(),
                  getattr(sys, "frozen", False), args.smoke)
+    if not set_taskbar_identity():
+        logging.warning("Windows taskbar identity could not be assigned")
     app = QApplication(sys.argv[:1])
     app.setApplicationName("跳动的歌词")
     app.setApplicationVersion(APP_VERSION)
@@ -55,6 +57,7 @@ def main():
     sys.excepthook = exception_hook
     store = SettingsStore(state_dir / ("smoke-settings.ini" if args.smoke or args.netease_smoke else "settings.ini"))
     prefs = store.load()
+    app.setWindowIcon(app_icon(prefs.theme))
     if args.netease:
         from netease import NeteasePlayer, NeteaseBridge, read_bridge_config
         from process_audio import ProcessAudio

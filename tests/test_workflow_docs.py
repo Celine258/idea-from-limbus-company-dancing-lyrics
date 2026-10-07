@@ -11,6 +11,18 @@ DOCUMENTS = tuple(ROOT / name for name in ("AGENTS.md", "CHANGELOG.md", "README.
 
 
 class WorkflowDocumentationTests(unittest.TestCase):
+    def test_current_guides_describe_all_themes_and_runtime_icon_scope(self):
+        from app_info import APP_VERSION
+        for name in ("README.md", "NETEASE.md", "产品设计方案.md", "技术文档.md"):
+            with self.subTest(document=name):
+                text = (ROOT / name).read_text(encoding="utf-8-sig")
+                self.assertIn(APP_VERSION, text)
+                for theme in ("默认主题", "深色主题", "特殊主题", "但丁钟头", "托盘"):
+                    self.assertIn(theme, text)
+        guide = (ROOT / "README.md").read_text(encoding="utf-8-sig")
+        self.assertIn("EXE 文件图标仍为原图标", guide)
+        self.assertIn("固定快捷方式由 Windows 管理", guide)
+
     @unittest.skipUnless(shutil.which("powershell.exe"), "Windows 启动脚本语法验证")
     def test_launcher_diagnostic_wait_is_bounded_and_powershell_syntax_valid(self):
         script = ROOT / "start.ps1"
@@ -57,7 +69,8 @@ class WorkflowDocumentationTests(unittest.TestCase):
         ignored = [".venv/probe.txt", ".state/probe.txt", "build/probe.txt",
                    "dist/probe.txt", "artifacts/probe.txt", "__pycache__/probe.pyc", "debug.log"]
         sources = ["AGENTS.md", "CHANGELOG.md", "main.py", "controls.py", "validation.py", "themes.py", "app_info.py",
-                   "assets/app.ico", "assets/check-white.svg", "tests/test_controls.py", "tests/test_workflow_docs.py"]
+                   "assets/app.ico", "assets/check-white.svg", "assets/dante-clock.svg", "assets/special-blueprint.svg",
+                   "tests/test_controls.py", "tests/test_workflow_docs.py"]
         result = subprocess.run(
             ["git", "-c", f"safe.directory={ROOT.as_posix()}", "check-ignore", "--no-index", "--stdin", "-z"],
             cwd=ROOT, input="\0".join(ignored + sources) + "\0", text=True,

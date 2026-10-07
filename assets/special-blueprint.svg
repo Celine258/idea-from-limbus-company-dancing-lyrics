@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200">
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#91764a" stroke-opacity=".12" stroke-width=".5"/></pattern>
+    <pattern id="scratches" width="137" height="113" patternUnits="userSpaceOnUse"><path d="M10 38L42 12M77 95L115 64M112 29L126 21M35 102L51 93" stroke="#987847" stroke-opacity=".12" stroke-width=".7"/></pattern>
+  </defs>
+  <rect width="1600" height="1200" fill="url(#grid)"/><rect width="1600" height="1200" fill="url(#scratches)"/>
+  <g fill="none" stroke="#b49258" stroke-opacity=".32" stroke-width="1.5">
+    <circle cx="1430" cy="210" r="170"/><circle cx="1430" cy="210" r="158"/><circle cx="1430" cy="210" r="125"/><circle cx="1430" cy="210" r="18"/>
+    <path d="M1430 40V82M1600 210H1558M1430 380V338M1260 210H1302M1430 210L1454 98M1430 210L1338 245M1308 88L1332 112M1552 332L1528 308M1552 88L1528 112M1308 332L1332 308"/>
+    <path d="M1130 34H1540L1580 74V428L1540 468H1170L1130 428ZM1141 44H1535L1570 79V421L1535 457H1175L1141 422Z"/>
+    <path d="M52 984H276L314 1022V1170H52ZM64 998H270L302 1030V1158H64M81 1018H249M81 1030H229M81 1042H263M81 1054H245"/>
+    <circle cx="166" cy="1110" r="36"/><circle cx="166" cy="1110" r="29"/><path d="M166 1074V1146M130 1110H202M146 1080L188 1138M188 1080L146 1138"/>
+    <path d="M1200 860L1570 720M1200 877L1570 737M1244 901L1510 798L1560 960L1294 1063ZM1256 907L1300 1046L1544 951L1503 814Z"/>
+    <path d="M1338 1000L1381 911L1367 863M1381 911L1424 885M1381 911L1402 940M1358 958L1328 934M1358 958L1386 973M1424 885L1434 854M1424 885L1454 885"/>
+    <path d="M0 90H940L979 129H1090M0 110H920L959 149H1100M1160 520H1510L1550 560V655M1200 542H1500L1530 572V645M950 1150H1560L1590 1120V870"/>
+    <path d="M1120 620H1154M1120 640H1140M1120 660H1154M1120 680H1140M1120 700H1154M1120 720H1140M1120 740H1154M1120 760H1140"/>
+  </g>
+  <g fill="#b99a68" fill-opacity=".20" font-family="sans-serif"><text x="1220" y="503" font-size="30" letter-spacing="6">LYRIC CONTROL</text><text x="1220" y="528" font-size="13" letter-spacing="4">FACE THE SIN. SAVE THE E.G.O</text></g>
+</svg>

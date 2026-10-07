@@ -1,6 +1,9 @@
 """Control-panel themes. Lyric materials and preview backgrounds are independent."""
 from string import Template
-from PySide6.QtGui import QColor, QPalette
+from functools import lru_cache
+from PySide6.QtCore import Qt, QRectF, QPointF
+from PySide6.QtGui import QColor, QPalette, QPainter, QPainterPath, QPen, QPixmap, QLinearGradient
+from PySide6.QtWidgets import QFrame, QWidget
 from settings import resource_path
 
 THEMES = {
@@ -14,6 +17,11 @@ THEMES = {
                  disabled="#798599", disabled_surface="#222936", nav="#c2ccdc", nav_hover="#303b4c",
                  track="#414d60", scroll="#58667e", selection="#542c3c", selection_text="#ff94a7",
                  notice="#3c2d22", notice_text="#ffd3a8", notice_border="#755038"),
+    "special": dict(background="#100e0c", text="#eadfc7", sidebar="#191510", border="#8e7750",
+                    surface="#211c17", muted="#b5a080", hover="#30251a", pressed="#46301c",
+                    disabled="#82705a", disabled_surface="#191510", nav="#d9c7a3", nav_hover="#33271a",
+                    track="#52432e", scroll="#907548", selection="#503817", selection_text="#ffe3a2",
+                    notice="#332317", notice_text="#ffd48b", notice_border="#987144", accent="#ffb526"),
 }
 
 STYLE = Template("""
@@ -89,7 +97,29 @@ def theme_colors(name):
 
 
 def theme_stylesheet(name):
-    return STYLE.substitute(theme_colors(name), checkmark=resource_path("assets/check-white.svg").as_posix())
+    style = STYLE.substitute(theme_colors(name), checkmark=resource_path("assets/check-white.svg").as_posix())
+    if name != "special":
+        return style
+    style = style.replace("#ff3656", "#ffb526").replace("#f42648", "#ffc24b").replace("#de2342", "#d89619").replace("#c62845", "#c18c32").replace("#ad1833", "#b98731")
+    return style + """
+    QFrame#sidebar, QFrame#card, QFrame#songRow, QFrame#playerBar { background: transparent; border: none; border-radius: 0; }
+    QWidget#themeCanvas { background: transparent; }
+    QPushButton, QComboBox, QSpinBox { border-radius: 3px; }
+    QPushButton#nav { border-radius: 3px; }
+    QPushButton#nav:checked { color: #ffcd64; border: 1px solid #ffb526;
+        background: qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #443019,stop:.5 #23190f,stop:1 #443019); }
+    QPushButton#nav:checked:hover { background: #503717; }
+    QPushButton#primary { color: #21170b; }
+    QCheckBox::indicator { border-radius: 2px; }
+    """
+
+
+def theme_accent(name):
+    return theme_colors(name).get("accent", "#ff3656")
+
+
+def accent_text(name):
+    return "#21170b" if name == "special" else "#ffffff"
 
 
 def theme_palette(name):
@@ -101,8 +131,70 @@ def theme_palette(name):
                       (QPalette.ColorRole.ButtonText, "text"), (QPalette.ColorRole.Mid, "track"),
                       (QPalette.ColorRole.ToolTipBase, "surface"), (QPalette.ColorRole.ToolTipText, "text")):
         palette.setColor(role, QColor(colors[key]))
-    palette.setColor(QPalette.ColorRole.Highlight, QColor("#ff3656"))
+    palette.setColor(QPalette.ColorRole.Highlight, QColor(theme_accent(name)))
     palette.setColor(QPalette.ColorRole.HighlightedText, QColor("#ffffff"))
     for role in (QPalette.ColorRole.WindowText, QPalette.ColorRole.Text, QPalette.ColorRole.ButtonText):
         palette.setColor(QPalette.ColorGroup.Disabled, role, QColor(colors["disabled"]))
     return palette
+
+
+@lru_cache(maxsize=1)
+def blueprint_texture():
+    return QPixmap(str(resource_path("assets/special-blueprint.svg")))
+
+
+def _special(widget):
+    return widget.window().property("interfaceTheme") == "special"
+
+
+def _paint_surface(painter, rectangle, base, opacity=.24):
+    gradient = QLinearGradient(rectangle.topLeft(), rectangle.bottomRight())
+    gradient.setColorAt(0, QColor(base))
+    gradient.setColorAt(1, QColor("#100d09"))
+    painter.fillRect(rectangle, gradient)
+    painter.save()
+    painter.setOpacity(opacity)
+    painter.drawPixmap(rectangle, blueprint_texture(), QRectF(blueprint_texture().rect()))
+    painter.restore()
+
+
+class ThemeCanvas(QWidget):
+    """Paint decorative margins only for the special skin; normal QSS stays intact."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("themeCanvas")
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if _special(self):
+            painter = QPainter(self)
+            _paint_surface(painter, QRectF(self.rect()), "#15110c", .5)
+            painter.end()
+
+
+class ThemeFrame(QFrame):
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if not _special(self):
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        rectangle = QRectF(self.rect()).adjusted(1, 1, -1, -1)
+        corner = 10.0
+        path = QPainterPath()
+        x, y, w, h = rectangle.x(), rectangle.y(), rectangle.width(), rectangle.height()
+        path.moveTo(x+corner, y)
+        for point in ((x+w-corner,y),(x+w,y+corner),(x+w,y+h-corner),(x+w-corner,y+h),
+                      (x+corner,y+h),(x,y+h-corner),(x,y+corner)):
+            path.lineTo(*point)
+        path.closeSubpath()
+        painter.setClipPath(path)
+        _paint_surface(painter, rectangle, "#211b13")
+        painter.setClipping(False)
+        painter.setPen(QPen(QColor("#9d8151"), 1))
+        painter.drawPath(path)
+        painter.setPen(QPen(QColor("#5f4c30"), .8))
+        painter.drawRect(rectangle.adjusted(4, 4, -4, -4))
+        painter.setPen(QPen(QColor("#dfbc76"), 1))
+        painter.drawLine(QPointF(x+corner,y+2), QPointF(x+w-corner,y+2))
+        painter.end()

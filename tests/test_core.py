@@ -3,6 +3,7 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch, MagicMock
 import numpy as np
 from PySide6.QtCore import QRectF
 from PySide6.QtMultimedia import QAudioFormat
@@ -13,6 +14,25 @@ from lrc import parse_lrc, load_lrc, LyricTimeline
 from settings import Preferences, SettingsStore
 
 APP = QApplication.instance() or QApplication([])
+
+
+class WindowsIdentityTests(unittest.TestCase):
+    def test_taskbar_identity_is_stable_and_reports_windows_api_result(self):
+        import app_info
+        library = MagicMock()
+        setter = library.shell32.SetCurrentProcessExplicitAppUserModelID
+        with patch.object(app_info.sys, "platform", "win32"), patch.object(app_info.ctypes, "windll", library, create=True):
+            for result in (0, -1):
+                setter.return_value = result
+                self.assertEqual(app_info.set_taskbar_identity(), result == 0)
+                setter.assert_called_with(app_info.WINDOWS_APP_ID)
+                self.assertEqual(setter.argtypes, [app_info.ctypes.c_wchar_p])
+
+    def test_other_platforms_do_not_use_windows_api(self):
+        import app_info
+        with patch.object(app_info.sys, "platform", "linux"), patch.object(app_info.ctypes, "windll", create=True) as library:
+            self.assertTrue(app_info.set_taskbar_identity())
+            library.shell32.SetCurrentProcessExplicitAppUserModelID.assert_not_called()
 
 
 class LyricsTests(unittest.TestCase):
@@ -158,6 +178,8 @@ class SettingsTests(unittest.TestCase):
             self.assertEqual(store.load().theme, "light")
             store.save(Preferences(theme="dark", color="#ffa0cc", singing_sync=True))
             self.assertEqual(store.load().theme, "dark")
+            store.save(Preferences(theme="special", color="#ffa0cc", singing_sync=True))
+            self.assertEqual(store.load().theme, "special")
             store.store.setValue("theme", "missing")
             self.assertEqual(store.load().theme, "light")
             self.assertEqual(store.load().color, "#ffa0cc")

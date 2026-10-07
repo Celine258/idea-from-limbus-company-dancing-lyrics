@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="fire" x1="0" y1="1" x2=".6" y2="0"><stop stop-color="#b01c0c"/><stop offset=".48" stop-color="#ff7517"/><stop offset="1" stop-color="#ffe572"/></linearGradient>
+    <linearGradient id="case" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f54a27"/><stop offset=".45" stop-color="#ba211a"/><stop offset="1" stop-color="#68100f"/></linearGradient>
+    <radialGradient id="dial"><stop stop-color="#30231c"/><stop offset="1" stop-color="#100e0c"/></radialGradient>
+  </defs>
+  <!-- A clean flame silhouette stays legible in a 16px Windows tray icon. -->
+  <path d="M48 133C15 110 31 80 24 55C49 67 45 91 58 84C78 72 45 50 74 24C70 50 90 59 96 43C101 28 116 27 119 8C131 34 112 57 127 62C148 61 136 26 164 14C157 37 174 39 167 60C192 49 186 23 210 21C196 45 220 67 206 86C226 74 226 56 238 49C249 81 243 111 212 133Z" fill="url(#fire)" stroke="#851a10" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M62 120C48 106 51 91 43 85C70 94 78 80 70 66C93 73 90 96 110 90C129 83 115 59 126 46C144 65 139 88 153 86C169 83 169 65 183 62C180 89 205 92 214 83C211 104 202 118 189 126Z" fill="#ffcf49"/>
+  <circle cx="128" cy="153" r="94" fill="#460b0b" stroke="#110b08" stroke-width="6"/>
+  <circle cx="128" cy="153" r="87" fill="url(#case)" stroke="#ee6c2a" stroke-width="3"/>
+  <circle cx="128" cy="153" r="73" fill="url(#dial)" stroke="#7f481f" stroke-width="4"/>
+  <circle cx="128" cy="153" r="64" fill="none" stroke="#4b3624" stroke-width="2"/>
+  <g stroke="#f0b64b" stroke-width="4" stroke-linecap="round">
+    <path d="M128 75V85M128 221V231M50 153H60M196 153H206M73 98L80 105M177 201L184 208M73 208L80 201M177 105L184 98"/>
+  </g>
+  <g fill="#861b15" stroke="#ca3320" stroke-width="2"><circle cx="84" cy="115" r="6"/><circle cx="107" cy="100" r="6"/></g>
+  <path d="M128 153L131 96L139 102L134 151L89 171L75 168L86 160Z" fill="#ffe28a" stroke="#c78126" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="128" cy="153" r="10" fill="#d49730" stroke="#ffdf77" stroke-width="3"/>
+  <circle cx="128" cy="153" r="4" fill="#8c2615"/>
+  <g fill="#22130d" stroke="#e47936" stroke-width="2"><path d="M118 65H138V77H118ZM118 229H138V241H118ZM34 143H46V163H34ZM210 143H222V163H210Z"/></g>
+</svg>

@@ -252,19 +252,30 @@ class NeteaseSmokeCheck:
 
     def _check_themes(self):
         from dataclasses import asdict
+        from controls import app_icon
+        from validation import native_icon_fingerprint
         panel, player = self.panel, self.player
         original = panel.prefs.theme
         effects = {key: value for key, value in asdict(panel.prefs).items() if key != "theme"}
         transport = (player._anchor, player._at, player.song_id, player.playing, self.jumps)
         document, preview = panel.overlay.document, panel.font_preview.dark
-        saved = True
-        for theme in ("dark", "light"):
+        saved, icons_ok = True, True
+        native_icons = {}
+        for theme in ("dark", "special", "light"):
             panel.theme_combo.setCurrentIndex(panel.theme_combo.findData(theme))
+            native_icons[theme] = native_icon_fingerprint(int(panel.winId()))
             saved &= panel.store.load().theme == theme
+            expected = app_icon(theme).pixmap(32, 32).toImage()
+            icons_ok &= (panel.windowIcon().pixmap(32, 32).toImage() == expected
+                         and panel.tray.icon().pixmap(32, 32).toImage() == expected)
             panel.grab().save(str(self.directory / f"netease-theme-{theme}.png"))
         panel.theme_combo.setCurrentIndex(panel.theme_combo.findData(original))
         self.theme_checks = {
             "themeSwitchPersists": bool(saved),
+            "themeSpecificIconsSwitchAndRestore": bool(icons_ok),
+            "nativeThemeIconsChangeAndRestore": bool(all(native_icons.values())
+                and native_icons["light"] == native_icons["dark"] and native_icons["special"] != native_icons["light"]
+                and native_icon_fingerprint(int(panel.winId())) == native_icons[original]),
             "themeSwitchKeepsPlayback": transport == (player._anchor, player._at, player.song_id, player.playing, self.jumps),
             "themeSwitchKeepsLyricsAndPreview": document is panel.overlay.document and preview == panel.font_preview.dark
                 and effects == {key: value for key, value in asdict(panel.prefs).items() if key != "theme"}}
