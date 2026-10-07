@@ -17,7 +17,8 @@ try {
     $staging = Join-Path $taskRoot ('artifacts\package-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
     $assets = Join-Path $taskRoot 'assets'
     $energy = Join-Path $taskRoot 'build\native\ProcessEnergy.exe'
-    & $taskPython -m PyInstaller --noconfirm --windowed --onedir --name FloatingLyrics --icon (Join-Path $assets 'app.ico') --add-data "$assets;assets" --add-binary "$energy;native" --distpath $staging --workpath (Join-Path $taskRoot 'build\pyinstaller') --specpath (Join-Path $taskRoot 'build\spec') (Join-Path $taskRoot 'main.py')
+    $pluginTemplates = Join-Path $taskRoot 'plugins\netease'
+    & $taskPython -m PyInstaller --noconfirm --windowed --onedir --name FloatingLyrics --icon (Join-Path $assets 'app.ico') --add-data "$assets;assets" --add-data "$pluginTemplates;plugins/netease" --add-binary "$energy;native" --distpath $staging --workpath (Join-Path $taskRoot 'build\pyinstaller') --specpath (Join-Path $taskRoot 'build\spec') (Join-Path $taskRoot 'main.py')
     if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
     $target = Join-Path $taskRoot 'dist\FloatingLyrics'
     $ready = Join-Path $staging 'FloatingLyrics'

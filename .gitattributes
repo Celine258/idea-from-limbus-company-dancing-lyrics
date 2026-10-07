@@ -1,0 +1,2 @@
+# Preserve upstream license bytes and their provenance hashes, including original whitespace.
+release/licenses/** -text -whitespace

@@ -1,6 +1,26 @@
 # 跳动的歌词
 
-应用版本 **0.5.0**。侧栏显示“创作者：Bilibili-鈴仙優昙華院因幡”和版本号，标语为 **FACE THE SIN. SAVE THE E.G.O**。左侧下方可选择“默认主题／深色主题／特殊主题”，立即生效并自动保存，重启后保留选择。默认主题和深色主题保留原外观；特殊主题采用 Limbus Company 风格的黑金配色、切角双层边框和机械图纸底纹。
+让歌词在桌面随音乐跳动。支持网易云联动、逐字动画、字体效果、预设及主题切换。
+
+![逐字动画演示](docs/images/lyrics-demo.gif)
+
+**[下载 Windows x64 试用版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.5.1-beta.1)** · [问题反馈](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues)
+
+[观看 30 秒无音乐演示](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.5.1-beta.1/dancing-lyrics-demo-30s.mp4)
+
+1. 下载 `dancing-lyrics-0.5.1-beta.1-windows-x64.zip`，完整解压到长期保留且可写的目录。
+2. 完全退出网易云（包括托盘），双击 **安装网易云联动.bat**，在窗口点击安装。
+3. 重开网易云，点击播放栏的“跳动的词”；右键或点击“设置”调整效果。
+
+无需 Python 或 Git。请下载 ZIP 成品，页面的 Source code 是源码。已验证 **Windows 11 x64、网易云 3.1.41.205529 x64、BetterNCM 1.3.4**；其他网易云版本停止安装并提示。尚未在第二台干净电脑完成试装。
+
+更新：退出网易云和歌词程序，新包覆盖原目录并再次安装，保留 `.state`。
+卸载：完全退出网易云后运行 **卸载网易云联动.bat**，保留个人设置、字体、预设和共用框架。
+安装后移动程序需重新安装。
+
+详细流程见 [使用说明](release/使用说明.txt)。自有源码采用 [MIT](LICENSE)，运行组件保留 [第三方许可](THIRD_PARTY_NOTICES.md)。
+
+应用版本 **0.5.1-beta.1**。侧栏显示“创作者：Bilibili-鈴仙優昙華院因幡”和版本号，标语为 **FACE THE SIN. SAVE THE E.G.O**。左侧下方可选择“默认主题／深色主题／特殊主题”，立即生效并自动保存，重启后保留选择。默认主题和深色主题保留原外观；特殊主题采用 Limbus Company 风格的黑金配色、切角双层边框和机械图纸底纹。
 
 特殊主题将侧栏、窗口、运行中的 Windows 任务栏及系统托盘图标换为但丁钟头；切回默认或深色主题恢复红色波形图标。后台运行时托盘也显示当前主题图标。主题不改变歌词颜色、字体、动画、效果预设、播放进度或独立的预览背景；更新保留已有选择。安装目录里的 EXE 文件图标仍为原图标，未运行时的固定快捷方式由 Windows 管理。
 
@@ -14,7 +34,7 @@ Windows 桌面音乐伴侣：透明置顶、鼠标穿透，歌词随机出现在
 
 现已支持网易云音乐 Windows **3.1.41.205529（64 位）** 联动：通过网易云播放栏的“跳动的词”按钮开启桌面效果，右键该按钮或点击旁边的“设置”，直接打开“歌词效果”页。歌曲、歌词和进度来自网易云，音乐仍由网易云播放。安装、更新和回滚见 [网易云联动说明](NETEASE.md)。
 
-## 启动
+## 源码与开发版启动
 
 双击项目根目录的 **启动.bat**，优先打开已打包的桌面版；也可以直接运行 **dist/FloatingLyrics/FloatingLyrics.exe**，无需安装 Python。请保留旁边的 `_internal` 文件夹。
 

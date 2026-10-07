@@ -19,6 +19,14 @@ from app_info import APP_VERSION, set_taskbar_identity
 
 def main():
     parser = argparse.ArgumentParser(description="跳动的歌词 · Windows 桌面音乐伴侣")
+    installer = parser.add_mutually_exclusive_group()
+    installer.add_argument("--install-netease", action="store_true", help="打开网易云联动安装窗口")
+    installer.add_argument("--uninstall-netease", action="store_true", help="打开网易云联动卸载窗口")
+    parser.add_argument("--client-directory", type=Path, help="网易云安装目录")
+    parser.add_argument("--profile-directory", type=Path, help="BetterNCM 数据目录")
+    parser.add_argument("--framework-dll", type=Path, help="离线安装的官方 BetterNCM 1.3.4 DLL")
+    parser.add_argument("--installer-elevated", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--installer-report", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--demo", action="store_true", help="启动并播放内置合成演示")
     parser.add_argument("--smoke", action="store_true", help="静音执行集成检查并退出")
     parser.add_argument("--netease", action="store_true", help="接收网易云插件的播放和歌词数据")
@@ -31,6 +39,10 @@ def main():
     parser.add_argument("--font-smoke-file", type=Path, help="本地或网易云验证时用于测试导入的字体文件")
     parser.add_argument("--report-dir", type=Path, default=app_directory() / "artifacts")
     args = parser.parse_args()
+    if args.install_netease or args.uninstall_netease:
+        from installer_ui import run_installer
+        from settings import resource_path
+        return run_installer(args, app_directory(), resource_path("plugins/netease"))
     state_dir = app_directory() / ".state"
     state_dir.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(filename=state_dir / "app.log", level=logging.INFO,

@@ -7,7 +7,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCUMENTS = tuple(ROOT / name for name in ("AGENTS.md", "CHANGELOG.md", "README.md", "验证记录.md", "NETEASE.md",
-                                         "产品设计方案.md", "技术文档.md"))
+                                         "产品设计方案.md", "技术文档.md", "THIRD_PARTY_NOTICES.md",
+                                         "docs/传播文案.md", "release/release-notes.md"))
 
 
 class WorkflowDocumentationTests(unittest.TestCase):

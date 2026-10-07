@@ -1,0 +1,23 @@
+name: 问题反馈
+description: 安装、播放联动或歌词显示问题
+title: "[问题] "
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: 版本
+      description: Windows 版本、网易云完整版本、歌词软件版本
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤与实际结果
+      description: 如何触发、希望看到什么、实际出现什么
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 截图或日志
+      description: 可附 .state/app.log；不要上传 netease-bridge.json 或其他连接令牌

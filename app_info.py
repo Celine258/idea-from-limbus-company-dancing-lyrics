@@ -2,7 +2,7 @@
 import ctypes
 import sys
 
-APP_VERSION = "0.5.0"
+APP_VERSION = "0.5.1-beta.1"
 WINDOWS_APP_ID = "FloatingLyrics.Desktop"
 CREATOR = "创作者：Bilibili-鈴仙優昙華院因幡"
 MOTTO = "FACE THE SIN. SAVE THE E.G.O"
