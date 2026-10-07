@@ -72,6 +72,7 @@ class SmokeCheck:
         self._capture_effects()
         self._capture_animations()
         self._capture_parameters()
+        self._capture_presets()
         self._capture_interface()
         image = self.overlay.grab().toImage()
         image.save(str(self.report_dir / "overlay-transparent.png"))
@@ -167,6 +168,7 @@ class SmokeCheck:
             for control in (panel.region, panel.font_combo, panel.import_font_button, panel.font_preview,
                             panel.text_style, panel.preview_background, panel.glow_field,
                             panel.color_button, panel.motion, panel.animation_combo, panel.replay_button,
+                            panel.preset_combo, panel.preset_save_button, panel.preset_update_button, panel.preset_delete_button,
                             *panel.parameter_fields.values(), *panel.spins.values()):
                 # Spin boxes expose the edit cursor to ensureWidgetVisible;
                 # scroll the entire field into view, including its arrow buttons.
@@ -277,6 +279,33 @@ class SmokeCheck:
         for key, value in original.items():
             panel.spins[key].setValue(value)
         panel.animation_combo.setCurrentIndex(panel.animation_combo.findData(style))
+
+    def _capture_presets(self):
+        from dataclasses import replace
+        from presets import PresetStore
+        panel = self.panel
+        original, position = replace(panel.prefs), self.player.position()
+        preserved = (panel.prefs.region, panel.prefs.delay_ms, panel.prefs.volume, panel.font_preview.dark)
+        for identifier in ("builtin:quiet", "builtin:lively"):
+            panel.apply_preset(identifier)
+            self.app.processEvents()
+            panel.effects_scroll.verticalScrollBar().setValue(0)
+            panel.grab().save(str(self.report_dir / ("preset-" + identifier.split(":")[1] + "-settings.png")))
+            panel.font_preview.grab().save(str(self.report_dir / ("preset-" + identifier.split(":")[1] + "-preview.png")))
+        saved = panel.presets.save("Smoke " + str(id(self)), panel.prefs)
+        loaded = PresetStore(panel.presets.path).get(saved.id)
+        self.results["custom_preset_reloads_complete_effects"] = loaded == saved
+        panel.presets.delete(saved.id)
+        self.results["preset_keeps_independent_settings"] = preserved == (panel.prefs.region, panel.prefs.delay_ms,
+                                                                         panel.prefs.volume, panel.font_preview.dark)
+        self.results["preset_switch_keeps_paused_position"] = not self.player.playing and self.player.position() == position
+        for key, value in vars(original).items():
+            setattr(panel.prefs, key, value)
+        panel._preset_id, panel._preset_modified = None, False
+        panel._sync_effect_widgets()
+        panel._reload_presets()
+        panel.store.save(panel.prefs)
+        panel.overlay.refresh_preferences()
 
     def _finish(self):
         self.results["end_of_song_clears_overlay"] = self.player.ended

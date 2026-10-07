@@ -295,6 +295,44 @@ class ControlPanelTests(unittest.TestCase):
         self.assertEqual(self.panel.font_combo.currentData(), "Floating Lyrics Test")
         self.assertEqual(self.panel.prefs.font_family, "Floating Lyrics Test")
 
+    def test_preset_applies_once_and_preserves_region_offset_volume_and_preview_background(self):
+        self.panel.region.setCurrentIndex(1)
+        self.panel.spins["delay_ms"].setValue(700)
+        self.panel.preview_background.setCurrentIndex(1)
+        before = self.overlay.refreshes
+        with patch.object(self.store, "save", wraps=self.store.save) as save:
+            self.panel.preset_combo.setCurrentIndex(self.panel.preset_combo.findData("builtin:quiet"))
+            self.assertEqual(save.call_count, 1)
+        self.assertEqual(self.overlay.refreshes, before + 1)
+        self.assertEqual((self.prefs.font_family, self.prefs.font_size, self.prefs.entry_speed), ("SimSun", 28, 80))
+        self.assertEqual((self.prefs.region, self.prefs.delay_ms, self.prefs.volume, self.panel.font_preview.dark),
+                         ("full", 700, 45, False))
+        self.panel.spins["font_size"].setValue(30)
+        self.assertIn("已修改", self.panel.preset_combo.currentText())
+        self.assertEqual(self.panel.presets.get("builtin:quiet").values["font_size"], 28)
+        self.assertFalse(self.panel.preset_update_button.isEnabled())
+        self.assertEqual(self.player.seeks, [])
+
+    def test_custom_preset_confirmation_cancel_update_delete_and_font_fallback(self):
+        from PySide6.QtWidgets import QMessageBox
+        self.assertTrue(self.panel.save_preset("自己的方案"))
+        identifier = self.panel._preset_id
+        self.panel.spins["entry_speed"].setValue(200)
+        with patch("controls.QMessageBox.question", return_value=QMessageBox.StandardButton.No):
+            self.assertFalse(self.panel.update_preset())
+            self.assertFalse(self.panel.delete_preset())
+        self.assertEqual(self.panel.presets.get(identifier).values["entry_speed"], 100)
+        with patch("controls.QMessageBox.question", return_value=QMessageBox.StandardButton.Yes):
+            self.assertTrue(self.panel.update_preset())
+        self.prefs.font_family = "Unavailable Imported Font"
+        saved = self.panel.presets.save("字体缺失方案", self.prefs)
+        self.panel.apply_preset(saved.id)
+        self.assertEqual(self.prefs.font_family, "Microsoft YaHei UI")
+        self.assertIn("不可用", self.panel.font_status.text())
+        with patch("controls.QMessageBox.question", return_value=QMessageBox.StandardButton.Yes):
+            self.assertTrue(self.panel.delete_preset())
+        self.assertEqual(self.prefs.entry_speed, 200)
+
     def test_animation_parameter_pairs_save_and_enable_only_relevant_controls(self):
         self.panel.spins["entry_speed"].setValue(180)
         self.panel.parameter_sliders["exit_speed"].setValue(65)

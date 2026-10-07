@@ -3,11 +3,11 @@ import ctypes
 from ctypes import wintypes
 import logging
 import sys
-from PySide6.QtCore import QPointF, QRect, QRectF, QSize, Qt, QTimer, QElapsedTimer
+from PySide6.QtCore import QPointF, QRect, QRectF, QSize, Qt, QTimer, QElapsedTimer, QSignalBlocker
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPalette, QPen, QPixmap, QPolygonF
 from PySide6.QtWidgets import (
     QApplication, QButtonGroup, QColorDialog, QComboBox, QFileDialog, QFormLayout,
-    QFrame, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QSizePolicy,
+    QFrame, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QSizePolicy, QInputDialog, QMessageBox,
     QSlider, QSpinBox, QStackedWidget, QStyle, QStyleOptionSlider, QSystemTrayIcon, QVBoxLayout, QWidget,
 )
 from lrc import load_lrc, ActiveLine
@@ -16,6 +16,7 @@ from animation import _glyph_layout
 from text_effects import TEXT_EFFECTS
 from settings import resource_path, ANIMATION_STYLES
 from glyph_motion import glyph_states
+from presets import PresetStore, EFFECT_KEYS
 
 
 STYLE = """
@@ -348,6 +349,10 @@ class ControlPanel(QWidget):
         self.player, self.overlay = player, overlay
         self.external = getattr(player, "is_external", False)
         self.prefs, self.store = prefs, store
+        state = Path(store.store.fileName())
+        self.presets = PresetStore(state.parent / ("smoke-effect-presets.json" if state.name.startswith("smoke-") else "effect-presets.json"))
+        self._preset_id = None
+        self._preset_modified = False
         self.font_library = font_library or FontLibrary(Path(store.store.fileName()).parent / "fonts")
         self.prefs.font_family, self._font_message = self.font_library.restore_family(prefs.font_family)
         self._updating = False
@@ -399,6 +404,8 @@ class ControlPanel(QWidget):
         self.refresh_timer.timeout.connect(self._refresh_position)
         self.refresh_timer.start()
         self._refresh_state()
+        if self.presets.error:
+            self.show_notice(self.presets.error)
 
     def _build_sidebar(self):
         self.sidebar = QFrame()
@@ -540,6 +547,26 @@ class ControlPanel(QWidget):
         body.addWidget(label("LYRIC EFFECTS", "eyebrow"))
         body.addWidget(label("歌词效果", "heading"))
         body.addWidget(label("调整文字与律动，让歌词融入你的桌面。设置会自动保存。", "muted"))
+        preset_card, preset_body = card("效果预设")
+        self.preset_combo = QComboBox()
+        self.preset_combo.setAccessibleName("效果预设")
+        self.preset_combo.currentIndexChanged.connect(lambda _: self.apply_preset(self.preset_combo.currentData()))
+        preset_body.addWidget(self.preset_combo)
+        preset_actions = QHBoxLayout()
+        self.preset_save_button = QPushButton("另存为预设")
+        self.preset_update_button = QPushButton("更新当前预设")
+        self.preset_delete_button = QPushButton("删除")
+        self.preset_save_button.clicked.connect(lambda: self.save_preset())
+        self.preset_update_button.clicked.connect(self.update_preset)
+        self.preset_delete_button.clicked.connect(self.delete_preset)
+        for button in (self.preset_save_button, self.preset_update_button, self.preset_delete_button):
+            preset_actions.addWidget(button)
+        preset_body.addLayout(preset_actions)
+        self.preset_status = label("内置方案只读；可另存为自己的方案。", "muted")
+        self.preset_status.setWordWrap(True)
+        preset_body.addWidget(self.preset_status)
+        body.addWidget(preset_card)
+        self._reload_presets()
         self.region = QComboBox()
         self.region.addItem("屏幕两侧 · 避开中央工作区", "edges")
         self.region.addItem("屏幕内自由出现", "full")
@@ -921,6 +948,9 @@ class ControlPanel(QWidget):
 
     def _set_preference(self, key, value):
         setattr(self.prefs, key, value)
+        if key in EFFECT_KEYS and self._preset_id:
+            self._preset_modified = True
+            self._reload_presets()
         self.store.save(self.prefs)
         self.overlay.refresh_preferences()
         self._update_effect_controls()
@@ -937,6 +967,102 @@ class ControlPanel(QWidget):
         self.glow_value.setText(f"{self.prefs.glow_strength}%")
         self.parameter_fields["shake_frequency"].setEnabled(self.prefs.animation_style.endswith("_shake"))
         self.parameter_fields["fall_distance"].setEnabled(self.prefs.animation_style.startswith("fall_"))
+
+    def _reload_presets(self):
+        blocker = QSignalBlocker(self.preset_combo)
+        self.preset_combo.clear()
+        self.preset_combo.addItem("当前自定义", None)
+        for preset in self.presets.all():
+            suffix = " · 已修改" if preset.id == self._preset_id and self._preset_modified else ""
+            self.preset_combo.addItem(preset.name + suffix, preset.id)
+        self.preset_combo.setCurrentIndex(max(0, self.preset_combo.findData(self._preset_id)))
+        selected = self.presets.get(self._preset_id)
+        editable = selected is not None and not selected.builtin
+        self.preset_update_button.setEnabled(editable)
+        self.preset_delete_button.setEnabled(editable)
+        self.preset_status.setText("已修改，方案未被覆盖；可更新当前预设或另存。" if self._preset_modified and editable else
+            "已修改，内置方案保持原样；可另存为自己的方案。" if self._preset_modified else
+            "内置方案只读；可另存为自己的方案。" if selected is None or selected.builtin else "自己的方案，可更新或删除。")
+
+    def _sync_effect_widgets(self):
+        widgets = [self.animation_combo, self.text_style, self.motion, self.font_combo, self.glow_slider,
+                   *self.spins.values(), *self.parameter_sliders.values()]
+        blockers = [QSignalBlocker(widget) for widget in widgets]
+        for widget, key in ((self.animation_combo, "animation_style"), (self.text_style, "text_style"), (self.motion, "motion")):
+            widget.setCurrentIndex(widget.findData(getattr(self.prefs, key)))
+        for key, spin in self.spins.items():
+            spin.setValue(getattr(self.prefs, key))
+        for key, slider in self.parameter_sliders.items():
+            slider.setValue(getattr(self.prefs, key))
+        self.glow_slider.setValue(self.prefs.glow_strength)
+        self._reload_fonts()
+        self._update_color_button()
+        self._update_effect_controls()
+        self.font_preview.invalidate()
+
+    def apply_preset(self, identifier):
+        preset = self.presets.get(identifier)
+        if preset is None:
+            self._preset_id, self._preset_modified = None, False
+            self._reload_presets()
+            return
+        for key, value in preset.values.items():
+            setattr(self.prefs, key, value)
+        requested = self.prefs.font_family
+        self.prefs.font_family, message = self.font_library.restore_family(requested)
+        self._preset_id, self._preset_modified = identifier, bool(message)
+        self._sync_effect_widgets()
+        self._reload_presets()
+        self.font_status.setText(message or "已切换效果预设，设置已自动保存。")
+        self.store.save(self.prefs)
+        self.overlay.refresh_preferences()
+        self.font_preview.replay()
+
+    def save_preset(self, name=None):
+        if name is None:
+            name, accepted = QInputDialog.getText(self, "保存效果预设", "方案名称（1–48 个字符）")
+            if not accepted:
+                return False
+        duplicate = self.presets.named(name)
+        identifier = None
+        if duplicate:
+            if duplicate.builtin:
+                self.show_notice("内置方案只读，请使用自己的方案名称。")
+                return False
+            if QMessageBox.question(self, "覆盖方案", f"覆盖“{duplicate.name}”的效果设置？",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+                return False
+            identifier = duplicate.id
+        try:
+            saved = self.presets.save(name, self.prefs, identifier)
+        except (OSError, ValueError) as error:
+            self.show_notice(str(error))
+            return False
+        self._preset_id, self._preset_modified = saved.id, False
+        self._reload_presets()
+        return True
+
+    def update_preset(self):
+        selected = self.presets.get(self._preset_id)
+        if selected and not selected.builtin:
+            return self.save_preset(selected.name)
+        return False
+
+    def delete_preset(self):
+        selected = self.presets.get(self._preset_id)
+        if selected is None or selected.builtin:
+            return False
+        if QMessageBox.question(self, "删除方案", f"删除“{selected.name}”？当前效果会保留。",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+            return False
+        try:
+            self.presets.delete(selected.id)
+        except (OSError, ValueError) as error:
+            self.show_notice(str(error))
+            return False
+        self._preset_id, self._preset_modified = None, False
+        self._reload_presets()
+        return True
 
     def _reload_fonts(self):
         self.font_combo.blockSignals(True)
