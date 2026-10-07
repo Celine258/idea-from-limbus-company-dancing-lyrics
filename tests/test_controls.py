@@ -83,7 +83,8 @@ class ControlPanelTests(unittest.TestCase):
         self.overlay = FakeOverlay()
         self.prefs = Preferences()
         self.store = SettingsStore(self.root / "settings.ini")
-        with patch("controls.QSystemTrayIcon.isSystemTrayAvailable", return_value=False):
+        with patch("controls.QSystemTrayIcon.isSystemTrayAvailable", return_value=False), \
+                patch("fonts.QFontDatabase.families", return_value=["Microsoft YaHei UI", "SimSun", "KaiTi"]):
             self.panel = ControlPanel(self.player, self.overlay, self.prefs, self.store)
         self.panel.refresh_timer.stop()
         self.overlay.show()
@@ -91,6 +92,7 @@ class ControlPanelTests(unittest.TestCase):
         APP.processEvents()
 
     def tearDown(self):
+        self.panel.font_library.close()
         self.panel.tray.hide()
         self.panel.hide()
         self.overlay.hide()
@@ -210,6 +212,68 @@ class ControlPanelTests(unittest.TestCase):
         self.assertIn("#FFFFFF", self.panel.color_button.text())
         self.assertLess(self.panel.color_button.palette().color(QPalette.ColorRole.ButtonText).lightness(), 180)
 
+    def test_font_presets_save_without_changing_playback_or_ui_theme(self):
+        self.panel.open_music(self.music())
+        self.player.playing = True
+        self.player.clock = 6500
+        style = self.panel.styleSheet()
+        self.click(self.panel.nav_buttons[1])
+        self.assertEqual([self.panel.font_combo.itemText(i) for i in range(3)], ["微软雅黑（默认）", "宋体", "楷体"])
+        for family in ("SimSun", "KaiTi", "Microsoft YaHei UI"):
+            self.panel.font_combo.setCurrentIndex(self.panel.font_combo.findData(family))
+            self.assertEqual(self.store.load().font_family, family)
+            self.assertEqual(self.prefs.font_family, family)
+            self.assertTrue(self.player.playing)
+            self.assertEqual(self.player.clock, 6500)
+            self.assertEqual(self.player.seeks, [])
+        self.assertEqual(self.panel.styleSheet(), style)
+        self.assertGreater(self.overlay.refreshes, 0)
+
+    def test_font_import_button_copies_selects_and_restores_after_restart(self):
+        fixture = Path(__file__).parent / "fixtures/lyrics-test.ttf"
+        source = self.root / "自定义 字体.TTF"
+        source.write_bytes(fixture.read_bytes())
+        self.click(self.panel.nav_buttons[1])
+        with patch("controls.QFileDialog.getOpenFileName", return_value=(str(source), "")):
+            self.click(self.panel.import_font_button)
+        self.assertEqual(self.store.load().font_family, "Floating Lyrics Test")
+        self.assertEqual(self.panel.font_combo.currentData(), "Floating Lyrics Test")
+        self.assertIn("已导入", self.panel.font_status.text())
+        self.assertEqual(len(list((self.root / "fonts").glob("*.ttf"))), 1)
+        source.unlink()
+        self.panel.font_library.close()
+        self.panel.hide()
+        self.panel.deleteLater()
+        with patch("controls.QSystemTrayIcon.isSystemTrayAvailable", return_value=False):
+            self.panel = ControlPanel(self.player, self.overlay, self.store.load(), self.store)
+        self.assertEqual(self.panel.font_combo.currentData(), "Floating Lyrics Test")
+        self.assertEqual(self.panel.prefs.font_family, "Floating Lyrics Test")
+
+    def test_font_import_cancel_and_invalid_data_leave_existing_choice_unchanged(self):
+        self.panel.font_combo.setCurrentIndex(self.panel.font_combo.findData("KaiTi"))
+        before = self.store.load()
+        with patch("controls.QFileDialog.getOpenFileName", return_value=("", "")):
+            self.click(self.panel.import_font_button)
+        invalid = self.root / "损坏.ttf"
+        invalid.write_bytes(b"this is not a font")
+        with patch("controls.QFileDialog.getOpenFileName", return_value=(str(invalid), "")):
+            self.click(self.panel.import_font_button)
+        self.assertEqual(self.store.load(), before)
+        self.assertEqual(self.panel.font_combo.currentData(), "KaiTi")
+        self.assertIn("无法读取", self.panel.font_status.text())
+        self.assertFalse((self.root / "fonts").exists())
+
+    def test_missing_selected_font_falls_back_with_visible_explanation(self):
+        self.panel.font_library.close()
+        self.panel.hide()
+        self.panel.deleteLater()
+        self.prefs.font_family = "Removed custom family"
+        with patch("controls.QSystemTrayIcon.isSystemTrayAvailable", return_value=False):
+            self.panel = ControlPanel(self.player, self.overlay, self.prefs, self.store)
+        self.assertEqual(self.prefs.font_family, "Microsoft YaHei UI")
+        self.assertEqual(self.panel.font_combo.currentIndex(), 0)
+        self.assertIn("不可用", self.panel.font_status.text())
+
     def test_errors_remain_visible_on_effects_page(self):
         self.click(self.panel.nav_buttons[1])
         self.player.error.emit("播放失败：音频不可用")
@@ -261,7 +325,8 @@ class ControlPanelTests(unittest.TestCase):
         self.click(self.panel.nav_buttons[1])
         scroll = self.panel.effects_scroll
         self.assertGreater(scroll.verticalScrollBar().maximum(), 0)
-        for widget in (self.panel.region, self.panel.color_button, self.panel.motion, *self.panel.spins.values()):
+        for widget in (self.panel.region, self.panel.font_combo, self.panel.import_font_button, self.panel.font_preview,
+                       self.panel.color_button, self.panel.motion, *self.panel.spins.values()):
             center = widget.mapTo(scroll.widget(), widget.rect().center())
             scroll.ensureVisible(center.x(), center.y(), 0, widget.height() // 2 + 16)
             APP.processEvents()
@@ -313,6 +378,10 @@ class ControlPanelTests(unittest.TestCase):
         self.assertTrue(self.player.playing)
         self.panel.spins["jump"].setValue(19)
         self.assertEqual(self.store.load().jump, 19)
+        self.player.apply(validate_snapshot(packet(lyrics=[])))
+        self.panel.font_combo.setCurrentIndex(self.panel.font_combo.findData("KaiTi"))
+        self.assertIsNone(self.overlay.document)
+        self.assertIn("保持空白", self.panel.lyric_label.text())
         self.player.disconnect()
         self.assertIsNone(self.overlay.document)
         self.assertIn("断开", self.panel.notice.text())

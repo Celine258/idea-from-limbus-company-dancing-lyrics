@@ -8,13 +8,16 @@ from PySide6 import __version__ as qt_version
 from PySide6.QtCore import QPoint, QRect, QTimer, Qt
 from PySide6.QtGui import QColor, QImage, QPainter
 from settings import Preferences
+from fonts import FontLibrary, PRESET_FONTS, lyric_font
+from PySide6.QtGui import QFontInfo
 
 
 class SmokeCheck:
-    def __init__(self, app, panel, report_dir):
+    def __init__(self, app, panel, report_dir, font_fixture=None):
         self.app, self.panel, self.player, self.overlay = app, panel, panel.player, panel.overlay
         self.report_dir = report_dir
         self.report_dir.mkdir(parents=True, exist_ok=True)
+        self.font_fixture = font_fixture
         self.results = {}
         self.errors = []
         self.maximum_energy = 0.0
@@ -62,6 +65,7 @@ class SmokeCheck:
         visible = self.overlay.timeline.visible(self.player.position(), self.player.duration)
         self.results["seek_rebuilds_lyrics"] = [line.text for line in visible] == ["陪你写下一行代码"]
         self.panel.grab().save(str(self.report_dir / "control-panel.png"))
+        self._capture_fonts()
         self._capture_interface()
         image = self.overlay.grab().toImage()
         image.save(str(self.report_dir / "overlay-transparent.png"))
@@ -92,6 +96,41 @@ class SmokeCheck:
         self.player.media.play()
         QTimer.singleShot(500, self._check_resume)
 
+    def _capture_fonts(self):
+        import hashlib
+        panel = self.panel
+        original = panel.prefs.font_family
+        position = self.player.position()
+        matches, shapes = {}, set()
+        panel.nav_buttons[1].click()
+        for _, family in PRESET_FONTS:
+            index = panel.font_combo.findData(family)
+            panel.font_combo.setCurrentIndex(index)
+            self.app.processEvents()
+            image = self.overlay.grab().toImage()
+            shapes.add(hashlib.sha256(bytes(image.constBits())).hexdigest())
+            matches[family] = QFontInfo(lyric_font(panel.prefs.font_family, 32)).family()
+            self.overlay.grab().save(str(self.report_dir / f"font-{family.replace(' ', '-')}.png"))
+            panel.effects_scroll.verticalScrollBar().setValue(0)
+            panel.grab().save(str(self.report_dir / f"font-settings-{family.replace(' ', '-')}.png"))
+        self.results["preset_font_families_resolve"] = all(family == actual for family, actual in matches.items())
+        self.results["preset_fonts_change_rendered_lyrics"] = len(shapes) == len(PRESET_FONTS)
+        self.results["preset_font_matches"] = matches
+        if self.font_fixture:
+            imported = panel.import_font(self.font_fixture)
+            selected = panel.prefs.font_family
+            self.results["custom_font_imported"] = imported and QFontInfo(lyric_font(selected, 32)).family() == selected
+            self.results["custom_font_selection_saved"] = imported and panel.store.load().font_family == selected
+            restored = FontLibrary(panel.font_library.directory)
+            try:
+                self.results["custom_font_reloads_from_owned_copy"] = imported and restored.restore_family(selected)[0] == selected
+            finally:
+                restored.close()
+            self.overlay.grab().save(str(self.report_dir / "font-imported.png"))
+        panel.font_combo.setCurrentIndex(panel.font_combo.findData(original))
+        self.app.processEvents()
+        self.results["font_changes_preserve_paused_position"] = not self.player.playing and self.player.position() == position
+
     def _capture_interface(self):
         """Check reachable controls on both pages at normal and minimum sizes."""
         panel = self.panel
@@ -119,7 +158,8 @@ class SmokeCheck:
                               and panel.player_bar.geometry() == bar)
             panel.effects_scroll.verticalScrollBar().setValue(0)
             panel.grab().save(str(self.report_dir / f"effects-{name}-top.png"))
-            for control in (panel.region, panel.color_button, panel.motion, *panel.spins.values()):
+            for control in (panel.region, panel.font_combo, panel.import_font_button, panel.font_preview,
+                            panel.color_button, panel.motion, *panel.spins.values()):
                 # Spin boxes expose the edit cursor to ensureWidgetVisible;
                 # scroll the entire field into view, including its arrow buttons.
                 center = control.mapTo(panel.effects_scroll.widget(), control.rect().center())

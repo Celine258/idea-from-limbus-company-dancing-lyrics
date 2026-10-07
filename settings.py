@@ -4,6 +4,8 @@ import sys
 from PySide6.QtCore import QSettings
 from PySide6.QtGui import QColor
 
+DEFAULT_FONT_FAMILY = "Microsoft YaHei UI"
+
 
 def app_directory() -> Path:
     return Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
@@ -15,6 +17,7 @@ def resource_path(name: str) -> Path:
 
 @dataclass
 class Preferences:
+    font_family: str = DEFAULT_FONT_FAMILY
     font_size: int = 32
     color: str = "#a9f4dc"
     opacity: int = 80
@@ -50,6 +53,9 @@ class SettingsStore:
             prefs.motion = "audio"
         if not QColor(prefs.color).isValid():
             prefs.color = "#a9f4dc"
+        prefs.font_family = prefs.font_family.strip()
+        if not prefs.font_family or len(prefs.font_family) > 256 or any(c in prefs.font_family for c in "\n\r\x00"):
+            prefs.font_family = DEFAULT_FONT_FAMILY
         return prefs
 
     def save(self, prefs: Preferences):

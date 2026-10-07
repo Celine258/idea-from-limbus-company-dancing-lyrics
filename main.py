@@ -13,6 +13,7 @@ from controls import ControlPanel, app_icon
 from overlay import LyricsOverlay
 from player import MusicPlayer
 from settings import SettingsStore, app_directory
+from fonts import FontLibrary
 
 
 def main():
@@ -23,6 +24,7 @@ def main():
     parser.add_argument("--background", action="store_true", help="联动模式启动到托盘")
     parser.add_argument("--netease-smoke", action="store_true", help="采集 45 秒真实网易云联动验证并退出")
     parser.add_argument("--settings-smoke", action="store_true", help="联动验证同时要求实际打开歌词效果窗口")
+    parser.add_argument("--font-smoke-file", type=Path, help="本地或网易云验证时用于测试导入的字体文件")
     parser.add_argument("--report-dir", type=Path, default=app_directory() / "artifacts")
     args = parser.parse_args()
     state_dir = app_directory() / ".state"
@@ -65,7 +67,8 @@ def main():
     else:
         player = MusicPlayer()
     overlay = LyricsOverlay(player, prefs)
-    panel = ControlPanel(player, overlay, prefs, store)
+    fonts = FontLibrary(state_dir / ("smoke-fonts" if args.smoke or args.netease_smoke else "fonts"))
+    panel = ControlPanel(player, overlay, prefs, store, font_library=fonts)
     app.aboutToQuit.connect(lambda: store.save(prefs))
     app.aboutToQuit.connect(player.stop if args.netease else player.media.stop)
     app.aboutToQuit.connect(panel.tray.hide)
@@ -79,10 +82,11 @@ def main():
     logging.info("Control panel initialized; Qt visible=%s", panel.isVisible())
     if args.netease_smoke and args.netease:
         from netease_validation import NeteaseSmokeCheck
-        check = NeteaseSmokeCheck(app, panel, args.report_dir, require_settings=args.settings_smoke)
+        check = NeteaseSmokeCheck(app, panel, args.report_dir, require_settings=args.settings_smoke,
+                                 font_fixture=args.font_smoke_file)
     elif args.smoke and not args.netease:
         from validation import SmokeCheck
-        check = SmokeCheck(app, panel, args.report_dir)
+        check = SmokeCheck(app, panel, args.report_dir, font_fixture=args.font_smoke_file)
         QTimer.singleShot(200, check.start)
     elif args.demo and not args.netease:
         QTimer.singleShot(200, panel.play_demo)

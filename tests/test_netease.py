@@ -6,6 +6,8 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 from PySide6.QtCore import QUrl
 from PySide6.QtTest import QTest, QSignalSpy
 from PySide6.QtWebSockets import QWebSocket
@@ -29,6 +31,45 @@ class NeteasePlayerTests(unittest.TestCase):
     def setUp(self):
         self.now = 10.
         self.player = NeteasePlayer(clock=lambda: self.now)
+
+    def _font_validation(self, mutate_transport=False):
+        from netease_validation import NeteaseSmokeCheck
+        from settings import Preferences
+        self.player.apply(validate_snapshot(packet()))
+        prefs = Preferences()
+        def select(family):
+            prefs.font_family = family
+        def import_font(_path):
+            select("Test custom family")
+            return True
+        def capture(_path):
+            self.now += .4
+            if mutate_transport:
+                self.player.apply(validate_snapshot(packet(position_ms=5000, seek=True)))
+        check = object.__new__(NeteaseSmokeCheck)
+        check.player, check.jumps = self.player, 0
+        check.directory, check.font_fixture = Path("unused-report"), Path("unused-font.ttf")
+        check.panel = SimpleNamespace(prefs=prefs, font_combo=SimpleNamespace(findData=lambda family: family, setCurrentIndex=select),
+                                      grab=lambda: SimpleNamespace(save=capture), import_font=import_font,
+                                      store=SimpleNamespace(load=lambda: prefs), font_library=SimpleNamespace(directory=Path("unused-fonts")))
+        self.player.discontinuity.connect(check._jump)
+        library = Mock()
+        library.restore_family.side_effect = lambda family: (family, "")
+        with patch("netease_validation.FontLibrary", return_value=library), \
+                patch("netease_validation.QFontInfo", side_effect=lambda font: SimpleNamespace(family=lambda: font.families()[0])):
+            check._check_fonts()
+        return check
+
+    def test_font_validator_accepts_normal_playback_time_advancing(self):
+        check = self._font_validation()
+        self.assertGreater(check.font_evidence["positionDeltaMs"], 750)
+        self.assertTrue(check.font_checks["fontSwitchKeepsPlayback"])
+        self.assertTrue(check.font_evidence["transportUnchanged"])
+
+    def test_font_validator_rejects_playback_anchor_changes(self):
+        check = self._font_validation(mutate_transport=True)
+        self.assertFalse(check.font_checks["fontSwitchKeepsPlayback"])
+        self.assertFalse(check.font_evidence["transportUnchanged"])
 
     def test_progress_pause_resume_and_seek_are_authoritative(self):
         self.player.apply(validate_snapshot(packet()))

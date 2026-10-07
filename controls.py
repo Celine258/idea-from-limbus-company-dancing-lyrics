@@ -11,6 +11,8 @@ from PySide6.QtWidgets import (
     QSlider, QSpinBox, QStackedWidget, QStyle, QStyleOptionSlider, QSystemTrayIcon, QVBoxLayout, QWidget,
 )
 from lrc import load_lrc
+from fonts import FontLibrary
+from animation import _glyph_layout
 from settings import resource_path
 
 
@@ -249,12 +251,39 @@ def card(title: str):
     return frame, layout
 
 
+class FontPreview(QWidget):
+    def __init__(self, prefs):
+        super().__init__()
+        self.prefs = prefs
+        self.setFixedHeight(88)
+        self.setAccessibleName("中英文字体预览")
+
+    def paintEvent(self, _event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(QPen(QColor("#e0e5ed"), 1))
+        painter.setBrush(QColor("#f7f8fa"))
+        painter.drawRoundedRect(QRectF(self.rect()).adjusted(.5, .5, -.5, -.5), 8, 8)
+        glyphs, width, height = _glyph_layout("给今天一点节奏\nHello music · 123",
+                                             min(28, self.prefs.font_size), max(1, self.width() - 24),
+                                             self.prefs.font_family)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor("#293449"))
+        painter.translate(self.rect().center())
+        scale = min(1, max(1, self.width() - 24) / max(1, width), (self.height() - 16) / max(1, height))
+        painter.scale(scale, scale)
+        for glyph in glyphs:
+            painter.drawPath(glyph.path.translated(glyph.x, glyph.baseline))
+
+
 class ControlPanel(QWidget):
-    def __init__(self, player, overlay, prefs, store):
+    def __init__(self, player, overlay, prefs, store, font_library=None):
         super().__init__()
         self.player, self.overlay = player, overlay
         self.external = getattr(player, "is_external", False)
         self.prefs, self.store = prefs, store
+        self.font_library = font_library or FontLibrary(Path(store.store.fileName()).parent / "fonts")
+        self.prefs.font_family, self._font_message = self.font_library.restore_family(prefs.font_family)
         self._updating = False
         self._shown_tray_hint = False
         self.setWindowTitle("跳动的歌词")
@@ -471,8 +500,27 @@ class ControlPanel(QWidget):
         self.color_button = QPushButton()
         self.color_button.clicked.connect(self.choose_color)
         self._update_color_button()
+        font_field = QWidget()
+        font_row = QHBoxLayout(font_field)
+        font_row.setContentsMargins(0, 0, 0, 0)
+        font_row.setSpacing(8)
+        self.font_combo = QComboBox()
+        self.font_combo.setMinimumWidth(100)
+        self.font_combo.setAccessibleName("歌词字体")
+        self.import_font_button = QPushButton("导入字体")
+        self.import_font_button.setToolTip("导入 TTF、OTF 或 TTC 字体；字体会保存到程序设置目录。")
+        self.import_font_button.clicked.connect(lambda: self.import_font())
+        font_row.addWidget(self.font_combo, 1)
+        font_row.addWidget(self.import_font_button)
+        self.font_preview = FontPreview(self.prefs)
+        self.font_status = label(self._font_message or ("部分导入字体无法加载，可重新导入。" if self.font_library.errors else
+                                 "支持 TTF、OTF、TTC；选择后立即生效并自动保存。"), "muted")
+        self.font_status.setWordWrap(True)
+        self._reload_fonts()
+        self.font_combo.currentIndexChanged.connect(self._font_selected)
         for title, fields in (
-            ("显示与文字", (("显示区域", self.region), ("文字大小", self.spins["font_size"]),
+            ("显示与文字", (("显示区域", self.region), ("歌词字体", font_field), ("字体预览", self.font_preview),
+                          ("文字大小", self.spins["font_size"]),
                           ("文字颜色", self.color_button), ("歌词透明度", self.spins["opacity"]))),
             ("律动与同步", (("运动方式", self.motion), ("跳动幅度", self.spins["jump"]),
                           ("倾斜范围", self.spins["angle"]), ("同步偏移", self.spins["delay_ms"]))),
@@ -487,6 +535,8 @@ class ControlPanel(QWidget):
                 widget.setMaximumWidth(460)
                 form.addRow(text, widget)
             section_body.addLayout(form)
+            if title == "显示与文字":
+                section_body.addWidget(self.font_status)
             if title == "律动与同步":
                 section_body.addWidget(label("偏移为正：歌词晚一点出现；为负：早一点出现。", "muted"))
             body.addWidget(section)
@@ -743,6 +793,40 @@ class ControlPanel(QWidget):
         setattr(self.prefs, key, value)
         self.store.save(self.prefs)
         self.overlay.refresh_preferences()
+        self.font_preview.update()
+
+    def _reload_fonts(self):
+        self.font_combo.blockSignals(True)
+        self.font_combo.clear()
+        for choice in self.font_library.choices():
+            self.font_combo.addItem(choice.label, choice.family)
+            if not choice.available:
+                self.font_combo.model().item(self.font_combo.count() - 1).setEnabled(False)
+        self.font_combo.setCurrentIndex(self.font_combo.findData(self.prefs.font_family))
+        self.font_combo.blockSignals(False)
+        self.font_combo.setToolTip(self.prefs.font_family)
+
+    def _font_selected(self, _index):
+        family = self.font_combo.currentData()
+        if family is not None:
+            self._set_preference("font_family", family)
+            self.font_combo.setToolTip(family)
+            self.font_status.setText("已选择" + self.font_combo.currentText() + "，设置已自动保存。")
+
+    def import_font(self, path=None):
+        if path is None:
+            path, _ = QFileDialog.getOpenFileName(self, "导入歌词字体", "", "字体文件 (*.ttf *.otf *.ttc);;所有文件 (*)")
+        if not path:
+            return False
+        try:
+            families, added = self.font_library.import_font(Path(path))
+        except (OSError, ValueError) as error:
+            self.font_status.setText(str(error))
+            return False
+        self._set_preference("font_family", families[0])
+        self._reload_fonts()
+        self.font_status.setText(("已导入" if added else "该字体已导入") + "，已切换到 " + families[0] + "。")
+        return True
 
     def choose_color(self):
         color = QColorDialog.getColor(QColor(self.prefs.color), self, "选择歌词颜色")

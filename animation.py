@@ -2,8 +2,9 @@ from dataclasses import dataclass
 import math
 import random
 from PySide6.QtCore import QPointF, QRectF, QTextBoundaryFinder
-from PySide6.QtGui import QFont, QFontMetricsF, QPainterPath
-from settings import Preferences
+from PySide6.QtGui import QFontMetricsF, QPainterPath
+from fonts import lyric_font
+from settings import DEFAULT_FONT_FAMILY, Preferences
 
 
 def graphemes(text: str) -> list[str]:
@@ -45,10 +46,8 @@ def display_regions(width: int, height: int, mode: str) -> list[QRectF]:
     return [QRectF(pad, pad, width - 2 * pad, height - 2 * pad)]
 
 
-def _glyph_layout(text: str, pixels: int, max_width: float):
-    font = QFont("Microsoft YaHei UI")
-    font.setPixelSize(pixels)
-    font.setWeight(QFont.Weight.DemiBold)
+def _glyph_layout(text: str, pixels: int, max_width: float, family: str = DEFAULT_FONT_FAMILY):
+    font = lyric_font(family, pixels)
     metrics = QFontMetricsF(font)
     rows: list[list[str]] = [[]]
     row_width = 0.0
@@ -77,7 +76,13 @@ def _glyph_layout(text: str, pixels: int, max_width: float):
             glyphs.append(Glyph(path, x + advance / 2, baseline, index))
             x += advance
             index += 1
-    return glyphs, max(widths, default=0), height
+    width = max(widths, default=0)
+    bounds = QRectF(-width / 2, -height / 2, width, height)
+    for glyph in glyphs:
+        bounds = bounds.united(glyph.path.boundingRect().translated(glyph.x, glyph.baseline))
+    # Imported fonts can draw outside their advances/ascent. Include their ink
+    # in the centered box used for rotation, collision and screen clipping.
+    return glyphs, 2 * max(abs(bounds.left()), abs(bounds.right())), 2 * max(abs(bounds.top()), abs(bounds.bottom()))
 
 
 def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRectF],
@@ -89,7 +94,7 @@ def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRe
     for region in regions:
         angle = rng.uniform(-prefs.angle, prefs.angle)
         for pixels in range(prefs.font_size, 9, -1):
-            glyphs, width, height = _glyph_layout(text, pixels, max(10, region.width() - 50))
+            glyphs, width, height = _glyph_layout(text, pixels, max(10, region.width() - 50), prefs.font_family)
             # Include stroke, character scale, jumping and fade-out drift.
             box_w = width * 1.04 + 16
             box_h = height * 1.04 + 2 * prefs.jump + 36

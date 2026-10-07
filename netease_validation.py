@@ -5,10 +5,12 @@ from pathlib import Path
 import time
 from PySide6.QtCore import QTimer
 from process_audio import netease_pid
+from PySide6.QtGui import QFontInfo
+from fonts import FontLibrary, PRESET_FONTS, lyric_font
 
 
 class NeteaseSmokeCheck:
-    def __init__(self, app, panel, directory, require_settings=False):
+    def __init__(self, app, panel, directory, require_settings=False, font_fixture=None):
         self.app, self.panel, self.player = app, panel, panel.player
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -17,6 +19,9 @@ class NeteaseSmokeCheck:
         self.saved = False
         self.require_settings = require_settings
         self.settings_opened = False
+        self.font_fixture = font_fixture
+        self.font_checks = {}
+        self.font_evidence = {}
         self.jumps = 0
         self.player.discontinuity.connect(self._jump)
         self.timer = QTimer(panel)
@@ -58,6 +63,8 @@ class NeteaseSmokeCheck:
                 self.settings_opened = True
         document = overlay.document
         active = overlay.timeline.visible(player.position(), player.duration) if overlay.timeline else []
+        if self.font_fixture and not self.font_checks and settings_visible and player.playing and active:
+            self._check_fonts()
         sample = {"seconds": round(time.monotonic()-self.started, 2), "connected": player.connected,
                   "song": player.song_id, "playing": player.playing, "position": round(player.position(), 1),
                   "lyricCount": len(document.lines) if document else 0, "activeCount": len(active),
@@ -79,6 +86,30 @@ class NeteaseSmokeCheck:
         if sample["seconds"] >= 45:
             self.finish()
 
+    def _check_fonts(self):
+        panel, player = self.panel, self.player
+        original, position = panel.prefs.font_family, player.position()
+        transport = (player._anchor, player._at, player.song_id, player.playing, self.jumps)
+        started = time.monotonic()
+        matches = []
+        for _, family in PRESET_FONTS:
+            panel.font_combo.setCurrentIndex(panel.font_combo.findData(family))
+            matches.append(QFontInfo(lyric_font(panel.prefs.font_family, 32)).family() == family)
+            panel.grab().save(str(self.directory / f"netease-font-{family.replace(' ', '-')}.png"))
+        imported = panel.import_font(self.font_fixture)
+        selected = panel.prefs.font_family
+        restored = FontLibrary(panel.font_library.directory)
+        try:
+            persistent = imported and panel.store.load().font_family == selected and restored.restore_family(selected)[0] == selected
+        finally:
+            restored.close()
+        panel.font_combo.setCurrentIndex(panel.font_combo.findData(original))
+        unchanged = transport == (player._anchor, player._at, player.song_id, player.playing, self.jumps)
+        self.font_evidence = {"elapsedMs": round((time.monotonic() - started) * 1000, 1),
+                              "positionDeltaMs": round(player.position() - position, 1), "transportUnchanged": unchanged}
+        self.font_checks = {"fontPresetsResolve": all(matches), "fontImportPersists": persistent,
+                            "fontSwitchKeepsPlayback": player.playing and unchanged}
+
     def finish(self):
         self.timer.stop()
         samples = self.samples
@@ -99,7 +130,12 @@ class NeteaseSmokeCheck:
                   "noSecondAudioPlayer": not hasattr(self.player,"media")}
         if self.require_settings:
             checks["nativeEffectsSettingsOpened"] = self.settings_opened
+        if self.font_fixture:
+            checks.update(self.font_checks or {"fontPresetsResolve": False, "fontImportPersists": False,
+                                              "fontSwitchKeepsPlayback": False})
         report = {"passed": all(checks.values()), "checks": checks, "jumps": self.jumps,
                   "sampleCount": len(samples), "samples": samples}
+        if self.font_fixture:
+            report["fontVerification"] = self.font_evidence
         (self.directory / "netease-report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
         self.app.exit(0 if report["passed"] else 1)

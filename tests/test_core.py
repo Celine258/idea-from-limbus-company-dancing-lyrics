@@ -107,6 +107,22 @@ class LayoutTests(unittest.TestCase):
 
 
 class SettingsTests(unittest.TestCase):
+    def test_legacy_settings_keep_existing_values_and_default_font(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = SettingsStore(Path(directory) / "settings.ini")
+            store.store.setValue("font_size", 41)
+            store.store.setValue("color", "#f4ea5d")
+            store.store.setValue("jump", 9)
+            prefs = store.load()
+            self.assertEqual((prefs.font_family, prefs.font_size, prefs.color, prefs.jump),
+                             ("Microsoft YaHei UI", 41, "#f4ea5d", 9))
+            prefs.font_family = "SimSun"
+            store.save(prefs)
+            self.assertEqual(store.load(), prefs)
+            for invalid in ("", "\n", "bad\x00family", "x" * 257):
+                store.store.setValue("font_family", invalid)
+                self.assertEqual(store.load().font_family, "Microsoft YaHei UI")
+
     def test_persistence_and_bad_values(self):
         with tempfile.TemporaryDirectory() as directory:
             store = SettingsStore(Path(directory) / "settings.ini")

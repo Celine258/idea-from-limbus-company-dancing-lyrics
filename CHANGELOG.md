@@ -2,6 +2,32 @@
 
 每次改动按日期追加记录，包含改动目的、涉及文件、测试与验证结果、影响或已知限制。
 
+## 2026-10-07：增加歌词字体选择与个人字体导入
+
+### 改动
+
+- [歌词效果面板](controls.py)增加“歌词字体”、中英文预览及“导入字体”，提供原有微软雅黑、宋体和楷体。选择立即应用并自动保存，预览与桌面文字使用相同字形布局。
+- 新增 [字体库](fonts.py)，支持 TTF、OTF、TTC；通过 Qt 验证字体后按内容散列原子保存到 `.state/fonts`，重启时加载副本，移动原文件不影响使用。处理重复文件、损坏字体、导入失败及失效选择回退；TTC 中各家族分别加入列表。
+- [设置](settings.py)新增 `font_family`，旧配置默认微软雅黑并保留其他值。[布局](animation.py)同时计算实际字形外伸范围，避免个人字体笔画越界；字体改变清理缓存，界面主题与歌词颜色保持独立。纯音乐及无歌词处理沿用原逻辑。
+- 更新 [入口](main.py)、[本地验证器](validation.py)、[网易云验证器](netease_validation.py)，隔离正常与验证字体目录，增加可选 `--font-smoke-file`。新增 [字体测试](tests/test_fonts.py)、[原创夹具](tests/fixtures/README.md)及 [夹具生成器](tools/make_test_font.py)，扩展 [界面](tests/test_controls.py)、[配置](tests/test_core.py)和 [联动](tests/test_netease.py)回归测试。
+- 更新 [使用说明](README.md)、[网易云说明](NETEASE.md)、[技术文档](技术文档.md)和 [验证记录](验证记录.md)，重新打包桌面引擎。网易云插件仍为 `0.1.2`，此次无需更新客户端或插件。
+
+### 测试与验证
+
+- `.\.venv\Scripts\python.exe -m unittest discover -s tests -v`：59 项全部通过，覆盖三款预置字体、保存及重建面板、取消与无效导入、字体副本重载、重复导入、复制失败清理、TTC 多家族、OTF CFF 轮廓、字形外伸、旧配置和无歌词保持空白。文档收尾后另行运行文档校验。
+- `.\.venv\Scripts\python.exe main.py --smoke --font-smoke-file tests/fixtures/lyrics-test.ttf --report-dir artifacts/fonts-source-150`：源码 Windows 静音检查通过。另以 `QT_SCALE_FACTOR=0.6666666667` 和 `0.8333333333` 验证 100% 与 125%；125% 使用 TTC 夹具。三个实际比例为 1.0、约 1.25、1.5，字体实际家族、三种歌词画面、默认及最小窗口可达性均通过。报告在 `artifacts/fonts-source-100`、`fonts-source-125`、`fonts-source-150`。
+- `.\build.ps1 -SkipDependencies`：原生音频助手与 PyInstaller 构建通过。改动前包备份为 `artifacts/previous-package-20261007-000046-775`，最终构建前的中间包为 `artifacts/previous-package-20261007-000916-125`；正常 `.state` 保留。
+- `.\启动.bat -Smoke -ReportDirectory "$PWD\artifacts\fonts-launcher-final"`：实际启动入口退出码 0，Windows 面板原生可见，最终打包版全部静音检查通过。最终 EXE 以 `--smoke --font-smoke-file tests/fixtures/lyrics-test.otf --report-dir artifacts/fonts-packaged-otf` 启动也全部通过，确认真实 OTF 导入、保存与副本重载。
+- `artifacts/netease-probe/run-fonts-regression.ps1`：最终 `netease-report.json` 13 项桌面、字体与设置窗口检查、`host-report.json` 7 项宿主播放检查、`settings-clicks.json` 3 项真实鼠标检查全部通过。45 秒采集 218 个样本、12 次重定位，最高平滑声音强度 `0.1266`。播放时完成预置字体切换及导入，耗时与进度增加均为 735 毫秒，同步锚点、歌曲编号和播放状态未改变；覆盖暂停、跳转、连续三次切歌、最小化和退出清理。
+- 首轮字体联动的固定时间差检查误将正常播放前进判为跳转，已改为验证同步锚点和状态不被修改，并增加接受正常前进、拒绝主动跳转的两项回归测试。一次真实鼠标复验未打开窗口；验证辅助脚本改为在窗口恢复后重新测量 CEF 按钮坐标，再次复验通过。首轮报告保留在 `artifacts/fonts-netease-first-run`。
+- 已查看 150% 默认、小窗口及最终网易云字体设置截图，字体选择、导入按钮、预览和固定底栏完整，其他设置可滚动访问。原九项用户设置值保持一致，仅新增默认 `font_family`；证明见 `artifacts/fonts-update-settings-preservation.json`。最终联动前后正常设置 SHA-256 一致，见 `artifacts/fonts-netease-live/settings-preservation.json`；连接配置散列不变，正常字体库未混入测试夹具。原网易云已恢复正常启动，不带验证调试端口。
+
+### 影响与限制
+
+- 宋体、楷体引用本机系统字体，不分发 Windows 字体文件；字体未安装时标为不可用。个人字体仅加载到本程序并保存副本，不安装到系统；同一家族仅显示一次，使用常规字重，缺字继续由 Qt 回退。
+- 验证字体采用项目原创矩形字形，仅用于测试，正常模式不加载它们。fontTools 仅供开发者重建夹具，应用无需新增依赖。
+- 本次实测仍为 Windows 本机、网易云 `3.1.41.205529` 与 BetterNCM `1.3.4`；没有扩大对其他客户端、长时间稳定性或跨显示器动态缩放的验证范围。纯音乐维持原样。
+
 ## 2026-10-06：修复后台设置窗口右键无反馈
 
 ### 改动
