@@ -1,5 +1,6 @@
 """Validate the deliverable documentation and the source-control boundary."""
 from pathlib import Path
+import hashlib
 import re
 import subprocess
 import shutil
@@ -12,6 +13,42 @@ DOCUMENTS = tuple(ROOT / name for name in ("AGENTS.md", "CHANGELOG.md", "README.
 
 
 class WorkflowDocumentationTests(unittest.TestCase):
+    def test_readme_embeds_desktop_recording_before_download_link(self):
+        text = (ROOT / "README.md").read_text(encoding="utf-8-sig")
+        image = re.search(r"!\[([^\]]+)\]\((docs/images/lyrics-demo\.gif)\)", text)
+        self.assertIsNotNone(image, "首页需要内嵌演示，而不是只提供文件链接")
+        self.assertIn("实机演示", image.group(1))
+        self.assertLess(image.start(), text.index("下载 Windows x64 试用版"))
+        self.assertTrue((ROOT / image.group(2)).is_file())
+
+    def test_readme_gif_decodes_complete_recording_and_loops(self):
+        from PySide6.QtGui import QImageReader
+
+        path = ROOT / "docs/images/lyrics-demo.gif"
+        self.assertLess(path.stat().st_size, 8 * 1024 * 1024, "避免首页演示文件过大")
+        reader = QImageReader(str(path))
+        self.assertTrue(reader.supportsAnimation())
+        self.assertEqual(reader.loopCount(), -1, "演示需要无限循环播放")
+        count = reader.imageCount()
+        self.assertGreater(count, 100, "必须保留完整动画，不能退化为静态图片")
+        width, height = reader.size().width(), reader.size().height()
+        self.assertGreaterEqual(width, 640)
+        self.assertLessEqual(width, 1280)
+        self.assertAlmostEqual(width / height, 16 / 9)
+        duration = 0
+        frame_hashes = set()
+        for frame in range(count):
+            decoded = reader.read()
+            self.assertFalse(decoded.isNull(), f"第 {frame} 帧解码失败：{reader.errorString()}")
+            self.assertEqual((decoded.width(), decoded.height()), (width, height))
+            delay = reader.nextImageDelay()
+            self.assertGreater(delay, 0)
+            duration += delay
+            frame_hashes.add(hashlib.sha256(decoded.constBits()).digest())
+        self.assertGreaterEqual(duration, 18_000)
+        self.assertLessEqual(duration, 19_000)
+        self.assertGreater(len(frame_hashes), 10, "录屏需要有实际画面变化")
+
     def test_current_guides_describe_all_themes_and_runtime_icon_scope(self):
         from app_info import APP_VERSION
         for name in ("README.md", "NETEASE.md", "产品设计方案.md", "技术文档.md"):

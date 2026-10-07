@@ -2,7 +2,9 @@
 
 让歌词在桌面随音乐跳动。支持网易云联动、逐字动画、字体效果、预设及主题切换。
 
-![逐字动画演示](docs/images/lyrics-demo.gif)
+![网易云联动与桌面歌词实机演示](docs/images/lyrics-demo.gif)
+
+桌面实机录屏，约 18 秒，循环播放（GIF 无声）。
 
 **[下载 Windows x64 试用版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.5.1-beta.1)** · [问题反馈](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues)
 
