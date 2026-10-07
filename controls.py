@@ -278,7 +278,11 @@ class FontPreview(QWidget):
         self.update()
 
     def _preview_position(self):
-        return (self._position + (self._elapsed.elapsed() if self.timer.isActive() else 0)) % 4200
+        return (self._position + (self._elapsed.elapsed() if self.timer.isActive() else 0)) % (self._preview_item().end_ms + 400)
+
+    def _preview_item(self):
+        end = 3800 if self.prefs.animation_style == "classic" else 3200 + min(600 * 100 / self.prefs.exit_speed, 4400 * .45)
+        return ActiveLine(0, "", 0, end, 1, min(700 * 100 / self.prefs.entry_speed, 3200 * .35), 3200)
 
     def _stop_preview(self):
         self._position = self._preview_position()
@@ -309,7 +313,7 @@ class FontPreview(QWidget):
         painter.drawRoundedRect(QRectF(self.rect()).adjusted(.5, .5, -.5, -.5), 8, 8)
         pixels = min(28, self.prefs.font_size)
         key = (self.width(), pixels, self.prefs.font_family, self.prefs.color, self.prefs.text_style,
-               self.devicePixelRatioF(), self.prefs.animation_style, self.prefs.jump)
+               self.devicePixelRatioF(), self.prefs.animation_style, self.prefs.jump, self.prefs.fall_distance)
         if key != self._key:
             glyphs, _, _ = _glyph_layout("给今天一点节奏\nHello music · 123", pixels,
                                          max(1, self.width() - 48), self.prefs.font_family)
@@ -317,7 +321,7 @@ class FontPreview(QWidget):
             self._key = key
         position = self._preview_position()
         states = (glyph_states(self._surface.glyphs, self.prefs,
-                              ActiveLine(0, "", 0, 3800, 1, 700, 3200), position, .5, pixels, 730)
+                              self._preview_item(), position, .5, pixels, 730)
                   if self.prefs.animation_style != "classic" else None)
         image = TEXT_EFFECTS.render(self._surface, self.prefs, states=states)
         width = 2 * max(abs(self._surface.origin.x()), abs(self._surface.origin.x() + image.width() / image.devicePixelRatio()))
@@ -328,7 +332,8 @@ class FontPreview(QWidget):
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         opacity = self.prefs.opacity / 100
         if self._running and self.prefs.animation_style == "classic":
-            opacity *= max(0, min(1, position / 300, (3800 - position) / 600))
+            opacity *= max(0, min(1, position / min(300 * 100 / self.prefs.entry_speed, 1900),
+                                 (3800 - position) / min(600 * 100 / self.prefs.exit_speed, 1900)))
         painter.setOpacity(opacity)
         painter.drawImage(self._surface.origin, image)
 
@@ -564,6 +569,28 @@ class ControlPanel(QWidget):
             spin.setSingleStep(100 if name == "delay_ms" else 1)
             spin.valueChanged.connect(lambda value, key=name: self._set_preference(key, value))
             self.spins[name] = spin
+        self.parameter_fields = {}
+        self.parameter_sliders = {}
+        for name, low, high, suffix in (("entry_speed", 25, 300, " %"), ("exit_speed", 25, 300, " %"),
+                                        ("shake_frequency", 1, 15, " 次/秒"), ("fall_distance", 0, 128, " px")):
+            spin = QSpinBox()
+            spin.setRange(low, high)
+            spin.setSuffix(suffix)
+            spin.setValue(getattr(self.prefs, name))
+            spin.setSingleStep(5 if name.endswith("speed") else 1)
+            slider = QSlider(Qt.Orientation.Horizontal)
+            slider.setRange(low, high)
+            slider.setValue(spin.value())
+            field = QWidget()
+            row = QHBoxLayout(field)
+            row.setContentsMargins(0, 0, 0, 0)
+            row.addWidget(slider, 1)
+            row.addWidget(spin)
+            slider.valueChanged.connect(spin.setValue)
+            spin.valueChanged.connect(slider.setValue)
+            spin.valueChanged.connect(lambda value, key=name: self._set_preference(key, value))
+            self.spins[name] = spin
+            self.parameter_fields[name], self.parameter_sliders[name] = field, slider
         self.color_button = QPushButton()
         self.color_button.clicked.connect(self.choose_color)
         self._update_color_button()
@@ -613,12 +640,14 @@ class ControlPanel(QWidget):
         self.font_combo.currentIndexChanged.connect(self._font_selected)
         for title, fields in (
             ("显示与文字", (("显示区域", self.region), ("歌词字体", font_field), ("文字样式", self.text_style),
-                          ("预览背景", self.preview_background), ("效果预览", self.font_preview),
-                          ("动画预览", self.replay_button),
                           ("文字大小", self.spins["font_size"]),
                           (self.color_label, self.color_button), ("发光强度", self.glow_field),
                           ("歌词透明度", self.spins["opacity"]))),
-            ("律动与同步", (("歌词动画", self.animation_combo), ("运动方式", self.motion), ("律动幅度", self.spins["jump"]),
+            ("律动与同步", (("歌词动画", self.animation_combo),
+                          ("入场速度", self.parameter_fields["entry_speed"]), ("退场速度", self.parameter_fields["exit_speed"]),
+                          ("抖动频率", self.parameter_fields["shake_frequency"]), ("跌落距离（32px 字号）", self.parameter_fields["fall_distance"]),
+                          ("预览背景", self.preview_background), ("效果预览", self.font_preview), ("动画预览", self.replay_button),
+                          ("运动方式", self.motion), ("律动幅度", self.spins["jump"]),
                           ("倾斜范围", self.spins["angle"]), ("同步偏移", self.spins["delay_ms"]))),
         ):
             section, section_body = card(title)
@@ -635,6 +664,9 @@ class ControlPanel(QWidget):
                 section_body.addWidget(self.white_hint)
                 section_body.addWidget(self.font_status)
             if title == "律动与同步":
+                hint = label("速度 100% 为原有效果；数值越高越快。短句会自动压缩动画时长。", "muted")
+                hint.setWordWrap(True)
+                section_body.addWidget(hint)
                 section_body.addWidget(label("偏移为正：歌词晚一点出现；为负：早一点出现。", "muted"))
             body.addWidget(section)
         body.addStretch(1)
@@ -893,7 +925,7 @@ class ControlPanel(QWidget):
         self.overlay.refresh_preferences()
         self._update_effect_controls()
         self.font_preview.update()
-        if key == "animation_style":
+        if key in ("animation_style", "entry_speed", "exit_speed", "shake_frequency", "fall_distance"):
             self.font_preview.replay()
 
     def _update_effect_controls(self):
@@ -903,6 +935,8 @@ class ControlPanel(QWidget):
         self.white_hint.setVisible(glowing)
         self.glow_slider.setEnabled(glowing)
         self.glow_value.setText(f"{self.prefs.glow_strength}%")
+        self.parameter_fields["shake_frequency"].setEnabled(self.prefs.animation_style.endswith("_shake"))
+        self.parameter_fields["fall_distance"].setEnabled(self.prefs.animation_style.startswith("fall_"))
 
     def _reload_fonts(self):
         self.font_combo.blockSignals(True)

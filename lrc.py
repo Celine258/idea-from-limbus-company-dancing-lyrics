@@ -79,12 +79,16 @@ class ActiveLine:
 
 class LyricTimeline:
     """Position is authoritative: pause and seek need no event replay."""
-    def __init__(self, document: LyricDocument, delay_ms: int = 0, animation_style: str = "classic"):
+    def __init__(self, document: LyricDocument, delay_ms: int = 0, animation_style: str = "classic",
+                 entry_speed: int = 100, exit_speed: int = 100):
         # A positive LRC offset advances timestamps; a positive UI delay postpones them.
         shift = delay_ms - document.offset_ms
         self.lines = [LyricLine(line.start_ms + shift, line.text) for line in document.lines]
         self.starts = [line.start_ms for line in self.lines]
         self.animation_style = animation_style
+        self.entry_duration = 700 * 100 / entry_speed
+        self.exit_duration = 600 * 100 / exit_speed
+        self.classic_entry = 300 * 100 / entry_speed
 
     def _animated_window(self, index, duration):
         line = self.lines[index]
@@ -93,17 +97,17 @@ class LyricTimeline:
         if duration > 0:
             boundary = min(boundary, duration)
         interval = max(0, boundary - line.start_ms)
-        entry_end = line.start_ms + min(700, interval * .35)
+        entry_end = line.start_ms + min(self.entry_duration, interval * .35)
         if following and following.text and boundary < (duration or float("inf")):
             next_boundary = (self.lines[index + 2].start_ms if index + 2 < len(self.lines)
                              else duration or following.start_ms + 6000)
             if duration > 0:
                 next_boundary = min(next_boundary, duration)
-            tail = min(600, max(0, next_boundary - boundary) * .45)
+            tail = min(self.exit_duration, max(0, next_boundary - boundary) * .45)
             exit_start, end = boundary, boundary + tail
         else:
             end = boundary
-            exit_start = end - min(600, interval * .3)
+            exit_start = end - min(self.exit_duration, interval * .3)
         return ActiveLine(index, line.text, line.start_ms, end, 1, entry_end, exit_start)
 
     def visible(self, position_ms: float, duration_ms: int = 0) -> list[ActiveLine]:
@@ -121,14 +125,14 @@ class LyricTimeline:
             end = line.start_ms + 6000
             if i + 1 < len(self.lines):
                 following = self.lines[i + 1]
-                end = min(end, following.start_ms + (600 if following.text else 0))
+                end = min(end, following.start_ms + (self.exit_duration if following.text else 0))
             if duration_ms > 0:
                 end = min(end, duration_ms)
             age, life = position_ms - line.start_ms, end - line.start_ms
             if life <= 0 or age < 0 or position_ms >= end:
                 continue
-            fade_in = min(300, life / 2)
-            fade_out = min(600, life / 2)
+            fade_in = min(self.classic_entry, life / 2)
+            fade_out = min(self.exit_duration, life / 2)
             opacity = max(0.0, min(1.0, age / fade_in, (end - position_ms) / fade_out))
             active.append(ActiveLine(i, line.text, line.start_ms, end, opacity))
         return active

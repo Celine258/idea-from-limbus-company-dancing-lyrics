@@ -119,7 +119,7 @@ class TextEffects:
                 ink = glyph.path.boundingRect().adjusted(-margin, -margin, margin, margin)
                 if asset:
                     ink = ink.united(QRectF(asset[1], asset[0].deviceIndependentSize()))
-                ink = motion_bounds(ink, pixels, jump_limit, prefs.animation_style, angle)
+                ink = motion_bounds(ink, pixels, jump_limit, prefs.animation_style, angle, prefs.fall_distance)
                 ink.translate(glyph.x, glyph.baseline)
                 bounds = bounds.united(ink)
             assets.append(asset)

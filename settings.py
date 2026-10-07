@@ -35,6 +35,10 @@ class Preferences:
     text_style: str = "glow"
     glow_strength: int = 60
     animation_style: str = "classic"
+    entry_speed: int = 100
+    exit_speed: int = 100
+    shake_frequency: int = 6
+    fall_distance: int = 48
 
 
 class SettingsStore:
@@ -53,7 +57,9 @@ class SettingsStore:
                 pass
         for key, low, high in (("font_size", 18, 64), ("opacity", 10, 100),
                                ("jump", 0, 30), ("angle", 0, 25),
-                               ("delay_ms", -10000, 10000), ("volume", 0, 100), ("glow_strength", 0, 100)):
+                               ("delay_ms", -10000, 10000), ("volume", 0, 100), ("glow_strength", 0, 100),
+                               ("entry_speed", 25, 300), ("exit_speed", 25, 300),
+                               ("shake_frequency", 1, 15), ("fall_distance", 0, 128)):
             setattr(prefs, key, max(low, min(high, getattr(prefs, key))))
         if prefs.region not in ("edges", "full"):
             prefs.region = "edges"

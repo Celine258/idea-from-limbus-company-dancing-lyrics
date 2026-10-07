@@ -103,7 +103,7 @@ def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRe
             if prefs.animation_style != "classic":
                 reserve += prefs.jump * .6 + 8
                 if prefs.animation_style.startswith("fall_"):
-                    reserve += pixels * 1.5 * abs(math.sin(math.radians(angle)))
+                    reserve += prefs.fall_distance * pixels / 32 * abs(math.sin(math.radians(angle)))
             glyphs, width, height = _glyph_layout(text, pixels, max(10, region.width() - reserve), prefs.font_family)
             # Include stroke, character scale, jumping and fade-out drift.
             stroke, glow = effect_geometry(pixels, prefs.text_style)
@@ -115,7 +115,7 @@ def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRe
                 for glyph in glyphs:
                     if not glyph.path.isEmpty():
                         ink = glyph.path.boundingRect().adjusted(-margin, -margin, margin, margin)
-                        animated = animated.united(motion_bounds(ink, pixels, prefs.jump, prefs.animation_style, angle)
+                        animated = animated.united(motion_bounds(ink, pixels, prefs.jump, prefs.animation_style, angle, prefs.fall_distance)
                                                    .translated(glyph.x, glyph.baseline))
                 box_w = 2 * max(abs(animated.left()), abs(animated.right())) + 16
                 box_h = 2 * max(abs(animated.top()), abs(animated.bottom())) + 16

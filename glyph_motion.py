@@ -26,8 +26,8 @@ def noise_value(seed, rank, axis, sample):
     return ((value ^ (value >> 16)) / 0xFFFFFFFF) * 2 - 1
 
 
-def noise(seed, rank, axis, seconds):
-    clock = seconds * 6
+def noise(seed, rank, axis, seconds, frequency=6):
+    clock = seconds * frequency
     sample = math.floor(clock)
     weight = smooth(clock - sample)
     first = noise_value(seed, rank, axis, sample)
@@ -56,16 +56,17 @@ def glyph_states(glyphs, prefs, item, position_ms, energy, pixels, seed=0, angle
         if glyph.path.isEmpty():
             result.append(GlyphState(glyph.x, glyph.baseline, 0))
             continue
-        entering = stagger(position_ms, item.start_ms, item.entry_end_ms, rank, count, 140)
-        leaving = stagger(position_ms, item.exit_start_ms, item.end_ms, rank, count, 350 if falling else 200)
+        entering = stagger(position_ms, item.start_ms, item.entry_end_ms, rank, count, 140 * 100 / prefs.entry_speed)
+        leaving = stagger(position_ms, item.exit_start_ms, item.end_ms, rank, count,
+                          (350 if falling else 200) * 100 / prefs.exit_speed)
         opacity = smooth(entering) * (1 - smooth(leaving))
         if shaking:
-            dx = amplitude * .3 * noise(seed, rank, 0, seconds)
-            dy = amplitude * .5 * noise(seed, rank, 1, seconds)
+            dx = amplitude * .3 * noise(seed, rank, 0, seconds, prefs.shake_frequency)
+            dy = amplitude * .5 * noise(seed, rank, 1, seconds, prefs.shake_frequency)
         else:
             dx = 0
             dy = amplitude * .4 * math.sin(seconds * 2 * math.pi * 1.5 - rank * .6)
-        distance = 1.5 * pixels * leaving ** 2 if falling else 0
+        distance = prefs.fall_distance * pixels / 32 * leaving ** 2 if falling else 0
         rotation = (8 if noise_value(seed, rank, 2, 0) >= 0 else -8) * leaving ** 2 if falling else 0
         # Convert screen-vertical fall to the tilted sentence's local coordinates.
         result.append(GlyphState(glyph.x + dx + math.sin(radians) * distance,
@@ -75,7 +76,7 @@ def glyph_states(glyphs, prefs, item, position_ms, energy, pixels, seed=0, angle
     return result
 
 
-def motion_bounds(ink, pixels, jump, style, angle=0):
+def motion_bounds(ink, pixels, jump, style, angle=0, fall_distance=48):
     """Conservative local bounds including rotation, shake and screen-vertical fall."""
     if style == "classic":
         scaled = QRectF(ink.x() * 1.04, ink.y() * 1.04, ink.width() * 1.04, ink.height() * 1.04)
@@ -85,6 +86,7 @@ def motion_bounds(ink, pixels, jump, style, angle=0):
         for rotation in (-8, 8):
             bounds = bounds.united(QTransform().rotate(rotation).mapRect(ink))
         radians = math.radians(angle)
-        bounds = bounds.united(bounds.translated(math.sin(radians) * pixels * 1.5,
-                                                math.cos(radians) * pixels * 1.5))
+        distance = fall_distance * pixels / 32
+        bounds = bounds.united(bounds.translated(math.sin(radians) * distance,
+                                                math.cos(radians) * distance))
     return bounds.adjusted(-jump * .3 - 2, -jump * .5 - 2, jump * .3 + 2, jump * .5 + 2)

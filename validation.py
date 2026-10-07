@@ -71,6 +71,7 @@ class SmokeCheck:
         self._capture_fonts()
         self._capture_effects()
         self._capture_animations()
+        self._capture_parameters()
         self._capture_interface()
         image = self.overlay.grab().toImage()
         image.save(str(self.report_dir / "overlay-transparent.png"))
@@ -165,7 +166,8 @@ class SmokeCheck:
             panel.grab().save(str(self.report_dir / f"effects-{name}-top.png"))
             for control in (panel.region, panel.font_combo, panel.import_font_button, panel.font_preview,
                             panel.text_style, panel.preview_background, panel.glow_field,
-                            panel.color_button, panel.motion, panel.animation_combo, panel.replay_button, *panel.spins.values()):
+                            panel.color_button, panel.motion, panel.animation_combo, panel.replay_button,
+                            *panel.parameter_fields.values(), *panel.spins.values()):
                 # Spin boxes expose the edit cursor to ensureWidgetVisible;
                 # scroll the entire field into view, including its arrow buttons.
                 center = control.mapTo(panel.effects_scroll.widget(), control.rect().center())
@@ -255,6 +257,26 @@ class SmokeCheck:
         panel.animation_combo.setCurrentIndex(panel.animation_combo.findData(original))
         self.results["animation_changes_preserve_transport"] = transport == (
             self.player._anchor_ms, self.player._anchor_time, self.player.playing)
+
+    def _capture_parameters(self):
+        panel = self.panel
+        keys = ("entry_speed", "exit_speed", "shake_frequency", "fall_distance")
+        original = {key: getattr(panel.prefs, key) for key in keys}
+        style, position = panel.prefs.animation_style, self.player.position()
+        panel.animation_combo.setCurrentIndex(panel.animation_combo.findData("fall_shake"))
+        for key, value in zip(keys, (180, 65, 12, 128)):
+            panel.spins[key].setValue(value)
+        self.results["animation_parameters_saved"] = all(getattr(panel.store.load(), key) == value
+            for key, value in zip(keys, (180, 65, 12, 128)))
+        self.app.processEvents()
+        center = panel.animation_combo.mapTo(panel.effects_scroll.widget(), panel.animation_combo.rect().center())
+        panel.effects_scroll.ensureVisible(center.x(), center.y(), 0, 120)
+        self.app.processEvents()
+        panel.grab().save(str(self.report_dir / "animation-parameters.png"))
+        self.results["animation_parameters_preserve_paused_clock"] = not self.player.playing and self.player.position() == position
+        for key, value in original.items():
+            panel.spins[key].setValue(value)
+        panel.animation_combo.setCurrentIndex(panel.animation_combo.findData(style))
 
     def _finish(self):
         self.results["end_of_song_clears_overlay"] = self.player.ended

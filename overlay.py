@@ -54,15 +54,19 @@ class LyricsOverlay(QWidget):
 
     def set_document(self, document: LyricDocument | None):
         self.document = document
-        self.timeline = LyricTimeline(document, self.prefs.delay_ms, self.prefs.animation_style) if document else None
+        self.timeline = self._timeline(document) if document else None
         self.seed = random.randrange(1_000_000)
         self.clear_layouts()
         self._sync_timer()
 
     def refresh_preferences(self):
         if self.document:
-            self.timeline = LyricTimeline(self.document, self.prefs.delay_ms, self.prefs.animation_style)
+            self.timeline = self._timeline(self.document)
         self.clear_layouts()
+
+    def _timeline(self, document):
+        return LyricTimeline(document, self.prefs.delay_ms, self.prefs.animation_style,
+                             self.prefs.entry_speed, self.prefs.exit_speed)
 
     def clear_layouts(self):
         self.layouts.clear()
@@ -146,7 +150,8 @@ class LyricsOverlay(QWidget):
                 continue
             age = position - item.start_ms
             remaining = item.end_ms - position
-            drift = 8 * (1 - min(1, remaining / 600)) - 5 * (1 - min(1, age / 300))
+            drift = (8 * (1 - min(1, remaining / (600 * 100 / self.prefs.exit_speed)))
+                     - 5 * (1 - min(1, age / (300 * 100 / self.prefs.entry_speed))))
             if self.prefs.animation_style != "classic":
                 drift = 0
             painter.save()

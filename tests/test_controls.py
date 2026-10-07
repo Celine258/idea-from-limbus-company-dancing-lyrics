@@ -295,6 +295,21 @@ class ControlPanelTests(unittest.TestCase):
         self.assertEqual(self.panel.font_combo.currentData(), "Floating Lyrics Test")
         self.assertEqual(self.panel.prefs.font_family, "Floating Lyrics Test")
 
+    def test_animation_parameter_pairs_save_and_enable_only_relevant_controls(self):
+        self.panel.spins["entry_speed"].setValue(180)
+        self.panel.parameter_sliders["exit_speed"].setValue(65)
+        self.assertEqual(self.store.load().entry_speed, 180)
+        self.assertEqual(self.panel.spins["exit_speed"].value(), 65)
+        self.assertFalse(self.panel.parameter_fields["shake_frequency"].isEnabled())
+        self.panel.animation_combo.setCurrentIndex(self.panel.animation_combo.findData("fall_shake"))
+        self.assertTrue(self.panel.parameter_fields["shake_frequency"].isEnabled())
+        self.assertTrue(self.panel.parameter_fields["fall_distance"].isEnabled())
+        self.panel.spins["shake_frequency"].setValue(12)
+        self.panel.animation_combo.setCurrentIndex(self.panel.animation_combo.findData("ripple_wave"))
+        self.assertEqual(self.store.load().shake_frequency, 12)
+        self.assertFalse(self.panel.parameter_fields["fall_distance"].isEnabled())
+        self.assertEqual(self.player.seeks, [])
+
     def test_four_animation_options_save_without_mutating_transport(self):
         from settings import ANIMATION_STYLES
         self.player.playing, self.player.clock = True, 6500
@@ -332,7 +347,7 @@ class ControlPanelTests(unittest.TestCase):
         APP.processEvents()
         self.panel.font_preview.replay()
         self.assertTrue(self.panel.font_preview.timer.isActive())
-        scroll.verticalScrollBar().setValue(scroll.verticalScrollBar().maximum())
+        scroll.verticalScrollBar().setValue(0)
         QTest.qWait(70)
         self.assertFalse(self.panel.font_preview.timer.isActive())
         scroll.ensureWidgetVisible(self.panel.font_preview)
