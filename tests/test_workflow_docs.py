@@ -31,6 +31,18 @@ class WorkflowDocumentationTests(unittest.TestCase):
             self.assertIn(phrase, text)
         for phrase in ("有中文翻译时优先显示译文", "无中文翻译", "不套用原文逐字时间", "独立于效果预设"):
             self.assertIn(phrase, text)
+        from PySide6.QtGui import QImageReader
+        fingerprints = []
+        for background in ("dark", "light"):
+            relative = f"docs/images/carmen-{background}.png"
+            self.assertIn(f"]({relative})", text)
+            reader = QImageReader(str(ROOT / relative))
+            image = reader.read()
+            self.assertFalse(image.isNull(), reader.errorString())
+            self.assertGreaterEqual(image.width(), 700)
+            self.assertGreaterEqual(image.height(), 200)
+            fingerprints.append(hashlib.sha256(image.constBits()).digest())
+        self.assertNotEqual(*fingerprints, "深浅背景预览应为不同的实际渲染图片")
 
     def test_readme_embeds_desktop_recording_before_download_link(self):
         text = (ROOT / "README.md").read_text(encoding="utf-8-sig")

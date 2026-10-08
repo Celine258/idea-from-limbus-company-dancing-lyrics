@@ -8,10 +8,12 @@ from PySide6.QtCore import QObject, QTimer, Signal
 from PySide6.QtNetwork import QHostAddress
 from PySide6.QtWebSockets import QWebSocketServer
 from lrc import LyricDocument, LyricLine, TimedWord, chinese_translation
+from app_info import NETEASE_VERSIONS
 
 PORT = 38473
 PROTOCOL = 1
 SUPPORTED_CLIENT = "3.1.41"
+SUPPORTED_CLIENTS = tuple('.'.join(version.split('.')[:3]) for version in NETEASE_VERSIONS)
 
 
 def read_bridge_config(path: Path) -> dict:
@@ -31,7 +33,7 @@ def _number(value, maximum):
 def validate_snapshot(data: dict) -> dict:
     if not isinstance(data, dict) or data.get("protocol") != PROTOCOL:
         raise ValueError("插件协议不兼容")
-    if data.get("client") != SUPPORTED_CLIENT:
+    if data.get("client") not in SUPPORTED_CLIENTS:
         raise ValueError("网易云版本尚未验证，请更新联动插件。")
     song = data.get("song")
     if not isinstance(song, dict):

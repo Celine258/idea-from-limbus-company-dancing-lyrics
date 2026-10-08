@@ -11,7 +11,7 @@ from fonts import FontLibrary, PRESET_FONTS, lyric_font
 
 class NeteaseSmokeCheck:
     def __init__(self, app, panel, directory, require_settings=False, font_fixture=None, require_effects=False,
-                 require_animations=False, require_singing=False):
+                 require_animations=False, require_singing=False, require_translation=False):
         self.app, self.panel, self.player = app, panel, panel.player
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -34,6 +34,9 @@ class NeteaseSmokeCheck:
         self.singing_checks = {}
         self.original_singing = panel.prefs.singing_sync
         self.theme_checks = {}
+        self.require_translation = require_translation
+        self.translation_checks = {}
+        self.translation_evidence = {}
         self.jumps = 0
         self.player.discontinuity.connect(self._jump)
         self.timer = QTimer(panel)
@@ -85,6 +88,8 @@ class NeteaseSmokeCheck:
             self._check_animations()
         if self.require_singing and not self.singing_checks and settings_visible and player.playing and active:
             self._check_singing()
+        if self.require_translation and not self.translation_checks and settings_visible and document and any(line.translation for line in document.lines):
+            self._check_translation()
         sample = {"seconds": round(time.monotonic()-self.started, 2), "connected": player.connected,
                   "song": player.song_id, "playing": player.playing, "position": round(player.position(), 1),
                   "lyricCount": len(document.lines) if document else 0, "activeCount": len(active),
@@ -155,6 +160,7 @@ class NeteaseSmokeCheck:
             panel.font_preview.grab().save(str(self.directory / f"netease-preview-{name}.png"))
         result = validate_effects(self.directory, panel.prefs, panel.devicePixelRatioF())
         self.effect_evidence = result.pop("effect_benchmark")
+        self.effect_evidence["carmen"] = result.pop("carmen_effect_benchmark")
         self.effect_checks.update(result)
         panel.text_style.setCurrentIndex(panel.text_style.findData(original[0]))
         panel.glow_slider.setValue(original[1])
@@ -195,12 +201,16 @@ class NeteaseSmokeCheck:
             checks["realSingingEmphasisObserved"] = any(sample.get("emphasis", 0) > 0 for sample in connected)
             checks["missingWordTimesKeepOrdinaryLyrics"] = any(sample.get("timedLines", 0) == 0 and sample["lyricCount"] > 0
                                                              and sample["activeCount"] > 0 for sample in connected)
+        if self.require_translation:
+            checks.update(self.translation_checks or {"realChineseTranslationReceived": False})
         report = {"passed": all(checks.values()), "checks": checks, "jumps": self.jumps,
                   "sampleCount": len(samples), "samples": samples}
         if self.font_fixture:
             report["fontVerification"] = self.font_evidence
         if self.require_effects:
             report["effectVerification"] = self.effect_evidence
+        if self.require_translation:
+            report["translationVerification"] = self.translation_evidence
         if self.require_animations:
             report["animationVerification"] = self.animation_evidence
             self.panel.animation_combo.setCurrentIndex(self.panel.animation_combo.findData(self.original_animation))
@@ -208,6 +218,27 @@ class NeteaseSmokeCheck:
             self.panel.singing_checkbox.setChecked(self.original_singing)
         (self.directory / "netease-report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
         self.app.exit(0 if report["passed"] else 1)
+
+    def _check_translation(self):
+        panel, player = self.panel, self.player
+        original = panel.prefs.prefer_translation
+        transport = (player._anchor, player._at, player.song_id, player.playing, self.jumps)
+        document = panel.overlay.document
+        try:
+            panel.translation_checkbox.setChecked(True)
+            translated = panel.overlay.display_document
+            reliable = [(before, after) for before, after in zip(document.lines, translated.lines) if before.translation]
+            self.translation_checks = {
+                "realChineseTranslationReceived": bool(reliable),
+                "translationUsesRealTextAndSentenceTimes": bool(reliable) and all(after.text == before.translation and after.start_ms == before.start_ms and not after.words for before, after in reliable),
+                "translationSwitchPersists": panel.store.load().prefer_translation is True,
+                "translationSwitchKeepsTransport": transport == (player._anchor, player._at, player.song_id, player.playing, self.jumps)}
+            self.translation_evidence = {"songId": player.song_id, "translatedLines": len(reliable),
+                "timePairsMs": [[before.start_ms, after.start_ms] for before, after in reliable[:3]]}
+            panel.overlay.grab().save(str(self.directory / "netease-translated-overlay.png"))
+        finally:
+            panel.translation_checkbox.setChecked(original)
+        self.translation_checks["translationRestoresOriginalText"] = (not original and panel.overlay.display_document is document) or original
 
     def _check_animations(self):
         from animation_validation import validate_animations

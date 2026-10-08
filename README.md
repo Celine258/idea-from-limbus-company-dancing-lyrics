@@ -6,23 +6,25 @@
 
 桌面实机录屏，约 18 秒，循环播放（GIF 无声）。
 
-**[下载 Windows x64 试用版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.5.1-beta.1)** · [问题反馈](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues)
+**[下载 Windows x64 试用版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.6.0-beta.1)** · [问题反馈](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues)
 
-[观看 30 秒无音乐演示](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.5.1-beta.1/dancing-lyrics-demo-30s.mp4)
+[观看 30 秒无音乐演示](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.6.0-beta.1/dancing-lyrics-demo-30s.mp4)
 
-1. 下载 `dancing-lyrics-0.5.1-beta.1-windows-x64.zip`，完整解压到长期保留且可写的目录。
+1. 下载 `dancing-lyrics-0.6.0-beta.1-windows-x64.zip`，完整解压到长期保留且可写的目录。
 2. 完全退出网易云（包括托盘），双击 **安装网易云联动.bat**，在窗口点击安装。
 3. 重开网易云，点击播放栏的“都市回响”；右键或点击“设置”调整效果。
 
-无需 Python 或 Git。请下载 ZIP 成品，页面的 Source code 是源码。已验证 **Windows 11 x64、网易云 3.1.41.205529 x64、BetterNCM 1.3.4**；其他网易云版本停止安装并提示。尚未在第二台干净电脑完成试装。
+无需 Python 或 Git。请下载 ZIP 成品，页面的 Source code 是源码。同一个 ZIP 自动识别 **网易云 3.1.40.205461／3.1.41.205529 x64**。已验证 Windows 11 x64、BetterNCM 1.3.4；其他网易云版本停止安装并提示。尚未在第二台干净电脑完成试装。
 
 更新：退出网易云和歌词程序，新包覆盖原目录并再次安装，保留 `.state`。
 卸载：完全退出网易云后运行 **卸载网易云联动.bat**，保留个人设置、字体、预设和共用框架。
 安装后移动程序需重新安装。
 
+插件数据目录请保留默认 `C:\betterncm`，或选择英文路径。BetterNCM 1.3.4 在中文数据路径下无法可靠解包，安装器会提前提示；歌词程序及网易云本身可以放在中文目录。
+
 详细流程见 [使用说明](release/使用说明.txt)。自有源码采用 [MIT](LICENSE)，运行组件保留 [第三方许可](THIRD_PARTY_NOTICES.md)。
 
-应用版本 **0.5.1-beta.1**。侧栏显示“创作者：Bilibili-鈴仙優昙華院因幡”和版本号，标语为 **FACE THE SIN. SAVE THE E.G.O**。左侧下方可选择“默认主题／深色主题／特殊主题”，立即生效并自动保存，重启后保留选择。默认主题和深色主题保留原外观；特殊主题采用 Limbus Company 风格的黑金配色、切角双层边框和机械图纸底纹。
+应用版本 **0.6.0-beta.1**。侧栏显示“创作者：Bilibili-鈴仙優昙華院因幡”和版本号，标语为 **FACE THE SIN. SAVE THE E.G.O**。左侧下方可选择“默认主题／深色主题／特殊主题”，立即生效并自动保存，重启后保留选择。默认主题和深色主题保留原外观；特殊主题采用 Limbus Company 风格的黑金配色、切角双层边框和机械图纸底纹。
 
 特殊主题将侧栏、窗口、运行中的 Windows 任务栏及系统托盘图标换为但丁钟头；切回默认或深色主题恢复红色波形图标。后台运行时托盘也显示当前主题图标。主题不改变歌词颜色、字体、动画、效果预设、播放进度或独立的预览背景；更新保留已有选择。安装目录里的 EXE 文件图标仍为原图标，未运行时的固定快捷方式由 Windows 管理。
 
@@ -34,7 +36,7 @@
 
 Windows 桌面音乐伴侣：透明置顶、鼠标穿透，歌词随机出现在屏幕两侧，整句倾斜，单字随音乐强弱跳动并逐渐淡出。
 
-现已支持网易云音乐 Windows **3.1.41.205529（64 位）** 联动：通过网易云播放栏的“都市回响”按钮开启桌面效果，右键该按钮或点击旁边的“设置”，直接打开“歌词效果”页。歌曲、歌词和进度来自网易云，音乐仍由网易云播放。安装、更新和回滚见 [网易云联动说明](NETEASE.md)。
+现已支持网易云音乐 Windows **3.1.40.205461／3.1.41.205529（64 位）** 联动：通过网易云播放栏的“都市回响”按钮开启桌面效果，右键该按钮或点击旁边的“设置”，直接打开“歌词效果”页。歌曲、歌词和进度来自网易云，音乐仍由网易云播放。安装、更新和回滚见 [网易云联动说明](NETEASE.md)。
 
 ## 源码与开发版启动
 
@@ -76,6 +78,11 @@ Windows 桌面音乐伴侣：透明置顶、鼠标穿透，歌词随机出现在
 - 默认主屏幕；上述网易云版本已接入可选 YRC 演唱时间，支持情况取决于具体歌曲。精准节拍检测与其他客户端版本留待后续。
 
 设置和错误日志位于程序目录的 `.state`，不会修改系统 Python 环境。透明窗口是普通桌面置顶窗口；独占全屏应用等场景需另行验证。
+
+“卡门的声音”实际绘制预览（深浅底色只用于查看效果）：
+
+![卡门的声音：深色背景](docs/images/carmen-dark.png)
+![卡门的声音：浅色背景](docs/images/carmen-light.png)
 
 打包版日志：`dist/FloatingLyrics/.state/app.log`；源码日志：`.state/app.log`。日志记录启动时间和进程编号，便于排查打不开面板的情况。
 

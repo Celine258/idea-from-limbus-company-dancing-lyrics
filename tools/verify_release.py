@@ -88,7 +88,7 @@ def check_bat_window(bat, directory):
     return {"entry": bat.name, "nativeWindowVisible": True}
 
 
-def verify(archive_path, directory, client_exe, framework):
+def verify(archive_path, directory, client_exe, framework, profile_directory=None):
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
     directory = Path(directory).resolve()
     if directory.exists():
@@ -100,7 +100,10 @@ def verify(archive_path, directory, client_exe, framework):
         archive.extractall(directory / "中文 解压路径")
     app = directory / "中文 解压路径/DancingLyrics"
     exe = app / "FloatingLyrics.exe"
-    client, profile = directory / "网易云 隔离客户端", directory / "BetterNCM 数据"
+    client = directory / "网易云 隔离客户端"
+    profile = Path(profile_directory).resolve() if profile_directory else directory / "BetterNCM-profile"
+    if profile.exists() or not str(profile).isascii():
+        raise ValueError("验证须指定新的英文框架数据路径 --profile-directory，不能覆盖已有插件目录。")
     client.mkdir()
     shutil.copyfile(client_exe, client / "cloudmusic.exe")
     env = dict(os.environ)
@@ -170,5 +173,6 @@ if __name__ == "__main__":
     parser.add_argument("directory", type=Path)
     parser.add_argument("--client-exe", type=Path, default=Path("C:/Program Files/NetEase/CloudMusic/cloudmusic.exe"))
     parser.add_argument("--framework", type=Path, default=Path("artifacts/netease-probe/BetterNCMII-1.3.4.dll"))
+    parser.add_argument("--profile-directory", type=Path, help="新的英文框架数据路径；应用与客户端路径仍可含中文")
     args = parser.parse_args()
-    verify(args.archive, args.directory, args.client_exe, args.framework.resolve())
+    verify(args.archive, args.directory, args.client_exe, args.framework.resolve(), args.profile_directory)

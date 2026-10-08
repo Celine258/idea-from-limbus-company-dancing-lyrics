@@ -10,8 +10,10 @@ import subprocess
 import tempfile
 import urllib.request
 import zipfile
+from app_info import NETEASE_VERSIONS
 
-CLIENT_VERSION = "3.1.41.205529"
+CLIENT_VERSIONS = NETEASE_VERSIONS
+CLIENT_VERSION = CLIENT_VERSIONS[-1]
 FRAMEWORK_VERSION = "1.3.4"
 FRAMEWORK_URL = "https://github.com/std-microblock/chromatic/releases/download/1.3.4/BetterNCMII.dll"
 FRAMEWORK_HASH = "a7c77af418d7940e63faa58ea036fba1f4baad497947109ea52ed78c8e86608f"
@@ -178,8 +180,8 @@ class NeteaseInstaller:
             if not (self.app_dir / "FloatingLyrics.exe").is_file():
                 raise InstallError("请使用完整解压的成品安装，不要从源码目录直接安装。")
             version = self.version_reader(exe)
-            if version != CLIENT_VERSION:
-                raise InstallError(f"当前仅支持网易云 {CLIENT_VERSION} x64；检测到 {version}，未改动客户端。")
+            if version not in CLIENT_VERSIONS:
+                raise InstallError(f"当前支持网易云 {'／'.join(CLIENT_VERSIONS)} x64；检测到 {version}，未改动客户端。")
             # PE machine type 0x8664 is required by the pinned x64 framework.
             with exe.open("rb") as stream:
                 stream.seek(0x3c)
@@ -192,6 +194,8 @@ class NeteaseInstaller:
     def install(self, client, profile, framework=None):
         client = self.check_client(client)
         profile = Path(profile).resolve()
+        if not str(profile).isascii():
+            raise InstallError("BetterNCM 1.3.4 无法可靠加载含中文的插件数据目录。请保留默认 C:\\betterncm 或选择英文路径；歌词程序和网易云目录可含中文。")
         dll, plugin = client / "msimg32.dll", profile / "plugins" / PLUGIN_NAME
         if dll.exists() and not framework_valid(dll):
             raise InstallError("已有不同版本的 msimg32.dll，未覆盖；请先确认现有 BetterNCM 版本。")
@@ -210,7 +214,7 @@ class NeteaseInstaller:
             previous = {path: path.read_bytes() if path.exists() else None for path in paths}
             created_dll = not dll.exists()
             receipt = {"version": 1, "client": str(client), "profile": str(profile), "app": str(self.app_dir),
-                       "clientVersion": CLIENT_VERSION, "frameworkVersion": FRAMEWORK_VERSION,
+                       "clientVersion": self.version_reader(client / "cloudmusic.exe"), "frameworkVersion": FRAMEWORK_VERSION,
                        "frameworkHash": FRAMEWORK_HASH, "createdFramework": created_dll, "installed": True}
             try:
                 if created_dll:

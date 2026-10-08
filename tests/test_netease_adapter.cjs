@@ -5,6 +5,8 @@ const state = {playing:{resourceTrackId:'42',resourceName:'测试歌曲',resourc
     'async:lyric':{resourceTrackId:'42',displayType:'default',offset:.5,
         lyricLines:[{time:1.5,lyric:'已含客户端偏移的测试歌词'}, {time:30,lyric:''}]}};
 const data = adapter.snapshot(state,1250,true);
+assert.equal(adapter.snapshot(state,1250,true,'3.1.40').client,'3.1.40');
+assert.throws(()=>adapter.snapshot(state,1250,true,'3.1.42'),/尚未验证/);
 assert.equal(data.position_ms,1250);
 assert.equal(data.duration_ms,120000);
 assert.equal(data.playing,true);
@@ -79,3 +81,21 @@ assert.equal('translation' in adapter.attachTranslations([{time_ms:1000,text:''}
 assert.equal('translation' in adapter.attachTranslations([{time_ms:1000,text:'original'}],[{time:.9,lyric:'歧义甲'},{time:1.1,lyric:'歧义乙'}])[0],false);
 assert.equal(adapter.lyricsFor({...bilingual,'async:lyric':{...bilingual['async:lyric'],resourceTrackId:'new'}},'42').length,0);
 console.log('Optional Chinese translation, single offset, late data and fallback passed');
+
+const {findSongDetails}=require('../tools/client_metadata.cjs');
+for(const [id,key,symbol] of [['14','Oh','qi'],['15','ji','abc']]){
+    const method=()=>[];
+    const runtime=id=>({[key]:method});
+    runtime.m={[id]:{toString:()=>`function(e,t,n){n.d(t,"${key}",(function(){return ${symbol}}));const ${symbol}=Object(r.a)({url:"/api/v3/song/detail"});}`}};
+    assert.equal(findSongDetails(runtime),method);
+}
+assert.throws(()=>findSongDetails({m:{}}),/unavailable/);
+console.log('Real-client metadata discovery works across both module layouts');
+const {readPlaybackPosition}=require('../tools/client_metadata.cjs');
+const slider=(max,value)=>({max:String(max),min:'0',value:String(value),getBoundingClientRect:()=>({width:1})});
+const progress=slider(194,12.998),volume=slider(100,.6);
+assert.equal(readPlaybackPosition({querySelector:()=>progress},194),12.998);
+assert.equal(readPlaybackPosition({querySelector:()=>null,querySelectorAll:()=>[volume,progress]},194.5),12.998);
+assert.throws(()=>readPlaybackPosition({querySelector:()=>null,querySelectorAll:()=>[volume]},194),/unavailable/);
+assert.throws(()=>readPlaybackPosition({querySelector:()=>null,querySelectorAll:()=>[progress,progress]},194),/unavailable/);
+console.log('Both progress input layouts supported, missing inputs never pretend to be zero');

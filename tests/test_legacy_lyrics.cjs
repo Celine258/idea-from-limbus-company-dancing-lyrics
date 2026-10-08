@@ -1,0 +1,37 @@
+const assert=require('node:assert/strict');
+const {LegacyLyricReader,lyricsFor,nativeLyricCache}=require('../plugins/netease/adapter.js');
+(async()=>{
+    const requests=[],resolved={},updates=[];
+    const reader=new LegacyLyricReader(id=>new Promise(resolve=>{requests.push(id);resolved[id]=resolve;}),()=>updates.push(reader.song));
+    const state=id=>({playing:{resourceTrackId:id,onlineResourceId:id},'async:lyric':{displayType:'default',lyricLines:[{time:1,lyric:'共享状态可能是旧歌词'}]}});
+    const lyric=(id,text)=>({resourceTrackId:id,displayType:'default',lyricLines:[{time:1,lyric:text}]});
+    const a=state('a'),b=state('b');
+    assert.deepEqual(lyricsFor(reader.state(a,100),'a'),[]);
+    await new Promise(setImmediate);
+    reader.state(b,200);
+    await new Promise(setImmediate);
+    resolved.a(lyric('a','迟到的上一首'));
+    await new Promise(setImmediate);
+    assert.deepEqual(lyricsFor(reader.state(b,250),'b'),[]);
+    assert.equal(updates.length,0,'切歌后迟到的缓存不能绑定新歌');
+    resolved.b(lyric('b','当前歌词'));
+    await new Promise(setImmediate);
+    assert.equal(lyricsFor(reader.state(b,300),'b')[0].text,'当前歌词');
+    assert.deepEqual(requests,['a','b'],'重复帧不能重复请求缓存');
+    reader.state({...b,'async:lyric':{...b['async:lyric'],offset:.5}},400);
+    await new Promise(setImmediate);
+    assert.deepEqual(requests,['a','b','b'],'偏移或迟到歌词变化后重新读取当前缓存');
+    resolved.b(lyric('wrong','错误缓存'));
+    await new Promise(setImmediate);
+    assert.equal(lyricsFor(reader.state(b,450),'b')[0].text,'当前歌词');
+    assert.deepEqual(lyricsFor(reader.state({playing:{resourceTrackId:'local',onlineResourceId:''}},500),'local'),[]);
+    const raw={code:200,lrc:{lyric:'fixture',offset:1000}};
+    let requested;
+    function format(raw){return {currentUsedLyricVersion:1,yrcInfo:{},displayType:'default',offset:raw.lrc.offset,lyricLines:[{time:1,lyric:raw.lrc.lyric}]};}
+    const runtime={c:{one:{exports:{Storage:{getLyricFromCache:async id=>{requested=id;return {url:id,lyric:raw};}}}},two:{exports:{a:format}}}};
+    const host={webpackJsonp:{push:args=>Object.values(args[1])[0](null,null,runtime)}};
+    const result=await nativeLyricCache(host)('42');
+    assert.equal(requested,'42');assert.equal(result.resourceTrackId,'42');assert.equal(result.offset,1);
+    assert.equal(raw.lrc.offset,1000,'读取不能修改原网易云缓存');
+    console.log('Legacy keyed cache: song isolation, late data, offset migration, no shared-state mutation passed');
+})().catch(error=>{console.error(error);process.exitCode=1;});

@@ -1,6 +1,6 @@
 (() => {
     let socket=null, store=null, config=null, position=0, playId='', lastSent=0, lastLyrics='', lastSong='', fetchSong='', lastState='';
-    let enabled=localStorage.getItem('floatingLyrics.enabled') !== 'false';
+    let clientVersion='', legacyLyrics=null, enabled=localStorage.getItem('floatingLyrics.enabled') !== 'false';
     let status='正在连接桌面歌词…', launching=false, nextLaunch=0, pendingShow=false;
     const buttons=new Set();
     function updateStatus(value) {
@@ -20,7 +20,7 @@
             const state=store.getState(), p=state.playing;
             if (!p) return;
             if (p.playId !== playId) {playId=p.playId; position=0;}
-            const data=FloatingLyricsAdapter.snapshot(state,position,enabled);
+            const data=FloatingLyricsAdapter.snapshot(legacyLyrics?legacyLyrics.state(state):state,position,enabled,clientVersion);
             const transportState=JSON.stringify([data.song.id,data.playing,data.enabled,data.duration_ms]);
             lastState=transportState;
             const key=data.song.id, lyrics=JSON.stringify(data.lyrics);
@@ -82,8 +82,11 @@
     }
     plugin.onLoad(async () => {
         try {
-            if(betterncm.ncm.getNCMVersion()!=='3.1.41') throw new Error('都市回响目前适配网易云 3.1.41');
+            clientVersion=betterncm.ncm.getNCMVersion();
+            if(!['3.1.40','3.1.41'].includes(clientVersion)) throw new Error('都市回响目前适配网易云 3.1.40／3.1.41');
             config=JSON.parse(await betterncm.fs.readFileText(plugin.pluginPath+'/bridge-config.json'));
+            if(clientVersion==='3.1.40')legacyLyrics=new FloatingLyricsAdapter.LegacyLyricReader(
+                song=>FloatingLyricsAdapter.nativeLyricCache()(song),()=>send(true),reportError);
             const events=new FloatingLyricsAdapter.PlaybackEvents(()=>FloatingLyricsAdapter.playbackStreams(),
                 ()=>store?.getState().playing,(id,milliseconds,seek)=>{
                     playId=id;position=milliseconds;send(seek,seek);
@@ -99,7 +102,7 @@
                 }
                 events.attach();
             };
-            // Both layouts remain mounted in 3.1.41; add entries to each one.
+            // Both playback layouts remain mounted; add entries to each one.
             const observer=new MutationObserver(()=>{attach();installButtons();});
             observer.observe(document.body,{childList:true,subtree:true});
             attach();installButtons();connect();

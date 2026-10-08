@@ -2,6 +2,8 @@
 import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {regressionChecks,seekFinishes} from './word_regression_checks.mjs';
+import metadataTools from './client_metadata.cjs';
+const {findSongDetails,readPlaybackPosition}=metadataTools;
 const directory=resolve(process.argv[2]||'artifacts/netease-word-regression');
 const pages=await(await fetch('http://127.0.0.1:9229/json/list')).json();
 const page=pages.find(p=>p.url.startsWith('orpheus://orpheus/pub/app.html'));
@@ -21,12 +23,11 @@ async function clientStep(action,payload){
     if(action==='prepare'){
         let require;const id='floating_word_regression_runtime';webpackJsonp.push([[id],{[id]:(_m,_e,r)=>{require=r}},[[id]]]);
         const state=store.getState(),p=state.playing,cur=p.curPlaying;
-        const range=document.querySelector('[aria-label="播放进度调节"] input[type="range"]');
         const original={tracks:state.playingList.curPlayingList.map(x=>x.track?.track||x.track||x),id:String(p.resourceTrackId),
-            position:Number(range?.value||0),playing:p.playingState===2,
+            position:readPlaybackPosition(document,p.resourceDuration),playing:p.playingState===2,
             from:{resourceType:cur.resourceType,scene:cur.scene,href:cur.href,text:cur.text,fromInfo:cur.fromInfo}};
         const ids=['2058124989','1811921555','1330348068','4875932'];
-        const tracks=await require(15).ji({c:JSON.stringify(ids.map(id=>({id}))) });
+        const tracks=await findSongDetails(require)({c:JSON.stringify(ids.map(id=>({id}))) });
         if(!Array.isArray(tracks))throw new Error('Song metadata shape changed');
         window._flWordCheck={original,tracks,require};
         const entry=visible('.floating-lyrics-entry');if(!entry.textContent.includes('✓'))entry.click();
@@ -46,17 +47,17 @@ async function clientStep(action,payload){
     else if(action==='next'){
         const previous=String(store.getState().playing.resourceTrackId);visible('[data-testid="tid_playbar_next_btn"]').click();return previous;
     }else if(action==='original')return {id:window._flWordCheck.original.id,position:window._flWordCheck.original.position,playing:window._flWordCheck.original.playing};
-    const state=store.getState(),p=state.playing,l=state['async:lyric'],id=String(p.resourceTrackId);
-    const lines=FloatingLyricsAdapter.lyricsFor(state,id),words=lines.flatMap(line=>line.words||[]);
+    const state=store.getState(),p=state.playing,id=String(p.resourceTrackId);
+    const l=betterncm.ncm.getNCMVersion()==='3.1.40'?await FloatingLyricsAdapter.nativeLyricCache()(id):state['async:lyric'];
+    const lines=FloatingLyricsAdapter.lyricsFor({...state,'async:lyric':l},id),words=lines.flatMap(line=>line.words||[]);
     const longest=words.filter(word=>word.end_ms-word.start_ms>=100).sort((a,b)=>(b.end_ms-b.start_ms)-(a.end_ms-a.start_ms))[0];
-    const range=document.querySelector('[aria-label="播放进度调节"] input[type="range"]');
-    return {id,title:p.resourceName,playing:p.playingState===2,position:Number(range?.value||0),seekLoading:p.loadingSeekDuration,
+    return {id,title:p.resourceName,playing:p.playingState===2,position:readPlaybackPosition(document,p.resourceDuration),seekLoading:p.loadingSeekDuration,
         lyricSong:String(l?.resourceTrackId||''),displayType:l?.displayType,lyricCount:lines.length,
         timedLines:lines.filter(line=>line.words?.length).length,wordCount:words.length,
         wordTarget:longest?(longest.start_ms+longest.end_ms)/2000:null};
 }
 async function remote(action,payload=null){
-    const response=await request(`(${clientStep.toString()})(${JSON.stringify(action)},${JSON.stringify(payload)})`);
+    const response=await request(`(()=>{const findSongDetails=${findSongDetails.toString()};const readPlaybackPosition=${readPlaybackPosition.toString()};return (${clientStep.toString()})(${JSON.stringify(action)},${JSON.stringify(payload)});})()`);
     if(response.error||response.result?.exceptionDetails)throw new Error(JSON.stringify(response.error||response.result.exceptionDetails));
     return response.result.result.value;
 }
@@ -71,7 +72,7 @@ try{
         await remote('select',id);
         let selected;
         for(let i=0;i<60;i++){await wait(250);selected=await remote('sample');if(selected.id===id&&selected.lyricSong===id&&selected.playing&&selected.position>.25)break;}
-        if(selected.id!==id||!selected.playing||selected.lyricSong!==id||selected.position<=.25)throw new Error('Selected song has not started audio: '+id);
+        if(selected.id!==id||!selected.playing||selected.lyricSong!==id||selected.position<=.25)throw new Error('Selected song has not started audio: '+JSON.stringify(selected));
         let active=await collect(kind+'-playing');
         if(kind==='english'||kind==='chinese'){
             const target=active.at(-1).wordTarget;
@@ -94,6 +95,9 @@ try{
     }
     const checks=regressionChecks(cases,nextSongs);
     report={passed:Object.values(checks).every(Boolean),checks,metadata,cases,nextSongs,samples,wordTimingSource:'native NetEase yrcInfo.yrc'};
+}catch(error){
+    report={passed:false,error:String(error),cases,nextSongs,samples,wordTimingSource:'native NetEase yrcInfo.yrc'};
+    throw error;
 }finally{
     if(prepared){
         try{const original=await remote('original');await remote('restore');await wait(1800);await remote('seek',original.position);await wait(500);await remote('play',original.playing);restored=(await remote('sample')).id===original.id;}

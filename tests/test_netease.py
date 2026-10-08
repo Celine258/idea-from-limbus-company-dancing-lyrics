@@ -28,6 +28,13 @@ def packet(**changes):
 
 
 class NeteasePlayerTests(unittest.TestCase):
+    def test_protocol_accepts_both_versions_and_rejects_unverified_clients(self):
+        for client in ("3.1.40", "3.1.41"):
+            self.assertEqual(validate_snapshot(packet(client=client))["client"], client)
+        for client in ("3.1.39", "3.1.42", "3.1.40.205461", None):
+            with self.assertRaises(ValueError):
+                validate_snapshot(packet(client=client))
+
     def setUp(self):
         self.now = 10.
         self.player = NeteasePlayer(clock=lambda: self.now)
@@ -156,6 +163,11 @@ class NeteasePlayerTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js 用于插件适配器测试")
     def test_javascript_adapter_contract(self):
         result = subprocess.run(["node", str(ROOT / "tests/test_netease_adapter.cjs")], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js 用于插件生命周期测试")
+    def test_legacy_lyric_cache_isolation(self):
+        result = subprocess.run(["node", str(ROOT / "tests/test_legacy_lyrics.cjs")], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     @unittest.skipUnless(shutil.which("node"), "Node.js 用于插件生命周期测试")

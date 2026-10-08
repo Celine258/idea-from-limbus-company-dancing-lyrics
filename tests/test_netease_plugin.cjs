@@ -18,8 +18,8 @@ const adapter=require('../plugins/netease/adapter.js');
         send(text){sent.push(JSON.parse(text));}
         close(){this.readyState=3;}
     }
-    const context={FloatingLyricsAdapter:{...adapter,playbackStreams:()=>streams},plugin:{pluginPath:'plugin',onLoad:fn=>loaded=fn,onConfig:()=>{}},
-        betterncm:{ncm:{getNCMVersion:()=> '3.1.41'},fs:{readFileText:async()=>JSON.stringify({token:'a'.repeat(64),command:'test'})},app:{exec:async()=>{launches++;return true;}}},
+    const context={FloatingLyricsAdapter:{...adapter,playbackStreams:()=>streams,nativeLyricCache:()=>async()=>state['async:lyric']},plugin:{pluginPath:'plugin',onLoad:fn=>loaded=fn,onConfig:()=>{}},
+        betterncm:{ncm:{getNCMVersion:()=> '3.1.40'},fs:{readFileText:async()=>JSON.stringify({token:'a'.repeat(64),command:'test'})},app:{exec:async()=>{launches++;return true;}}},
         legacyNativeCmder:{appendRegisterCall:()=>{throw new Error('不得重注册网易云原生回调');}},
         document:{body:{},querySelector:()=>player,querySelectorAll:()=>[anchor],createElement:element},
         MutationObserver:class {constructor(callback){observe=callback;}observe(){}},
@@ -36,6 +36,7 @@ const adapter=require('../plugins/netease/adapter.js');
     assert.equal(entries.length,2);
     assert.equal(textWrites,writes,'观察 DOM 时不能反复改写按钮，造成事件循环饥饿');
     Socket.current.readyState=1;Socket.current.onopen();
+    assert.equal(sent.at(-1).client,'3.1.40','发送真实客户端版本，不能硬编码成 3.1.41');
     registered.Seek('live','seek',0,12.5);
     assert.equal(sent.at(-1).position_ms,12500);
     assert.equal(sent.at(-1).seek,true);

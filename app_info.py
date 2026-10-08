@@ -2,7 +2,8 @@
 import ctypes
 import sys
 
-APP_VERSION = "0.5.1-beta.1"
+APP_VERSION = "0.6.0-beta.1"
+NETEASE_VERSIONS = ("3.1.40.205461", "3.1.41.205529")
 APP_NAME = "都市回响"
 WINDOWS_APP_ID = "FloatingLyrics.Desktop"
 CREATOR = "创作者：Bilibili-鈴仙優昙華院因幡"

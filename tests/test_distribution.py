@@ -32,7 +32,7 @@ class InstallerTests(unittest.TestCase):
         data[0x3c:0x40] = (64).to_bytes(4, "little")
         data[64:70] = b"PE\0\0\x64\x86"
         (self.client / "cloudmusic.exe").write_bytes(data)
-        self.profile = root / "插件 数据"
+        self.profile = root / "BetterNCM data"
         self.framework = root / "framework.dll"
         self.framework.write_bytes(b"verified test framework")
         self.validator = patch.object(ni, "framework_valid", side_effect=lambda path: Path(path).read_bytes() == b"verified test framework")
@@ -74,6 +74,23 @@ class InstallerTests(unittest.TestCase):
         first = ni.bridge_contents(self.app / ".state", self.installer.command)
         second = ni.bridge_contents(self.app / ".other", self.installer.command)
         self.assertNotEqual(json.loads(first)["token"], json.loads(second)["token"])
+
+    def test_unicode_framework_profile_is_rejected_before_plugin_or_token_writes(self):
+        with self.assertRaisesRegex(ni.InstallError, "插件数据目录"):
+            self.installer.install(self.client, self.profile.parent / "中文框架目录", self.framework)
+        self.assertFalse((self.app / ".state/netease-bridge.json").exists())
+        self.assertFalse((self.client / "msimg32.dll").exists())
+
+    def test_same_installer_auto_detects_both_verified_builds_and_preserves_token(self):
+        token = None
+        for version in ni.CLIENT_VERSIONS:
+            self.installer.version_reader = lambda exe, version=version: version
+            result = self.install()
+            self.assertEqual(result["clientVersion"], version)
+            current = json.loads((self.app / ".state/netease-bridge.json").read_text(encoding="utf-8"))["token"]
+            if token is not None:
+                self.assertEqual(current, token)
+            token = current
 
     def test_client_running_wrong_version_and_x86_are_rejected_before_writes(self):
         for failure in ("running", "version", "x86"):
@@ -248,6 +265,8 @@ class ReleaseTests(unittest.TestCase):
         self.assertIn("Celine258/idea-from-limbus-company-dancing-lyrics", readme)
         self.assertIn("安装网易云联动.bat", readme)
         self.assertIn("3.1.41.205529", readme)
+        self.assertIn("3.1.40.205461", readme)
+        self.assertIn("同一个 ZIP 自动识别", readme)
         self.assertTrue((ROOT / "LICENSE").read_text().startswith("MIT License"))
         self.assertIn("GPLv3", (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8"))
         for name in ("安装网易云联动.bat", "卸载网易云联动.bat", "启动.bat"):

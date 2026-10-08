@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$ClientDirectory = 'C:\Program Files\NetEase\CloudMusic',
     [string]$ProfileDirectory = 'C:\betterncm',
     [string]$FrameworkDll = (Join-Path $PSScriptRoot '..\artifacts\netease-probe\BetterNCMII-1.3.4.dll')
@@ -8,7 +8,8 @@ $root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $exe = Join-Path $ClientDirectory 'cloudmusic.exe'
 if (-not (Test-Path -LiteralPath $exe)) { throw "未找到网易云客户端：$exe" }
 $version = (Get-Item -LiteralPath $exe).VersionInfo.FileVersion
-if ($version -ne '3.1.41.205529') { throw "当前仅验证网易云 3.1.41.205529，检测到 $version；未改动客户端。" }
+if ($version -notin @('3.1.40.205461','3.1.41.205529')) { throw "当前支持网易云 3.1.40.205461／3.1.41.205529，检测到 $version；未改动客户端。" }
+if ([IO.Path]::GetFullPath($ProfileDirectory) -match '[^\x00-\x7F]') { throw 'BetterNCM 1.3.4 插件数据目录请使用默认 C:\betterncm 或英文路径；未安装。' }
 if (@(Get-Process -Name cloudmusic -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe }).Count) {
     throw '请先完全退出网易云，再运行安装脚本。安装不会结束你的音乐进程。'
 }

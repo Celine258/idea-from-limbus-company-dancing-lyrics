@@ -1,4 +1,4 @@
-/* The 3.1.41 adapter reads only the current playback and lyric fields. */
+/* Verified 3.1.40 / 3.1.41 adapter: reads current playback and lyric fields. */
 (function(root) {
     function findStore(element) {
         if (!element) return null;
@@ -75,27 +75,75 @@
         lyricCache=lyric;lyricSong=songId;lyricFields=fields;
         return lyricResult;
     }
-    function snapshot(state, position, enabled) {
+    function snapshot(state, position, enabled, client='3.1.41') {
+        if(!['3.1.40','3.1.41'].includes(client))throw new Error('网易云版本尚未验证');
         const p=state.playing;
         if (!p || !Number.isFinite(p.resourceDuration) || typeof p.resourceName !== 'string') throw new Error('网易云播放器接口已改变');
         const songId=String(p.resourceTrackId || '');
-        return {protocol:1, client:'3.1.41', kind:'snapshot', enabled,
+        return {protocol:1, client, kind:'snapshot', enabled,
             song:{id:songId,title:p.resourceName,artist:(p.resourceArtists||[]).map(x=>x.name).filter(Boolean).join(' / ')},
             duration_ms:Math.round(Math.max(0,p.resourceDuration*1000)),
             position_ms:Math.round(Math.max(0,Number.isFinite(position)?position:0)),
             playing:p.playingState===2, lyrics:lyricsFor(state,songId)};
     }
     let runtime=null;
-    function playbackStreams(host=root) {
+    function clientRuntime(host=root) {
         if (!runtime && typeof host.webpackJsonp?.push==='function') {
             const id='floating_lyrics_playback_runtime';
             host.webpackJsonp.push([[id],{[id]:(_module,_exports,require)=>{runtime=require;}},[[id]]]);
         }
+        return runtime;
+    }
+    function playbackStreams(host=root) {
+        const runtime=clientRuntime(host);
         // Subscribe through the client's own command instance. A separate legacy
         // instance has its own callback map and can replace the client's native slot.
         return Object.values(runtime?.c||{}).map(module=>module.exports).find(exports=>
             typeof exports?.audioPlayerPlayProgress$?.subscribe==='function' &&
             typeof exports?.audioPlayerSeek$?.subscribe==='function') || null;
+    }
+    function nativeLyricCache(host=root) {
+        const modules=Object.values(clientRuntime(host)?.c||{}).map(module=>module.exports);
+        const storage=modules.find(exports=>typeof exports?.Storage?.getLyricFromCache==='function')?.Storage;
+        const format=modules.flatMap(exports=>Object.values(exports||{})).find(value=>{
+            if(typeof value!=='function')return false;
+            const source=value.toString();
+            return source.includes('currentUsedLyricVersion')&&source.includes('yrcInfo')&&!source.includes('fetchLyric');
+        });
+        if(!storage||!format)throw new Error('网易云本机歌词缓存接口尚未加载');
+        return async songId=>{
+            const cached=await storage.getLyricFromCache(songId);
+            if(String(cached?.url)!==songId||cached?.lyric?.code!==200)return null;
+            const raw={...cached.lyric};
+            // Match the client's cache migration, without modifying the cache object.
+            for(const field of ['lrc','yrc','tlyric','romalrc'])
+                if(raw[field])raw[field]={...raw[field],offset:raw[field].offset>500?raw[field].offset/1000:raw[field].offset};
+            return {...format(raw),resourceTrackId:songId};
+        };
+    }
+    class LegacyLyricReader {
+        constructor(readCache,onChange=()=>{},onError=()=>{}) {
+            this.readCache=readCache;this.onChange=onChange;this.onError=onError;
+            this.song='';this.generation=0;this.lyric=null;this.nextRead=0;this.pending=0;this.fields=[];
+        }
+        state(state,now=Date.now()) {
+            const song=String(state.playing?.resourceTrackId||'');
+            if(song!==this.song){this.song=song;this.generation++;this.lyric=null;this.nextRead=0;this.fields=[];}
+            const current=state['async:lyric'];
+            const fields=[current?.lyricLines,current?.tlyricLines,current?.yrcInfo?.yrc,current?.offset,current?.displayType];
+            if(fields.some((field,index)=>field!==this.fields[index])){this.fields=fields;this.nextRead=0;}
+            // 3.1.40 has no lyric song ID. Read its own cache by ID instead of
+            // assigning the currently playing ID to potentially stale shared state.
+            if(song&&String(state.playing?.onlineResourceId||'')===song&&this.pending!==this.generation&&now>=this.nextRead){
+                const generation=this.generation;
+                this.pending=generation;this.nextRead=now+1000;
+                Promise.resolve().then(()=>this.readCache(song)).then(lyric=>{
+                    if(generation!==this.generation||String(lyric?.resourceTrackId)!==song)return;
+                    this.lyric=lyric;this.onChange();
+                }).catch(error=>this.onError(error)).finally(()=>{if(this.pending===generation)this.pending=0;});
+            }
+            return {...state,'async:lyric':this.lyric};
+        }
     }
     class PlaybackEvents {
         constructor(getStreams,getPlaying,onUpdate,onError=()=>{}) {
@@ -124,7 +172,7 @@
             this.subscriptions=[];this.bound=null;
         }
     }
-    const api={findStore,lyricsFor,snapshot,playbackStreams,PlaybackEvents,parseYrc,attachWordTimings,attachTranslations};
+    const api={findStore,lyricsFor,snapshot,playbackStreams,PlaybackEvents,parseYrc,attachWordTimings,attachTranslations,nativeLyricCache,LegacyLyricReader};
     if (typeof module!=='undefined' && module.exports) module.exports=api;
     else root.FloatingLyricsAdapter=api;
 })(typeof window==='undefined' ? globalThis : window);

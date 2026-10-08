@@ -39,7 +39,7 @@ class InstallerWindow(QDialog):
         heading = QLabel("卸载网易云联动" if args.uninstall_netease else "安装网易云联动")
         heading.setStyleSheet("font-size:22px;font-weight:bold")
         layout.addWidget(heading)
-        tip = QLabel("请先完全退出网易云（包括托盘）。支持 3.1.41.205529 x64。\n安装成功后重新打开网易云，点击播放栏的“都市回响”。\n请将完整程序放在长期保留且可写的目录，安装后不要移动它。")
+        tip = QLabel("请先完全退出网易云（包括托盘）。自动识别 3.1.40.205461／3.1.41.205529 x64。\n安装成功后重新打开网易云，点击播放栏的“都市回响”。\n请将完整程序放在长期保留且可写的目录，安装后不要移动它。")
         tip.setWordWrap(True)
         layout.addWidget(tip)
         try:
@@ -51,6 +51,7 @@ class InstallerWindow(QDialog):
         self.client = QLineEdit(str(args.client_directory or saved.get("client") or find_client() or ""))
         self.add_path(layout, "网易云目录", self.client, True)
         self.profile = QLineEdit(str(args.profile_directory or saved.get("profile") or default_profile()))
+        self.profile.setToolTip("建议保留默认 C:\\betterncm；插件数据目录请使用英文路径。歌词程序目录可含中文。")
         self.add_path(layout, "BetterNCM 数据目录", self.profile, True)
         self.framework = QLineEdit(str(args.framework_dll or ""))
         self.framework.setPlaceholderText("可选；缺少框架时从官方自动下载并校验")
