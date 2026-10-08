@@ -215,6 +215,22 @@ class InstallerTests(unittest.TestCase):
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_download_links_and_bundled_guide_match_application_version(self):
+        from app_info import APP_VERSION, EFFECT_PREVIEW_TEXT
+
+        repository = "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics"
+        filename = f"dancing-lyrics-{APP_VERSION}-windows-x64.zip"
+        readme = (ROOT / "README.md").read_text(encoding="utf-8-sig")
+        self.assertIn(f"{repository}/releases/tag/v{APP_VERSION}", readme)
+        self.assertIn(f"{repository}/releases/download/v{APP_VERSION}/dancing-lyrics-demo-30s.mp4", readme)
+        self.assertIn(filename, readme)
+        guide = (ROOT / "release/使用说明.txt").read_text(encoding="utf-8-sig")
+        self.assertIn(APP_VERSION, guide.splitlines()[0])
+        notes = (ROOT / "release/release-notes.md").read_text(encoding="utf-8-sig")
+        self.assertIn(f"v{APP_VERSION}", notes.splitlines()[0])
+        self.assertIn(filename, notes)
+        self.assertIn(EFFECT_PREVIEW_TEXT, notes)
+
     def test_upstream_license_bytes_match_provenance_and_survive_git_checkout(self):
         import hashlib
         directory = ROOT / "release/licenses"
@@ -251,8 +267,12 @@ class ReleaseTests(unittest.TestCase):
             (package / ".state/fonts/private.ttf").write_bytes(b"private font")
             (package / "debug.log").write_text("private logs")
             output = package_release(package, root / "output")
+            from app_info import APP_VERSION
+            self.assertEqual(output.name, f"dancing-lyrics-{APP_VERSION}-windows-x64.zip")
             with zipfile.ZipFile(output) as archive:
                 names = archive.namelist()
+                guide = archive.read("DancingLyrics/使用说明.txt").decode("utf-8-sig")
+                self.assertIn(APP_VERSION, guide.splitlines()[0])
                 self.assertTrue(any(name.endswith("安装网易云联动.bat") for name in names))
                 self.assertTrue(any(name.endswith("licenses/LGPL-3.0.txt") for name in names))
                 self.assertFalse(any(".state" in name or "bridge-config" in name or name.endswith(".log") for name in names))

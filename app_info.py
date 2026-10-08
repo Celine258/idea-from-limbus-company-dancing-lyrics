@@ -2,7 +2,7 @@
 import ctypes
 import sys
 
-APP_VERSION = "0.6.0-beta.1"
+APP_VERSION = "0.6.0-beta.2"
 NETEASE_VERSIONS = ("3.1.40.205461", "3.1.41.205529")
 APP_NAME = "都市回响"
 EFFECT_PREVIEW_TEXT = "啊，对了！但丁。有一天，去一趟图书馆吧。"

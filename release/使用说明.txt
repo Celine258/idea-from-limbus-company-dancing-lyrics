@@ -1,4 +1,4 @@
-都市回响 0.6.0-beta.1（Windows x64 试用版）
+都市回响 0.6.0-beta.2（Windows x64 试用版）
 
 三步开始
 1. 完整解压 ZIP 到准备长期保留且自己可写的目录，例如 D:\Apps\DancingLyrics。
