@@ -579,6 +579,47 @@ class ControlPanelTests(unittest.TestCase):
         self.click(self.panel.nav_buttons[0])
         self.assertFalse(self.panel.font_preview.timer.isActive())
 
+    def test_preview_quote_renders_completely_for_all_materials_and_narrow_width(self):
+        from app_info import EFFECT_PREVIEW_TEXT
+        from controls import FontPreview
+        from settings import ANIMATION_STYLES
+        quote = "啊，对了！但丁。有一天，去一趟图书馆吧。"
+        self.assertEqual(EFFECT_PREVIEW_TEXT, quote)
+        preview = FontPreview(self.prefs)
+        try:
+            for width in (700, 240):
+                for style, variant in (("solid", "standard"), ("glow", "standard"), ("glow", "carmen")):
+                    for animation in ANIMATION_STYLES:
+                        with self.subTest(width=width, style=style, variant=variant, animation=animation):
+                            self.prefs.text_style, self.prefs.glow_variant = style, variant
+                            self.prefs.animation_style = animation
+                            preview.resize(width, 150)
+                            preview.invalidate()
+                            preview._running, preview._position = False, 1800
+                            self.assertFalse(preview.grab().isNull())
+                            self.assertEqual("".join(quote[glyph.text_start:glyph.text_end]
+                                                    for glyph in preview._surface.glyphs), quote)
+                            self.assertEqual(preview.accessibleDescription(), quote)
+            self.assertFalse(self.player.playing)
+            self.assertFalse(self.player.seeks)
+        finally:
+            preview.close()
+
+    def test_preview_singing_times_cover_new_quote_without_punctuation_or_stale_ranges(self):
+        from app_info import EFFECT_PREVIEW_TEXT
+        item = self.panel.font_preview._preview_item()
+        self.assertEqual(item.text, EFFECT_PREVIEW_TEXT)
+        self.assertEqual([word.text_start for word in item.words],
+                         [index for index, char in enumerate(item.text) if char.isalnum()])
+        self.assertEqual(item.words[0].start_ms, 800)
+        self.assertEqual(item.words[-1].end_ms, 3000)
+        for word in item.words:
+            self.assertEqual(word.text_end, word.text_start + 1)
+            self.assertLess(word.start_ms, word.end_ms)
+            self.assertLess(word.end_ms, item.exit_start_ms)
+        for before, after in zip(item.words, item.words[1:]):
+            self.assertEqual(before.end_ms, after.start_ms)
+
     def test_preview_timer_stops_when_scrolled_out_and_restarts_on_reveal(self):
         self.click(self.panel.nav_buttons[1])
         self.panel.resize(900, 560)

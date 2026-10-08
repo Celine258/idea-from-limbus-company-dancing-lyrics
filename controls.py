@@ -17,7 +17,7 @@ from text_effects import TEXT_EFFECTS
 from settings import resource_path, ANIMATION_STYLES
 from glyph_motion import glyph_states
 from presets import PresetStore, EFFECT_KEYS
-from app_info import APP_NAME, APP_VERSION, CREATOR, MOTTO
+from app_info import APP_NAME, APP_VERSION, CREATOR, MOTTO, EFFECT_PREVIEW_TEXT
 from themes import theme_colors, theme_stylesheet, theme_palette, theme_accent, accent_text, ThemeFrame, ThemeCanvas
 
 
@@ -210,7 +210,8 @@ class FontPreview(QWidget):
         self.timer.setInterval(33)
         self.timer.timeout.connect(self._tick)
         self.setFixedHeight(150)
-        self.setAccessibleName("中英文字体效果预览")
+        self.setAccessibleName("字体与动画效果预览")
+        self.setAccessibleDescription(EFFECT_PREVIEW_TEXT)
 
     def replay(self):
         self._position = 0
@@ -225,9 +226,12 @@ class FontPreview(QWidget):
 
     def _preview_item(self):
         end = 3800 if self.prefs.animation_style == "classic" else 3200 + min(600 * 100 / self.prefs.exit_speed, 4400 * .45)
-        words = tuple(TimedWord(800+i*160, 960+i*160, i, i+1) for i in range(7)) + (
-            TimedWord(2000, 2400, 8, 13), TimedWord(2500, 2900, 14, 19), TimedWord(2950, 3200, 22, 25))
-        return ActiveLine(0, "", 0, end, 1, min(700 * 100 / self.prefs.entry_speed, 3200 * .35), 3200, words)
+        units = [index for index, char in enumerate(EFFECT_PREVIEW_TEXT) if char.isalnum()]
+        words = tuple(TimedWord(round(800 + 2200 * order / len(units)),
+                                round(800 + 2200 * (order + 1) / len(units)), index, index + 1)
+                      for order, index in enumerate(units))
+        return ActiveLine(0, EFFECT_PREVIEW_TEXT, 0, end, 1,
+                          min(700 * 100 / self.prefs.entry_speed, 3200 * .35), 3200, words)
 
     def _stop_preview(self):
         self._position = self._preview_position()
@@ -260,7 +264,7 @@ class FontPreview(QWidget):
         key = (self.width(), pixels, self.prefs.font_family, self.prefs.color, self.prefs.text_style, self.prefs.glow_variant,
                self.devicePixelRatioF(), self.prefs.animation_style, self.prefs.jump, self.prefs.fall_distance, self.prefs.singing_sync)
         if key != self._key:
-            glyphs, _, _ = _glyph_layout("给今天一点节奏\nHello music · 123", pixels,
+            glyphs, _, _ = _glyph_layout(EFFECT_PREVIEW_TEXT, pixels,
                                          max(1, self.width() - 48), self.prefs.font_family)
             self._surface = TEXT_EFFECTS.prepare(glyphs, pixels, self.prefs, self.devicePixelRatioF(), self.prefs.jump)
             self._key = key
@@ -696,7 +700,7 @@ class ControlPanel(QWidget):
                 section_body.addWidget(self.white_hint)
                 section_body.addWidget(self.font_status)
             if title == "律动与同步":
-                singing_hint = label("预览使用中英文演示时间；歌曲需提供真实逐字时间，无数据时保留原动画。", "muted")
+                singing_hint = label("预览使用演示时间；歌曲需提供真实逐字时间，无数据时保留原动画。", "muted")
                 singing_hint.setWordWrap(True)
                 section_body.addWidget(singing_hint)
                 hint = label("速度 100% 为原有效果；数值越高越快。短句会自动压缩动画时长。", "muted")

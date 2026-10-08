@@ -8,6 +8,7 @@ from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import QApplication
 from animation import _glyph_layout, build_layout, display_regions
 from text_effects import TextEffects, transparent_image
+from app_info import EFFECT_PREVIEW_TEXT
 
 
 def validate_effects(directory, prefs, dpr):
@@ -22,7 +23,7 @@ def _validate_variant(directory, prefs, dpr):
     renderer = TextEffects()
     demo = replace(prefs, color="#ff6a9c", font_size=48, jump=0, opacity=100, text_style="glow", glow_strength=60,
                    animation_style="classic")
-    text = "虽然永远都无法真正抵达饱足…\nFACE THE SIN. SAVE THE E.G.O" if prefs.glow_variant == "carmen" else "给今天一点节奏\nfrom the elevator you"
+    text = EFFECT_PREVIEW_TEXT if prefs.glow_variant == "carmen" else "给今天一点节奏\nfrom the elevator you"
     glyphs, _, _ = _glyph_layout(text, 48, 690, demo.font_family)
     surface = renderer.prepare(glyphs, 48, demo, dpr)
     source = renderer.render(surface, demo)
