@@ -22,6 +22,7 @@ class LyricLine:
     start_ms: int
     text: str
     words: tuple[TimedWord, ...] = ()
+    translation: str = ""
 
 
 @dataclass
@@ -29,6 +30,20 @@ class LyricDocument:
     lines: list[LyricLine]
     warnings: list[str]
     offset_ms: int = 0
+
+
+def chinese_translation(text):
+    """Only genuine Chinese text is eligible; optional bad data is harmless."""
+    return (isinstance(text, str) and len(text) <= 2048 and not any(c in text for c in "\x00\r")
+            and any('\u3400' <= c <= '\u9fff' or '\U00020000' <= c <= '\U0003134f' for c in text))
+
+
+def display_document(document, prefer_translation=False):
+    if document is None or not prefer_translation:
+        return document
+    lines = [replace(line, text=line.translation.strip(), words=())
+             if line.text.strip() and chinese_translation(line.translation) else line for line in document.lines]
+    return LyricDocument(lines, list(document.warnings), document.offset_ms)
 
 
 def parse_lrc(text: str) -> LyricDocument:

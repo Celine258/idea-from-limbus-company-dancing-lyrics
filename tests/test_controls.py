@@ -436,6 +436,18 @@ class ControlPanelTests(unittest.TestCase):
         self.assertEqual(self.prefs.color, original_color)
         self.assertEqual((self.player.playing, self.player.clock, self.player.seeks), (True, 6500, []))
 
+    def test_translation_checkbox_saves_and_presets_do_not_override_language(self):
+        from lrc import LyricDocument, LyricLine, TimedWord
+        self.player.clock, self.player.playing = 6500, False
+        self.overlay.set_document(LyricDocument([LyricLine(1000, "Original", (TimedWord(1000, 2000, 0, 8),), "中文译文")], []))
+        self.panel.translation_checkbox.setChecked(True)
+        self.assertTrue(self.store.load().prefer_translation)
+        self.assertIn("中文译文按整句同步", self.panel.word_status.text())
+        self.panel.apply_preset("builtin:quiet")
+        self.assertTrue(self.panel.translation_checkbox.isChecked())
+        self.assertTrue(self.prefs.prefer_translation)
+        self.assertEqual((self.player.playing, self.player.clock, self.player.seeks), (False, 6500, []))
+
     def test_smoke_resets_effect_controls_from_saved_classic_settings(self):
         from validation import SmokeCheck
         self.panel.text_style.setCurrentIndex(self.panel.text_style.findData("solid"))
@@ -660,7 +672,7 @@ class ControlPanelTests(unittest.TestCase):
         scroll = self.panel.effects_scroll
         self.assertGreater(scroll.verticalScrollBar().maximum(), 0)
         for widget in (self.panel.region, self.panel.font_combo, self.panel.import_font_button, self.panel.font_preview,
-                       self.panel.text_style, self.panel.glow_variant, self.panel.preview_background, self.panel.glow_field, self.panel.animation_combo, self.panel.replay_button,
+                       self.panel.text_style, self.panel.glow_variant, self.panel.translation_checkbox, self.panel.preview_background, self.panel.glow_field, self.panel.animation_combo, self.panel.replay_button,
                        self.panel.color_button, self.panel.motion, *self.panel.spins.values()):
             center = widget.mapTo(scroll.widget(), widget.rect().center())
             scroll.ensureVisible(center.x(), center.y(), 0, widget.height() // 2 + 16)

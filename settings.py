@@ -41,6 +41,7 @@ class Preferences:
     shake_frequency: int = 6
     fall_distance: int = 48
     singing_sync: bool = False
+    prefer_translation: bool = False
     theme: str = "light"
 
 

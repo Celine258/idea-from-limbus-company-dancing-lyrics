@@ -7,7 +7,7 @@ import time
 from PySide6.QtCore import QObject, QTimer, Signal
 from PySide6.QtNetwork import QHostAddress
 from PySide6.QtWebSockets import QWebSocketServer
-from lrc import LyricDocument, LyricLine, TimedWord
+from lrc import LyricDocument, LyricLine, TimedWord, chinese_translation
 
 PORT = 38473
 PROTOCOL = 1
@@ -71,7 +71,9 @@ def validate_snapshot(data: dict) -> dict:
                             words.append(TimedWord(int(begin), int(finish), start, end))
                     except (TypeError, ValueError):
                         continue
-            cleaned.append(LyricLine(int(_number(line.get("time_ms"), 24 * 3600 * 1000)), line["text"], tuple(words)))
+            translation = line.get("translation", "")
+            cleaned.append(LyricLine(int(_number(line.get("time_ms"), 24 * 3600 * 1000)), line["text"], tuple(words),
+                                     translation.strip() if chinese_translation(translation) else ""))
         result["document"] = LyricDocument(sorted(cleaned, key=lambda line: line.start_ms), []) if cleaned else None
     return result
 

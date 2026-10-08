@@ -63,3 +63,19 @@ assert.strictEqual(adapter.lyricsFor(late,'42'),adapter.lyricsFor(late,'42'),'�
 assert.deepEqual(adapter.parseYrc('broken'),[]);
 assert.deepEqual(adapter.parseYrc('[1000,200](1000,0,0)甲')[0].words,[]);
 console.log('Optional YRC word timing contract passed');
+
+const bilingual={...late,'async:lyric':{...late['async:lyric'],tlyricLines:[{time:2,lyric:'中文译文'}]}};
+const translated=adapter.lyricsFor(bilingual,'42')[0];
+assert.equal(translated.translation,'中文译文');
+assert.equal(translated.time_ms,1500,'原文时间已经含客户端偏移');
+assert.equal(translated.words[0].start_ms,1500,'译文不能改变原文 YRC');
+assert.strictEqual(adapter.lyricsFor(bilingual,'42')[0],translated);
+bilingual['async:lyric'].tlyricLines=[{time:2,lyric:'迟到的中文翻译'}];
+assert.equal(adapter.lyricsFor(bilingual,'42')[0].translation,'迟到的中文翻译');
+assert.equal('translation' in adapter.attachTranslations([{time_ms:1000,text:'original'}],[{time:2,lyric:'相差太大'}])[0],false);
+for(const bad of [null,{},[{time:1,lyric:'English only'}],[{time:1,lyric:null}],[{time:NaN,lyric:'无效'}]])
+    assert.equal('translation' in adapter.attachTranslations([{time_ms:1000,text:'original'}],bad)[0],false);
+assert.equal('translation' in adapter.attachTranslations([{time_ms:1000,text:''}],[{time:1,lyric:'空白不可填充'}])[0],false);
+assert.equal('translation' in adapter.attachTranslations([{time_ms:1000,text:'original'}],[{time:.9,lyric:'歧义甲'},{time:1.1,lyric:'歧义乙'}])[0],false);
+assert.equal(adapter.lyricsFor({...bilingual,'async:lyric':{...bilingual['async:lyric'],resourceTrackId:'new'}},'42').length,0);
+console.log('Optional Chinese translation, single offset, late data and fallback passed');

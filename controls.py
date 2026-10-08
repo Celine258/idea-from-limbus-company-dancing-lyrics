@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QSizePolicy, QInputDialog, QMessageBox, QCheckBox,
     QSlider, QSpinBox, QStackedWidget, QStyle, QStyleOptionSlider, QSystemTrayIcon, QVBoxLayout, QWidget,
 )
-from lrc import load_lrc, ActiveLine, TimedWord, word_timing_status
+from lrc import load_lrc, ActiveLine, TimedWord, word_timing_status, display_document
 from fonts import FontLibrary
 from animation import _glyph_layout
 from text_effects import TEXT_EFFECTS
@@ -662,6 +662,10 @@ class ControlPanel(QWidget):
         self.font_status = label(self._font_message or ("部分导入字体无法加载，可重新导入。" if self.font_library.errors else
                                  "支持 TTF、OTF、TTC；选择后立即生效并自动保存。"), "muted")
         self.font_status.setWordWrap(True)
+        self.translation_checkbox = QCheckBox("有中文翻译时优先显示译文")
+        self.translation_checkbox.setChecked(self.prefs.prefer_translation)
+        self.translation_checkbox.setToolTip("逐句选择中文译文，无翻译时显示原文。译文按整句同步，不套用原文字词时间。")
+        self.translation_checkbox.toggled.connect(lambda value: self._set_preference("prefer_translation", value))
         self._reload_fonts()
         self.font_combo.currentIndexChanged.connect(self._font_selected)
         for title, fields in (
@@ -669,7 +673,7 @@ class ControlPanel(QWidget):
                           ("发光风格", self.glow_variant),
                           ("文字大小", self.spins["font_size"]),
                           (self.color_label, self.color_button), ("发光强度", self.glow_field),
-                          ("歌词透明度", self.spins["opacity"]))),
+                          ("歌词透明度", self.spins["opacity"]), ("歌词语言", self.translation_checkbox))),
             ("律动与同步", (("歌词动画", self.animation_combo),
                           ("入场速度", self.parameter_fields["entry_speed"]), ("退场速度", self.parameter_fields["exit_speed"]),
                           ("抖动频率", self.parameter_fields["shake_frequency"]), ("跌落距离（32px 字号）", self.parameter_fields["fall_distance"]),
@@ -982,7 +986,11 @@ class ControlPanel(QWidget):
 
     def _refresh_word_status(self):
         waiting = not getattr(self.player, "lyrics_received", False) if self.external else self.player.path is None
-        self.word_status.setText(word_timing_status(self.overlay.document, waiting))
+        displayed = display_document(self.overlay.document, self.prefs.prefer_translation)
+        translated = bool(displayed and self.prefs.prefer_translation and any(
+            a.text != b.text for a, b in zip(displayed.lines, self.overlay.document.lines)))
+        status = word_timing_status(displayed, waiting)
+        self.word_status.setText(status + " · 中文译文按整句同步" if translated else status)
 
     def _reload_presets(self):
         blocker = QSignalBlocker(self.preset_combo)
@@ -1002,7 +1010,7 @@ class ControlPanel(QWidget):
 
     def _sync_effect_widgets(self):
         widgets = [self.animation_combo, self.text_style, self.glow_variant, self.motion, self.font_combo, self.glow_slider,
-                   self.singing_checkbox, self.theme_combo,
+                   self.singing_checkbox, self.translation_checkbox, self.theme_combo,
                    *self.spins.values(), *self.parameter_sliders.values()]
         blockers = [QSignalBlocker(widget) for widget in widgets]
         for widget, key in ((self.animation_combo, "animation_style"), (self.text_style, "text_style"),
@@ -1014,6 +1022,7 @@ class ControlPanel(QWidget):
             slider.setValue(getattr(self.prefs, key))
         self.glow_slider.setValue(self.prefs.glow_strength)
         self.singing_checkbox.setChecked(self.prefs.singing_sync)
+        self.translation_checkbox.setChecked(self.prefs.prefer_translation)
         self.theme_combo.setCurrentIndex(self.theme_combo.findData(self.prefs.theme))
         if self.styleSheet() != theme_stylesheet(self.prefs.theme):
             self._apply_theme()

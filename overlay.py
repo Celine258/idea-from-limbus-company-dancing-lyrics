@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, QTimer, QEvent
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QApplication, QWidget
 from animation import build_layout, display_regions
-from lrc import LyricTimeline, LyricDocument
+from lrc import LyricTimeline, LyricDocument, display_document
 from settings import Preferences
 from text_effects import TEXT_EFFECTS
 from glyph_motion import glyph_states
@@ -25,6 +25,7 @@ class LyricsOverlay(QWidget):
         self.player = player
         self.prefs = prefs
         self.document = None
+        self.display_document = None
         self.timeline = None
         self.layouts = {}
         self.seed = random.randrange(1_000_000)
@@ -54,18 +55,21 @@ class LyricsOverlay(QWidget):
         self.clear_layouts()
 
     def set_document(self, document: LyricDocument | None):
-        same_text = bool(document and self.document and [(line.start_ms, line.text) for line in document.lines]
-                         == [(line.start_ms, line.text) for line in self.document.lines])
+        displayed = display_document(document, self.prefs.prefer_translation)
+        same_text = bool(displayed and self.display_document and [(line.start_ms, line.text) for line in displayed.lines]
+                         == [(line.start_ms, line.text) for line in self.display_document.lines])
         self.document = document
-        self.timeline = self._timeline(document) if document else None
+        self.display_document = displayed
+        self.timeline = self._timeline(displayed) if displayed else None
         if not same_text:
             self.seed = random.randrange(1_000_000)
             self.clear_layouts()
         self._sync_timer()
 
     def refresh_preferences(self):
+        self.display_document = display_document(self.document, self.prefs.prefer_translation)
         if self.document:
-            self.timeline = self._timeline(self.document)
+            self.timeline = self._timeline(self.display_document)
         self.clear_layouts()
 
     def _timeline(self, document):

@@ -45,16 +45,33 @@
             return words.length?{...line,words}:line;
         });
     }
+    function attachTranslations(lines, translations, offsetMs=0) {
+        if(!Array.isArray(translations)||translations.length>5000)return lines;
+        const rows=translations.filter(row=>Number.isFinite(row?.time)&&typeof row.lyric==='string'
+            &&row.lyric.length<=4096&&/[\u3400-\u9fff\u{20000}-\u{3134f}]/u.test(row.lyric))
+            .map(row=>({time_ms:Math.max(0,Math.round(row.time*1000-offsetMs)),text:row.lyric.trim()}));
+        const sorted=rows.sort((a,b)=>a.time_ms-b.time_ms);
+        let cursor=0;
+        return lines.map(line=>{
+            if(!line.text.trim())return line;
+            while(cursor<sorted.length&&sorted[cursor].time_ms<line.time_ms-250)cursor++;
+            const candidates=[];
+            for(let i=cursor;i<sorted.length&&sorted[i].time_ms<=line.time_ms+250;i++)candidates.push(sorted[i]);
+            candidates.sort((a,b)=>Math.abs(a.time_ms-line.time_ms)-Math.abs(b.time_ms-line.time_ms));
+            if(!candidates.length||candidates[1]&&Math.abs(candidates[0].time_ms-line.time_ms)===Math.abs(candidates[1].time_ms-line.time_ms))return line;
+            return {...line,translation:candidates[0].text};
+        });
+    }
     let lyricCache=null, lyricSong='', lyricResult=[], lyricFields=[];
     function lyricsFor(state, songId) {
         const lyric=state['async:lyric'];
         if (!lyric || String(lyric.resourceTrackId) !== songId || lyric.displayType !== 'default') return [];
-        const fields=[lyric.lyricLines,lyric.yrcInfo?.yrc,lyric.offset,lyric.scrollable];
+        const fields=[lyric.lyricLines,lyric.yrcInfo?.yrc,lyric.offset,lyric.scrollable,lyric.tlyricLines];
         if(lyric===lyricCache&&songId===lyricSong&&fields.every((field,index)=>field===lyricFields[index]))return lyricResult;
         const lines=(lyric.lyricLines || []).filter(x => Number.isFinite(x.time) && typeof x.lyric === 'string')
             .map(x => ({time_ms: Math.round(Math.max(0,x.time*1000)), text:x.lyric}));
         const offset=lyric.scrollable&&Number.isFinite(lyric.offset)?Math.round(lyric.offset*1000):0;
-        lyricResult=attachWordTimings(lines,lyric.yrcInfo?.yrc,offset);
+        lyricResult=attachTranslations(attachWordTimings(lines,lyric.yrcInfo?.yrc,offset),lyric.tlyricLines,offset);
         lyricCache=lyric;lyricSong=songId;lyricFields=fields;
         return lyricResult;
     }
@@ -107,7 +124,7 @@
             this.subscriptions=[];this.bound=null;
         }
     }
-    const api={findStore,lyricsFor,snapshot,playbackStreams,PlaybackEvents,parseYrc,attachWordTimings};
+    const api={findStore,lyricsFor,snapshot,playbackStreams,PlaybackEvents,parseYrc,attachWordTimings,attachTranslations};
     if (typeof module!=='undefined' && module.exports) module.exports=api;
     else root.FloatingLyricsAdapter=api;
 })(typeof window==='undefined' ? globalThis : window);

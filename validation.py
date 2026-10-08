@@ -133,6 +133,7 @@ class SmokeCheck:
         self._capture_parameters()
         self._capture_presets()
         self._capture_singing()
+        self._capture_translation()
         self._capture_interface()
         self._capture_themes()
         image = self.overlay.grab().toImage()
@@ -163,6 +164,24 @@ class SmokeCheck:
         self.results["show_while_paused_keeps_timer_stopped"] = not self.overlay.timer.isActive()
         self.player.media.play()
         QTimer.singleShot(500, self._check_resume)
+
+    def _capture_translation(self):
+        from dataclasses import replace
+        from lrc import LyricDocument
+        panel, overlay = self.panel, self.overlay
+        original, document, position = panel.prefs.prefer_translation, overlay.document, self.player.position()
+        demo = LyricDocument([replace(line, translation="这是一句演示中文译文" if line.text else "")
+                              for line in document.lines], document.warnings, document.offset_ms)
+        overlay.set_document(demo)
+        panel.translation_checkbox.setChecked(True)
+        self.app.processEvents()
+        visible = overlay.timeline.visible(position, self.player.duration)
+        self.results["translation_switch_saved"] = panel.store.load().prefer_translation is True
+        self.results["translation_demo_rebuilds_lyrics"] = bool(visible) and all(line.text == "这是一句演示中文译文" and not line.words for line in visible)
+        overlay.grab().save(str(self.report_dir / "translation-demo-overlay.png"))
+        panel.translation_checkbox.setChecked(original)
+        overlay.set_document(document)
+        self.results["translation_keeps_paused_position"] = not self.player.playing and self.player.position() == position
 
     def _capture_fonts(self):
         import hashlib
@@ -227,7 +246,7 @@ class SmokeCheck:
             panel.effects_scroll.verticalScrollBar().setValue(0)
             panel.grab().save(str(self.report_dir / f"effects-{name}-top.png"))
             for control in (panel.region, panel.font_combo, panel.import_font_button, panel.font_preview,
-                            panel.text_style, panel.glow_variant, panel.preview_background, panel.glow_field,
+                            panel.text_style, panel.glow_variant, panel.translation_checkbox, panel.preview_background, panel.glow_field,
                             panel.color_button, panel.motion, panel.animation_combo, panel.replay_button,
                             panel.preset_combo, panel.preset_save_button, panel.preset_update_button, panel.preset_delete_button,
                             panel.singing_checkbox, panel.word_status,

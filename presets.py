@@ -6,7 +6,7 @@ import tempfile
 import uuid
 from settings import Preferences, normalize_preferences
 
-EFFECT_KEYS = tuple(key for key in asdict(Preferences()) if key not in ("region", "delay_ms", "volume", "theme"))
+EFFECT_KEYS = tuple(key for key in asdict(Preferences()) if key not in ("region", "delay_ms", "volume", "theme", "prefer_translation"))
 
 
 def effect_values(prefs):
