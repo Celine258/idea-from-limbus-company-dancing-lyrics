@@ -93,6 +93,47 @@ class TextEffectsTests(unittest.TestCase):
         self.assertEqual(self.sample(surface, -5, 10).alpha(), 0)
         self.assertEqual(self.effects.misses, 0)
 
+    def test_carmen_fixed_warm_core_and_amber_halo_for_all_compositing_paths(self):
+        from glyph_motion import GlyphState
+        from text_effects import effect_palette
+        self.prefs.glow_variant = "carmen"
+        self.prefs.color = "#0080ff"
+        core, outline, halo = effect_palette(self.prefs)
+        self.assertEqual((core.name(), outline.name(), halo.name()), ("#ffe6bd", "#f2b772", "#ffb655"))
+        for style in ("classic", "ripple_wave", "fall_shake"):
+            self.prefs.animation_style = style
+            surface = self.surface()
+            states = None if style == "classic" else [GlyphState(0, 0)]
+            self.effects.render(surface, self.prefs, states=states)
+            self.assertEqual(self.sample(surface, 10, 10), core)
+            near, far = self.sample(surface, -3, 10), self.sample(surface, -9, 10)
+            self.assertGreater(near.alpha(), far.alpha())
+            self.assertGreater(far.alpha(), 0)
+            self.assertGreater(near.red(), near.blue())
+            self.prefs.glow_strength = 0
+            self.effects.render(surface, self.prefs, states=states)
+            self.assertEqual(self.sample(surface, 10, 10), core)
+            self.assertEqual(self.sample(surface, -5, 10).alpha(), 0)
+            self.prefs.glow_strength = 60
+
+    def test_carmen_cache_and_thin_font_edges_at_fractional_scale(self):
+        from text_effects import effect_palette
+        self.prefs.glow_variant = "carmen"
+        for dpr in (1, 1.25, 1.5):
+            surface = self.surface([rectangle(.7)], dpr=dpr)
+            self.effects.render(surface, self.prefs)
+            alpha = pixels_view(surface.image)[:, :, 3]
+            self.assertGreater(alpha.max(), 120)
+            self.assertFalse(np.any(alpha[0]) or np.any(alpha[-1]) or np.any(alpha[:, 0]) or np.any(alpha[:, -1]))
+        halo = effect_palette(self.prefs)[2]
+        standard = self.effects.glow(self.glyph, 32, "test", halo, 1, "standard")
+        carmen = self.effects.glow(self.glyph, 32, "test", halo, 1, "carmen")
+        self.assertGreater(carmen[0].width(), standard[0].width())
+        self.prefs.text_style = "solid"
+        surface = self.surface()
+        self.effects.render(surface, self.prefs)
+        self.assertEqual(self.sample(surface, 10, 10), QColor(self.prefs.color))
+
     def test_reused_buffer_clears_old_jump_frame(self):
         surface = self.surface(jump=30)
         original_id = id(surface.image)

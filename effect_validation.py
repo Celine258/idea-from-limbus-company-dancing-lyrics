@@ -11,12 +11,19 @@ from text_effects import TextEffects, transparent_image
 
 
 def validate_effects(directory, prefs, dpr):
+    standard = _validate_variant(directory, replace(prefs, glow_variant="standard"), dpr)
+    carmen = _validate_variant(directory, replace(prefs, glow_variant="carmen"), dpr)
+    return {**standard, **{"carmen_" + key: value for key, value in carmen.items()}}
+
+
+def _validate_variant(directory, prefs, dpr):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     renderer = TextEffects()
     demo = replace(prefs, color="#ff6a9c", font_size=48, jump=0, opacity=100, text_style="glow", glow_strength=60,
                    animation_style="classic")
-    glyphs, _, _ = _glyph_layout("给今天一点节奏\nfrom the elevator you", 48, 690, demo.font_family)
+    text = "虽然永远都无法真正抵达饱足…\nFACE THE SIN. SAVE THE E.G.O" if prefs.glow_variant == "carmen" else "给今天一点节奏\nfrom the elevator you"
+    glyphs, _, _ = _glyph_layout(text, 48, 690, demo.font_family)
     surface = renderer.prepare(glyphs, 48, demo, dpr)
     source = renderer.render(surface, demo)
     for name, background in (("dark", "#18232f"), ("light", "#f7f8fa")):
@@ -26,8 +33,10 @@ def validate_effects(directory, prefs, dpr):
         painter.translate(380, 105)
         painter.drawImage(surface.origin, source)
         painter.end()
-        image.save(str(directory / f"glow-{name}.png"))
-    source.save(str(directory / "glow-transparent.png"))
+        image.save(str(directory / f"{prefs.glow_variant}-{name}.png"))
+        if prefs.glow_variant == "standard":
+            image.save(str(directory / f"glow-{name}.png"))
+    source.save(str(directory / f"{prefs.glow_variant}-transparent.png"))
 
     benchmark_prefs = replace(prefs, font_size=32, jump=10, angle=12, region="edges", text_style="glow", animation_style="classic")
     area = QApplication.primaryScreen().availableGeometry()

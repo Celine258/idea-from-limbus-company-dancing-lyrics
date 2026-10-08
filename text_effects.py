@@ -8,9 +8,17 @@ from PySide6.QtGui import QColor, QImage, QPainter, QPen
 from glyph_motion import motion_bounds
 
 
-def effect_geometry(pixels, style):
+def effect_geometry(pixels, style, variant="standard"):
     """Visible outside stroke and finite glow support, in logical pixels."""
+    if style == "glow" and variant == "carmen":
+        return (.65 * pixels / 32, 12 * pixels / 32)
     return (1.2 * pixels / 32, 8 * pixels / 32) if style == "glow" else (1.2, 0)
+
+
+def effect_palette(prefs):
+    if prefs.text_style == "glow" and prefs.glow_variant == "carmen":
+        return QColor("#ffe6bd"), QColor("#f2b772"), QColor("#ffb655")
+    return QColor("#ffffff"), QColor(prefs.color), QColor(prefs.color)
 
 
 def gaussian_alpha(alpha, sigma, radius):
@@ -65,20 +73,20 @@ class TextEffects:
         self.cache.clear()
         self.cache_bytes = 0
 
-    def glow(self, glyph, pixels, family, color, dpr):
+    def glow(self, glyph, pixels, family, color, dpr, variant="standard"):
         path = glyph.path
         if path.isEmpty():
             return None
         if glyph.effect_key is None:
             glyph.effect_key = (path.fillRule().value, tuple((element.x, element.y, element.type.value)
                                 for element in (path.elementAt(i) for i in range(path.elementCount()))))
-        key = (glyph.effect_key, pixels, family, color.rgba(), dpr)
+        key = (glyph.effect_key, pixels, family, color.rgba(), dpr, variant)
         if key in self.cache:
             self.hits += 1
             self.cache.move_to_end(key)
             return self.cache[key]
         self.misses += 1
-        stroke, radius = effect_geometry(pixels, "glow")
+        stroke, radius = effect_geometry(pixels, "glow", variant)
         margin = stroke + math.ceil(radius * dpr) / dpr + 2 / dpr
         bounds = path.boundingRect().adjusted(-margin, -margin, margin, margin).toAlignedRect()
         image = transparent_image(bounds, dpr)
@@ -108,13 +116,13 @@ class TextEffects:
         return asset
 
     def prepare(self, glyphs, pixels, prefs, dpr, jump_limit=0, angle=0):
-        color = QColor(prefs.color)
-        stroke, radius = effect_geometry(pixels, prefs.text_style)
+        _, _, color = effect_palette(prefs)
+        stroke, radius = effect_geometry(pixels, prefs.text_style, prefs.glow_variant)
         margin = stroke + radius + 3 / dpr
         bounds = QRectF()
         assets = []
         for glyph in glyphs:
-            asset = self.glow(glyph, pixels, prefs.font_family, color, dpr) if prefs.text_style == "glow" else None
+            asset = self.glow(glyph, pixels, prefs.font_family, color, dpr, prefs.glow_variant) if prefs.text_style == "glow" else None
             if not glyph.path.isEmpty():
                 ink = glyph.path.boundingRect().adjusted(-margin, -margin, margin, margin)
                 if asset:
@@ -135,12 +143,13 @@ class TextEffects:
         Disjoint halo/body pixels allow all halos to precede the white cores.
         A body knockout excludes neighbouring halos underneath fading white ink.
         """
-        key = (prefs.text_style, prefs.color, prefs.glow_strength, prefs.singing_sync)
+        key = (prefs.text_style, prefs.color, prefs.glow_strength, prefs.singing_sync, prefs.glow_variant)
         if surface.material_key == key:
             return surface.materials
         materials = []
         dpr = surface.image.devicePixelRatio()
-        stroke, radius = effect_geometry(surface.pixels, prefs.text_style)
+        stroke, radius = effect_geometry(surface.pixels, prefs.text_style, prefs.glow_variant)
+        core, outline, _ = effect_palette(prefs)
         for index, glyph in enumerate(surface.glyphs):
             if glyph.path.isEmpty():
                 materials.append(None)
@@ -160,13 +169,13 @@ class TextEffects:
                 painter.setOpacity(prefs.glow_strength / 100)
                 painter.drawImage(origin, glow[0])
             painter.setOpacity(1)
-            painter.setPen(QPen(QColor(prefs.color) if prefs.text_style == "glow" else QColor(10, 22, 26, 210),
+            painter.setPen(QPen(outline if prefs.text_style == "glow" else QColor(10, 22, 26, 210),
                                 stroke * 2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
             painter.setBrush(Qt.BrushStyle.NoBrush if prefs.text_style == "glow" else QColor(prefs.color))
             painter.drawPath(glyph.path)
             if prefs.text_style == "glow":
                 painter.setPen(Qt.PenStyle.NoPen)
-                painter.setBrush(Qt.GlobalColor.white)
+                painter.setBrush(core)
                 painter.drawPath(glyph.path)
             painter.end()
             painter = QPainter(mask)
@@ -244,7 +253,7 @@ class TextEffects:
             painter.translate(*poses[index])
             painter.scale(scale, scale)
 
-        color = QColor(prefs.color)
+        core, color, _ = effect_palette(prefs)
         if prefs.text_style == "glow":
             painter.setOpacity(prefs.glow_strength / 100)
             if prefs.glow_strength:
@@ -254,7 +263,7 @@ class TextEffects:
                         painter.drawImage(asset[1], asset[0])
                         painter.restore()
             painter.setOpacity(1)
-            stroke, _ = effect_geometry(surface.pixels, "glow")
+            stroke, _ = effect_geometry(surface.pixels, "glow", prefs.glow_variant)
             painter.setPen(QPen(color, 2 * stroke, Qt.PenStyle.SolidLine,
                                 Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
             painter.setBrush(Qt.BrushStyle.NoBrush)
@@ -264,7 +273,7 @@ class TextEffects:
                 painter.restore()
             # Draw all white cores last so neighbouring halos never tint them.
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(Qt.GlobalColor.white)
+            painter.setBrush(core)
         else:
             painter.setPen(QPen(QColor(10, 22, 26, 210), 2.4, Qt.PenStyle.SolidLine,
                                 Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))

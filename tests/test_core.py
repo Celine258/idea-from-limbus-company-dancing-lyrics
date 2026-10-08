@@ -17,6 +17,18 @@ APP = QApplication.instance() or QApplication([])
 
 
 class WindowsIdentityTests(unittest.TestCase):
+    def test_carmen_variant_preserves_legacy_color_and_persists(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = SettingsStore(Path(directory) / "settings.ini")
+            store.store.setValue("color", "#aaffdd")
+            self.assertEqual(store.load().glow_variant, "standard")
+            prefs = store.load()
+            prefs.glow_variant = "carmen"
+            store.save(prefs)
+            self.assertEqual((store.load().glow_variant, store.load().color), ("carmen", "#aaffdd"))
+            store.store.setValue("glow_variant", "unknown")
+            self.assertEqual(store.load().glow_variant, "standard")
+
     def test_taskbar_identity_is_stable_and_reports_windows_api_result(self):
         import app_info
         library = MagicMock()

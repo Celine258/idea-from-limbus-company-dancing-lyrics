@@ -257,7 +257,7 @@ class FontPreview(QWidget):
         painter.setBrush(QColor("#18232f" if self.dark else "#f7f8fa"))
         painter.drawRoundedRect(QRectF(self.rect()).adjusted(.5, .5, -.5, -.5), 8, 8)
         pixels = min(28, self.prefs.font_size)
-        key = (self.width(), pixels, self.prefs.font_family, self.prefs.color, self.prefs.text_style,
+        key = (self.width(), pixels, self.prefs.font_family, self.prefs.color, self.prefs.text_style, self.prefs.glow_variant,
                self.devicePixelRatioF(), self.prefs.animation_style, self.prefs.jump, self.prefs.fall_distance, self.prefs.singing_sync)
         if key != self._key:
             glyphs, _, _ = _glyph_layout("给今天一点节奏\nHello music · 123", pixels,
@@ -619,6 +619,12 @@ class ControlPanel(QWidget):
         self.text_style.addItem("经典纯色", "solid")
         self.text_style.setCurrentIndex(self.text_style.findData(self.prefs.text_style))
         self.text_style.currentIndexChanged.connect(lambda _: self._set_preference("text_style", self.text_style.currentData()))
+        self.glow_variant = QComboBox()
+        self.glow_variant.addItem("标准白芯", "standard")
+        self.glow_variant.addItem("卡门的声音", "carmen")
+        self.glow_variant.setCurrentIndex(self.glow_variant.findData(self.prefs.glow_variant))
+        self.glow_variant.setAccessibleName("白芯发光风格")
+        self.glow_variant.currentIndexChanged.connect(lambda _: self._set_preference("glow_variant", self.glow_variant.currentData()))
         self.glow_slider = QSlider(Qt.Orientation.Horizontal)
         self.glow_slider.setRange(0, 100)
         self.glow_slider.setValue(self.prefs.glow_strength)
@@ -660,6 +666,7 @@ class ControlPanel(QWidget):
         self.font_combo.currentIndexChanged.connect(self._font_selected)
         for title, fields in (
             ("显示与文字", (("显示区域", self.region), ("歌词字体", font_field), ("文字样式", self.text_style),
+                          ("发光风格", self.glow_variant),
                           ("文字大小", self.spins["font_size"]),
                           (self.color_label, self.color_button), ("发光强度", self.glow_field),
                           ("歌词透明度", self.spins["opacity"]))),
@@ -959,6 +966,11 @@ class ControlPanel(QWidget):
 
     def _update_effect_controls(self):
         glowing = self.prefs.text_style == "glow"
+        carmen = glowing and self.prefs.glow_variant == "carmen"
+        self.glow_variant.setEnabled(glowing)
+        self.color_button.setEnabled(not carmen)
+        self.white_hint.setText("卡门的声音：固定暖白字芯与琥珀金光晕，发光强度可调。" if carmen else
+                                "字芯固定白色，描边与光晕使用所选颜色。")
         self.color_label.setText("描边颜色" if glowing else "文字颜色")
         self.color_button.setToolTip("选择描边和光晕颜色" if glowing else "选择文字填充颜色")
         self.white_hint.setVisible(glowing)
@@ -989,11 +1001,12 @@ class ControlPanel(QWidget):
             "内置方案只读；可另存为自己的方案。" if selected is None or selected.builtin else "自己的方案，可更新或删除。")
 
     def _sync_effect_widgets(self):
-        widgets = [self.animation_combo, self.text_style, self.motion, self.font_combo, self.glow_slider,
+        widgets = [self.animation_combo, self.text_style, self.glow_variant, self.motion, self.font_combo, self.glow_slider,
                    self.singing_checkbox, self.theme_combo,
                    *self.spins.values(), *self.parameter_sliders.values()]
         blockers = [QSignalBlocker(widget) for widget in widgets]
-        for widget, key in ((self.animation_combo, "animation_style"), (self.text_style, "text_style"), (self.motion, "motion")):
+        for widget, key in ((self.animation_combo, "animation_style"), (self.text_style, "text_style"),
+                            (self.glow_variant, "glow_variant"), (self.motion, "motion")):
             widget.setCurrentIndex(widget.findData(getattr(self.prefs, key)))
         for key, spin in self.spins.items():
             spin.setValue(getattr(self.prefs, key))

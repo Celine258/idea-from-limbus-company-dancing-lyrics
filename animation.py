@@ -110,7 +110,7 @@ def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRe
                     reserve += prefs.fall_distance * pixels / 32 * abs(math.sin(math.radians(angle)))
             glyphs, width, height = _glyph_layout(text, pixels, max(10, region.width() - reserve), prefs.font_family)
             # Include stroke, character scale, jumping and fade-out drift.
-            stroke, glow = effect_geometry(pixels, prefs.text_style)
+            stroke, glow = effect_geometry(pixels, prefs.text_style, prefs.glow_variant)
             margin = stroke + glow + 4
             box_w = (width + 2 * margin) * 1.04 + 16
             box_h = (height + 2 * margin) * 1.04 + 2 * prefs.jump + 36

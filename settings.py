@@ -34,6 +34,7 @@ class Preferences:
     motion: str = "audio"
     text_style: str = "glow"
     glow_strength: int = 60
+    glow_variant: str = "standard"
     animation_style: str = "classic"
     entry_speed: int = 100
     exit_speed: int = 100
@@ -82,6 +83,8 @@ def normalize_preferences(prefs):
         prefs.motion = "audio"
     if prefs.text_style not in ("glow", "solid"):
         prefs.text_style = "glow"
+    if prefs.glow_variant not in ("standard", "carmen"):
+        prefs.glow_variant = "standard"
     if prefs.animation_style not in ANIMATION_STYLES:
         prefs.animation_style = "classic"
     if prefs.theme not in ("light", "dark", "special"):

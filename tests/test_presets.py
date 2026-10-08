@@ -31,11 +31,12 @@ class PresetTests(unittest.TestCase):
 
     def test_save_restart_update_and_delete_retain_the_complete_visual_combination(self):
         prefs = replace(Preferences(), font_family="Imported Custom", color="#ffaa00", animation_style="fall_shake",
-                        entry_speed=65, exit_speed=170, shake_frequency=14, fall_distance=96, singing_sync=True)
+                        entry_speed=65, exit_speed=170, shake_frequency=14, fall_distance=96, singing_sync=True, glow_variant="carmen")
         saved = self.store.save("我的夜间方案", prefs)
         restored = PresetStore(self.path)
         self.assertEqual(restored.get(saved.id), saved)
         self.assertEqual(saved.values["singing_sync"], True)
+        self.assertEqual(saved.values["glow_variant"], "carmen")
         updated = restored.save(saved.name, replace(prefs, color="#ff4080"), saved.id)
         self.assertEqual(PresetStore(self.path).get(saved.id), updated)
         restored.delete(saved.id)
@@ -80,6 +81,7 @@ class PresetTests(unittest.TestCase):
         self.assertEqual(loaded.values["entry_speed"], 25)
         self.assertEqual(loaded.values["fall_distance"], 48)
         self.assertFalse(loaded.values["singing_sync"])
+        self.assertEqual(loaded.values["glow_variant"], "standard")
 
 
 if __name__ == "__main__":

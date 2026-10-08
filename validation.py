@@ -227,7 +227,7 @@ class SmokeCheck:
             panel.effects_scroll.verticalScrollBar().setValue(0)
             panel.grab().save(str(self.report_dir / f"effects-{name}-top.png"))
             for control in (panel.region, panel.font_combo, panel.import_font_button, panel.font_preview,
-                            panel.text_style, panel.preview_background, panel.glow_field,
+                            panel.text_style, panel.glow_variant, panel.preview_background, panel.glow_field,
                             panel.color_button, panel.motion, panel.animation_combo, panel.replay_button,
                             panel.preset_combo, panel.preset_save_button, panel.preset_update_button, panel.preset_delete_button,
                             panel.singing_checkbox, panel.word_status,
@@ -260,7 +260,7 @@ class SmokeCheck:
         import hashlib
         from effect_validation import validate_effects
         panel = self.panel
-        original = (panel.prefs.text_style, panel.prefs.glow_strength, panel.preview_background.currentIndex())
+        original = (panel.prefs.text_style, panel.prefs.glow_strength, panel.preview_background.currentIndex(), panel.prefs.glow_variant)
         position = self.player.position()
         shapes = set()
         for style in ("solid", "glow"):
@@ -281,7 +281,17 @@ class SmokeCheck:
         saved = panel.store.load()
         self.results["effect_style_changes_rendered_lyrics"] = len(shapes) == 2
         self.results["effect_settings_saved"] = saved.text_style == "glow" and saved.glow_strength == 60
+        picture = self.overlay.grab().toImage()
+        previous = hashlib.sha256(bytes(picture.constBits())).hexdigest()
+        panel.glow_variant.setCurrentIndex(panel.glow_variant.findData("carmen"))
+        self.app.processEvents()
+        picture = self.overlay.grab().toImage()
+        self.results["carmen_changes_rendered_lyrics"] = previous != hashlib.sha256(bytes(picture.constBits())).hexdigest()
+        self.results["carmen_saved_and_palette_fixed"] = (panel.store.load().glow_variant == "carmen"
+            and not panel.color_button.isEnabled() and panel.glow_slider.isEnabled())
+        panel.font_preview.grab().save(str(self.report_dir / "carmen-settings-preview.png"))
         self.results.update(validate_effects(self.report_dir, panel.prefs, panel.devicePixelRatioF()))
+        panel.glow_variant.setCurrentIndex(panel.glow_variant.findData(original[3]))
         panel.text_style.setCurrentIndex(panel.text_style.findData(original[0]))
         panel.glow_slider.setValue(original[1])
         panel.preview_background.setCurrentIndex(original[2])

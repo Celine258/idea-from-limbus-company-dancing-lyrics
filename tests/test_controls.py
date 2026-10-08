@@ -417,6 +417,25 @@ class ControlPanelTests(unittest.TestCase):
         self.assertEqual(self.store.load(), saved)
         self.assertEqual(self.overlay.refreshes, refreshes)
 
+    def test_carmen_variant_is_nested_in_glow_and_does_not_change_transport(self):
+        self.click(self.panel.nav_buttons[1])
+        self.player.playing, self.player.clock = True, 6500
+        original_color = self.prefs.color
+        self.panel.glow_variant.setCurrentIndex(self.panel.glow_variant.findData("carmen"))
+        self.assertEqual(self.store.load().glow_variant, "carmen")
+        self.assertIn("固定暖白", self.panel.white_hint.text())
+        self.assertFalse(self.panel.color_button.isEnabled())
+        self.assertTrue(self.panel.glow_slider.isEnabled())
+        self.panel.text_style.setCurrentIndex(self.panel.text_style.findData("solid"))
+        self.assertFalse(self.panel.glow_variant.isEnabled())
+        self.assertTrue(self.panel.color_button.isEnabled())
+        self.panel.text_style.setCurrentIndex(self.panel.text_style.findData("glow"))
+        self.assertEqual(self.panel.glow_variant.currentData(), "carmen")
+        self.panel.glow_variant.setCurrentIndex(self.panel.glow_variant.findData("standard"))
+        self.assertTrue(self.panel.color_button.isEnabled())
+        self.assertEqual(self.prefs.color, original_color)
+        self.assertEqual((self.player.playing, self.player.clock, self.player.seeks), (True, 6500, []))
+
     def test_smoke_resets_effect_controls_from_saved_classic_settings(self):
         from validation import SmokeCheck
         self.panel.text_style.setCurrentIndex(self.panel.text_style.findData("solid"))
@@ -641,7 +660,7 @@ class ControlPanelTests(unittest.TestCase):
         scroll = self.panel.effects_scroll
         self.assertGreater(scroll.verticalScrollBar().maximum(), 0)
         for widget in (self.panel.region, self.panel.font_combo, self.panel.import_font_button, self.panel.font_preview,
-                       self.panel.text_style, self.panel.preview_background, self.panel.glow_field, self.panel.animation_combo, self.panel.replay_button,
+                       self.panel.text_style, self.panel.glow_variant, self.panel.preview_background, self.panel.glow_field, self.panel.animation_combo, self.panel.replay_button,
                        self.panel.color_button, self.panel.motion, *self.panel.spins.values()):
             center = widget.mapTo(scroll.widget(), widget.rect().center())
             scroll.ensureVisible(center.x(), center.y(), 0, widget.height() // 2 + 16)

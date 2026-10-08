@@ -25,6 +25,11 @@ class WorkflowDocumentationTests(unittest.TestCase):
         self.assertIn("".join(f"\\u{ord(char):04x}" for char in APP_NAME), launcher,
                       "原生启动器必须匹配新窗口名称")
 
+    def test_carmen_guide_describes_fixed_palette_and_retained_original_color(self):
+        text = (ROOT / "README.md").read_text(encoding="utf-8")
+        for phrase in ("卡门的声音", "固定暖白字芯与琥珀金光晕", "原有自定义颜色会保留", "效果预设保存"):
+            self.assertIn(phrase, text)
+
     def test_readme_embeds_desktop_recording_before_download_link(self):
         text = (ROOT / "README.md").read_text(encoding="utf-8-sig")
         image = re.search(r"!\[([^\]]+)\]\((docs/images/lyrics-demo\.gif)\)", text)
