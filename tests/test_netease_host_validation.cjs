@@ -12,7 +12,7 @@ async function simulate({frozen=false,skips=false}={}){
         dispatch:action=>{assert.equal(action.type,'playing/setPlayingPosition');anchor=action.payload.duration;at=clock;}};
     const button={click,getBoundingClientRect:()=>({width:10})};
     const next={getBoundingClientRect:button.getBoundingClientRect,click:()=>{id++;anchor=0;at=clock;selectedAt=clock;skipPending=true;}};
-    const entry={textContent:'跳动的词 ✓',getBoundingClientRect:button.getBoundingClientRect};
+    const entry={textContent:'都市回响 ✓',getBoundingClientRect:button.getBoundingClientRect};
     const context=vm.createContext({FloatingLyricsAdapter:{findStore:()=>store},
         document:{querySelector:selector=>selector.includes('input')?{value:position()}:button,
             querySelectorAll:selector=>selector.includes('next_btn')?[next]:selector==='.floating-lyrics-entry'?[entry]:[button]},

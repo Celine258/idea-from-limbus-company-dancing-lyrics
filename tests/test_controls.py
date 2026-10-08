@@ -76,6 +76,15 @@ class FakeOverlay(QWidget):
 
 
 class ControlPanelTests(unittest.TestCase):
+    def test_city_echoes_name_is_visible_and_tray_identity_is_preserved(self):
+        from app_info import APP_NAME, WINDOWS_APP_ID
+        from PySide6.QtWidgets import QLabel
+        self.assertEqual(APP_NAME, "都市回响")
+        self.assertEqual(self.panel.windowTitle(), APP_NAME)
+        self.assertEqual(self.panel.tray.toolTip(), APP_NAME)
+        self.assertIn(APP_NAME, [item.text() for item in self.panel.findChildren(QLabel)])
+        self.assertEqual(WINDOWS_APP_ID, "FloatingLyrics.Desktop")
+
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.root = Path(self.directory.name)

@@ -1,6 +1,7 @@
 """Validate the deliverable documentation and the source-control boundary."""
 from pathlib import Path
 import hashlib
+import json
 import re
 import subprocess
 import shutil
@@ -13,6 +14,17 @@ DOCUMENTS = tuple(ROOT / name for name in ("AGENTS.md", "CHANGELOG.md", "README.
 
 
 class WorkflowDocumentationTests(unittest.TestCase):
+    def test_brand_name_and_existing_plugin_identity(self):
+        from app_info import APP_NAME
+        self.assertEqual(APP_NAME, "都市回响")
+        self.assertTrue((ROOT / "README.md").read_text(encoding="utf-8").startswith(f"# {APP_NAME}\n"))
+        manifest = json.loads((ROOT / "plugins/netease/manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["name"], APP_NAME)
+        self.assertEqual(manifest["slug"], "floating-lyrics", "改名不能变成另一个安装实例")
+        launcher = (ROOT / "start.ps1").read_text(encoding="utf-8-sig")
+        self.assertIn("".join(f"\\u{ord(char):04x}" for char in APP_NAME), launcher,
+                      "原生启动器必须匹配新窗口名称")
+
     def test_readme_embeds_desktop_recording_before_download_link(self):
         text = (ROOT / "README.md").read_text(encoding="utf-8-sig")
         image = re.search(r"!\[([^\]]+)\]\((docs/images/lyrics-demo\.gif)\)", text)

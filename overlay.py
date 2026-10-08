@@ -8,6 +8,7 @@ from lrc import LyricTimeline, LyricDocument
 from settings import Preferences
 from text_effects import TEXT_EFFECTS
 from glyph_motion import glyph_states
+from app_info import APP_NAME
 
 
 class LyricsOverlay(QWidget):
@@ -20,7 +21,7 @@ class LyricsOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.setWindowTitle("跳动的歌词 · 悬浮层")
+        self.setWindowTitle(f"{APP_NAME} · 悬浮层")
         self.player = player
         self.prefs = prefs
         self.document = None

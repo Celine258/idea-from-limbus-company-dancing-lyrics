@@ -25,7 +25,7 @@ class RecordingWindow(QWidget):
         self.frames = directory / "frames"
         self.frames.mkdir(exist_ok=True)
         self.resize(1180, 560)
-        self.setWindowTitle("跳动的歌词 · 四种动画预览")
+        self.setWindowTitle("都市回响 · 四种动画预览")
         self.styles = [style for style in ANIMATION_STYLES if style != "classic"]
         self.position, self.frame = 0., 0
         self.singing = singing

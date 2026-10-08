@@ -14,11 +14,11 @@ from overlay import LyricsOverlay
 from player import MusicPlayer
 from settings import SettingsStore, app_directory
 from fonts import FontLibrary
-from app_info import APP_VERSION, set_taskbar_identity
+from app_info import APP_NAME, APP_VERSION, set_taskbar_identity
 
 
 def main():
-    parser = argparse.ArgumentParser(description="跳动的歌词 · Windows 桌面音乐伴侣")
+    parser = argparse.ArgumentParser(description=f"{APP_NAME} · Windows 桌面音乐伴侣")
     installer = parser.add_mutually_exclusive_group()
     installer.add_argument("--install-netease", action="store_true", help="打开网易云联动安装窗口")
     installer.add_argument("--uninstall-netease", action="store_true", help="打开网易云联动卸载窗口")
@@ -52,7 +52,7 @@ def main():
     if not set_taskbar_identity():
         logging.warning("Windows taskbar identity could not be assigned")
     app = QApplication(sys.argv[:1])
-    app.setApplicationName("跳动的歌词")
+    app.setApplicationName(APP_NAME)
     app.setApplicationVersion(APP_VERSION)
     app.setOrganizationName("FloatingLyrics")
     app.setWindowIcon(app_icon())

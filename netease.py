@@ -131,7 +131,7 @@ class NeteasePlayer(QObject):
     def disconnect(self):
         self._anchor = self.position()
         self.playing = self.connected = False
-        self.status = "连接已断开，请在网易云中启用跳动的歌词"
+        self.status = "连接已断开，请在网易云中启用都市回响"
         self.lyrics_received = False
         self.document_changed.emit(None)
         self.changed.emit()

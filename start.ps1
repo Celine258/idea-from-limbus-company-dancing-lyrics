@@ -66,7 +66,7 @@ public static class LyricsLauncherWindows {
             if (!related.Contains(pid)) return true;
             StringBuilder title = new StringBuilder(256);
             GetWindowText(hwnd, title, title.Capacity);
-            if (title.ToString() == "\u8df3\u52a8\u7684\u6b4c\u8bcd" && IsWindowVisible(hwnd)) {
+            if (title.ToString() == "\u90fd\u5e02\u56de\u54cd" && IsWindowVisible(hwnd)) {
                 result = hwnd;
                 return false;
             }
@@ -105,7 +105,7 @@ public static class LyricsLauncherWindows {
 
     if ($Smoke) { $taskArguments += '--smoke' }
     if ($ReportDirectory) { $taskArguments += @('--report-dir', ('"' + $ReportDirectory + '"')) }
-    Write-Output 'Opening the Floating Lyrics control panel...'
+    Write-Output 'Opening the City Echoes control panel...'
     $taskOptions = @{
         FilePath = $taskProgram
         WorkingDirectory = $taskWorkDirectory

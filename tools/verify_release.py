@@ -61,7 +61,7 @@ def check_bat_window(bat, directory):
     user.IsWindowVisible.argtypes = [wintypes.HWND]
     user.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
     user.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
-    title = f"跳动的歌词 {APP_VERSION} · 网易云联动"
+    title = f"都市回响 {APP_VERSION} · 网易云联动"
     os.startfile(str(bat))
     found = []
     @callback

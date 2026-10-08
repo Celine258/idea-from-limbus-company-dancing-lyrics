@@ -45,5 +45,5 @@ try {
 }
 @{clientVersion=$version;frameworkVersion='1.3.4';frameworkHash=$expected;client=$ClientDirectory;profile=$ProfileDirectory;createdFramework=(-not $hadFramework);replacedPlugin=$hadPlugin;backup=$backup;installedAt=(Get-Date).ToString('o')} |
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $backup 'receipt.json') -Encoding utf8
-Write-Host '联动插件已安装。启动网易云后，播放栏会出现“跳动的词”，右键可以打开设置。'
+Write-Host '联动插件已安装。启动网易云后，播放栏会出现“都市回响”，右键可以打开设置。'
 Write-Host "安装记录：$backup"

@@ -7,7 +7,7 @@ import sys
 from PySide6.QtCore import QThread, Signal, Qt
 from PySide6.QtWidgets import (QApplication, QDialog, QVBoxLayout, QLabel, QLineEdit,
                               QPushButton, QFileDialog, QHBoxLayout)
-from app_info import APP_VERSION
+from app_info import APP_NAME, APP_VERSION
 from netease_install import NeteaseInstaller, find_client, default_profile, atomic_write
 
 
@@ -33,13 +33,13 @@ class InstallerWindow(QDialog):
         super().__init__()
         self.installer, self.args = installer, args
         self.worker = None
-        self.setWindowTitle(f"跳动的歌词 {APP_VERSION} · 网易云联动")
+        self.setWindowTitle(f"{APP_NAME} {APP_VERSION} · 网易云联动")
         self.resize(600, 380)
         layout = QVBoxLayout(self)
         heading = QLabel("卸载网易云联动" if args.uninstall_netease else "安装网易云联动")
         heading.setStyleSheet("font-size:22px;font-weight:bold")
         layout.addWidget(heading)
-        tip = QLabel("请先完全退出网易云（包括托盘）。支持 3.1.41.205529 x64。\n安装成功后重新打开网易云，点击播放栏的“跳动的词”。\n请将完整程序放在长期保留且可写的目录，安装后不要移动它。")
+        tip = QLabel("请先完全退出网易云（包括托盘）。支持 3.1.41.205529 x64。\n安装成功后重新打开网易云，点击播放栏的“都市回响”。\n请将完整程序放在长期保留且可写的目录，安装后不要移动它。")
         tip.setWordWrap(True)
         layout.addWidget(tip)
         try:
@@ -108,7 +108,7 @@ class InstallerWindow(QDialog):
             self.status.setText(str(error) + ("\n目录需要写入权限，请点击管理员重试。" if isinstance(error, PermissionError) else ""))
             self.admin.setVisible(isinstance(error, PermissionError) and not self.args.installer_elevated)
         else:
-            self.status.setText("卸载完成。请重新启动网易云。个人设置和共用框架已保留。" if self.args.uninstall_netease else "安装完成！请重新启动网易云，在播放栏点击“跳动的词”，右键或点击“设置”调整效果。")
+            self.status.setText("卸载完成。请重新启动网易云。个人设置和共用框架已保留。" if self.args.uninstall_netease else "安装完成！请重新启动网易云，在播放栏点击“都市回响”，右键或点击“设置”调整效果。")
 
     def elevate(self):
         arguments = ["--uninstall-netease" if self.args.uninstall_netease else "--install-netease",

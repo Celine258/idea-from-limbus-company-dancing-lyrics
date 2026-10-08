@@ -17,7 +17,7 @@ from text_effects import TEXT_EFFECTS
 from settings import resource_path, ANIMATION_STYLES
 from glyph_motion import glyph_states
 from presets import PresetStore, EFFECT_KEYS
-from app_info import APP_VERSION, CREATOR, MOTTO
+from app_info import APP_NAME, APP_VERSION, CREATOR, MOTTO
 from themes import theme_colors, theme_stylesheet, theme_palette, theme_accent, accent_text, ThemeFrame, ThemeCanvas
 
 
@@ -301,7 +301,7 @@ class ControlPanel(QWidget):
         self.prefs.font_family, self._font_message = self.font_library.restore_family(prefs.font_family)
         self._updating = False
         self._shown_tray_hint = False
-        self.setWindowTitle("跳动的歌词")
+        self.setWindowTitle(APP_NAME)
         self.setWindowIcon(app_icon(prefs.theme))
         self.setStyleSheet(theme_stylesheet(prefs.theme))
         self.setPalette(theme_palette(prefs.theme))
@@ -366,7 +366,7 @@ class ControlPanel(QWidget):
         icon.setPixmap(app_icon(self.prefs.theme).pixmap(36, 36))
         icon.setFixedSize(36, 36)
         brand.addWidget(icon)
-        brand.addWidget(label("跳动的歌词", "brand"))
+        brand.addWidget(label(APP_NAME, "brand"))
         body.addLayout(brand)
         self.creator_label = label(CREATOR.replace("：", "：\n", 1), "creator")
         self.version_label = label(f"版本 {APP_VERSION}", "version")
@@ -797,7 +797,7 @@ class ControlPanel(QWidget):
 
     def _setup_tray(self):
         self.tray = QSystemTrayIcon(self.windowIcon(), self)
-        self.tray.setToolTip("跳动的歌词")
+        self.tray.setToolTip(APP_NAME)
         menu = QMenu()
         open_action = QAction("打开控制面板", self)
         open_action.triggered.connect(self.show_panel)
@@ -854,7 +854,7 @@ class ControlPanel(QWidget):
             event.ignore()
             self.hide()
             if not self._shown_tray_hint:
-                self.tray.showMessage("跳动的歌词", "已收起到托盘。右键托盘图标可以退出。")
+                self.tray.showMessage("都市回响", "已收起到托盘。右键托盘图标可以退出。")
                 self._shown_tray_hint = True
         else:
             QApplication.instance().quit()
@@ -1147,7 +1147,7 @@ class ControlPanel(QWidget):
             self.tray_play.setText("由网易云控制播放")
             title = self.player.title or "等待网易云播放音乐"
             self._set_song_title(title, "网易云音乐 · " + self.player.artist)
-            self.source_label.setText(self.player.artist or "请在网易云中点击“跳动的词”启用效果。")
+            self.source_label.setText(self.player.artist or "请在网易云中点击“都市回响”启用效果。")
             self.footer_detail.setText(self.player.artist or self.player.status)
             self.format_label.setText("网易云")
             self.track_number.setText("01" if self.player.song_id else "—")

@@ -7,7 +7,7 @@
         status=value;
         for(const item of buttons) {
             if(item.title!==status) item.title=status;
-            const text=enabled?'跳动的词 ✓':'跳动的词';
+            const text=enabled?'都市回响 ✓':'都市回响';
             if(item.textContent!==text) item.textContent=text;
         }
     }
@@ -82,7 +82,7 @@
     }
     plugin.onLoad(async () => {
         try {
-            if(betterncm.ncm.getNCMVersion()!=='3.1.41') throw new Error('跳动的歌词目前适配网易云 3.1.41');
+            if(betterncm.ncm.getNCMVersion()!=='3.1.41') throw new Error('都市回响目前适配网易云 3.1.41');
             config=JSON.parse(await betterncm.fs.readFileText(plugin.pluginPath+'/bridge-config.json'));
             const events=new FloatingLyricsAdapter.PlaybackEvents(()=>FloatingLyricsAdapter.playbackStreams(),
                 ()=>store?.getState().playing,(id,milliseconds,seek)=>{
@@ -110,8 +110,8 @@
     plugin.onConfig(()=>{
         const section=document.createElement('div');
         section.style.cssText='padding:20px;line-height:1.8';
-        const title=document.createElement('h2');title.textContent='跳动的歌词';section.append(title);
-        const info=document.createElement('p');info.textContent='音乐由网易云播放。播放栏点击“跳动的词”开关效果，右键或点击旁边的“设置”调整效果。';section.append(info);
+        const title=document.createElement('h2');title.textContent='都市回响';section.append(title);
+        const info=document.createElement('p');info.textContent='音乐由网易云播放。播放栏点击“都市回响”开关效果，右键或点击旁边的“设置”调整效果。';section.append(info);
         const note=document.createElement('p');note.textContent=status;section.append(note);
         const button=document.createElement('button');button.textContent='打开歌词效果设置';button.onclick=showSettings;section.append(button);
         return section;

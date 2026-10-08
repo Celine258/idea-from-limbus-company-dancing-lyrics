@@ -28,7 +28,7 @@ def compose_frame(source, caption, subtitle):
 def create(smoke, recording, installer, ffmpeg, output):
     smoke, recording, output = Path(smoke), Path(recording), Path(output)
     scenes = [
-        (0, 5, smoke / "theme-light/effects-default-top.png", "跳动的歌词 · Windows 桌面音乐伴侣", "音乐由网易云播放；这个工具专注桌面歌词效果。"),
+        (0, 5, smoke / "theme-light/effects-default-top.png", "都市回响 · Windows 桌面音乐伴侣", "音乐由网易云播放；这个工具专注桌面歌词效果。"),
         (16, 19, smoke / "preset-quiet-settings.png", "安静办公 · 保存自己的效果方案", "字体、颜色、透明度与动画参数一次切换。"),
         (19, 22, smoke / "preset-lively-settings.png", "轻快律动 · 字体发光与逐字动画", "预设、字体导入和可用歌曲的演唱强调。"),
         (22, 26, smoke / "theme-special/effects-default-top.png", "特殊主题 · FACE THE SIN. SAVE THE E.G.O", "默认、深色和特殊主题；钟头图标随特殊主题切换。"),

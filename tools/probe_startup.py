@@ -54,7 +54,7 @@ if __name__ == "__main__":
     print(json.dumps(reports, ensure_ascii=True, indent=2))
     expected = {"hidden": (False, 1), "normal": (True, 0)}
     for report in reports:
-        panel = next((w for w in report["windows"] if w["title"] == "跳动的歌词"), None)
+        panel = next((w for w in report["windows"] if w["title"] == "都市回响"), None)
         visible, code = expected[report["mode"]]
         if panel is None or panel["visible"] != visible or report["exit_code"] != code:
             raise SystemExit("Startup visibility regression check failed")
