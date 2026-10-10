@@ -20,6 +20,10 @@ class LyricsOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        if sys.platform == "darwin":
+            # Qt's native NSPanel stays visible when another application is active.
+            # Keep Tool on Windows: removing it exposes the overlay in the taskbar.
+            self.setAttribute(Qt.WidgetAttribute.WA_MacAlwaysShowToolWindow)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setWindowTitle(f"{APP_NAME} · 悬浮层")
         self.player = player
@@ -73,7 +77,8 @@ class LyricsOverlay(QWidget):
         self.clear_layouts()
 
     def _timeline(self, document):
-        return LyricTimeline(document, self.prefs.delay_ms, self.prefs.animation_style,
+        delay = self.prefs.delay_ms - getattr(self.player, "lyric_offset_ms", 0)
+        return LyricTimeline(document, delay, self.prefs.animation_style,
                              self.prefs.entry_speed, self.prefs.exit_speed)
 
     def clear_layouts(self):

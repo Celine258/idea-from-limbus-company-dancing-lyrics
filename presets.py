@@ -5,6 +5,7 @@ from pathlib import Path
 import tempfile
 import uuid
 from settings import Preferences, normalize_preferences
+from fonts import PRESET_FONTS
 
 EFFECT_KEYS = tuple(key for key in asdict(Preferences()) if key not in ("region", "delay_ms", "volume", "theme", "prefer_translation"))
 
@@ -22,7 +23,7 @@ class EffectPreset:
 
 
 BUILTINS = (
-    EffectPreset("builtin:quiet", "安静办公", effect_values(replace(Preferences(), font_family="SimSun", font_size=28,
+    EffectPreset("builtin:quiet", "安静办公", effect_values(replace(Preferences(), font_family=PRESET_FONTS[1][1], font_size=28,
         glow_strength=30, opacity=60, motion="wave", jump=2, angle=3, entry_speed=80, exit_speed=80)), True),
     EffectPreset("builtin:lively", "轻快律动", effect_values(replace(Preferences(), color="#ff4080", opacity=80,
         animation_style="ripple_wave", jump=10, angle=8, entry_speed=140, exit_speed=140)), True),

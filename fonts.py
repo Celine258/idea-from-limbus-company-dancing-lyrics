@@ -4,11 +4,18 @@ import hashlib
 import logging
 from pathlib import Path
 import tempfile
+import sys
 from PySide6.QtGui import QFont, QFontDatabase
 from settings import DEFAULT_FONT_FAMILY
 
 FONT_EXTENSIONS = {".ttf", ".otf", ".ttc"}
-PRESET_FONTS = (("微软雅黑（默认）", DEFAULT_FONT_FAMILY), ("宋体", "SimSun"), ("楷体", "KaiTi"))
+def preset_fonts(platform=None):
+    if (platform or sys.platform) == "darwin":
+        return (("苹方（默认）", "PingFang SC"), ("宋体", "Songti SC"), ("楷体", "Kaiti SC"))
+    return (("微软雅黑（默认）", "Microsoft YaHei UI"), ("宋体", "SimSun"), ("楷体", "KaiTi"))
+
+
+PRESET_FONTS = preset_fonts()
 
 
 @dataclass(frozen=True)
@@ -65,7 +72,8 @@ class FontLibrary:
     def restore_family(self, requested):
         if any(choice.family == requested and choice.available for choice in self.choices()):
             return requested, ""
-        return DEFAULT_FONT_FAMILY, "上次选择的字体不可用，已恢复为微软雅黑；可重新导入字体。"
+        fallback = "苹方" if sys.platform == "darwin" else "微软雅黑"
+        return DEFAULT_FONT_FAMILY, f"上次选择的字体不可用，已恢复为{fallback}；可重新导入字体。"
 
     def import_font(self, source: Path):
         source = Path(source)

@@ -1,2 +1,5 @@
 # Preserve upstream license bytes and their provenance hashes, including original whitespace.
 release/licenses/** -text -whitespace
+*.sh text eol=lf
+*.command text eol=lf
+.github/workflows/*.yml text eol=lf

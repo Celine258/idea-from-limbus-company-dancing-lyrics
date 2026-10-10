@@ -4,7 +4,11 @@ import sys
 from PySide6.QtCore import QSettings
 from PySide6.QtGui import QColor
 
-DEFAULT_FONT_FAMILY = "Microsoft YaHei UI"
+def default_font_family(platform=None):
+    return "PingFang SC" if (platform or sys.platform) == "darwin" else "Microsoft YaHei UI"
+
+
+DEFAULT_FONT_FAMILY = default_font_family()
 ANIMATION_STYLES = {
     "classic": "原有效果 · 整句渐隐",
     "ripple_wave": "波纹·波动", "ripple_shake": "波纹·抖动",
