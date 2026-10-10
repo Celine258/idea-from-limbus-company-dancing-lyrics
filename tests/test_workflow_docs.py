@@ -138,6 +138,7 @@ class WorkflowDocumentationTests(unittest.TestCase):
         ignored = [".venv/probe.txt", ".state/probe.txt", "build/probe.txt",
                    "dist/probe.txt", "artifacts/probe.txt", "__pycache__/probe.pyc", "debug.log"]
         sources = ["AGENTS.md", "CHANGELOG.md", "main.py", "controls.py", "validation.py", "themes.py", "app_info.py",
+                   "CityEchoes.spec", "main_mac.py", "tools/build_macos.py",
                    "assets/app.ico", "assets/check-white.svg", "assets/dante-clock.svg", "assets/special-blueprint.svg",
                    "tests/test_controls.py", "tests/test_workflow_docs.py"]
         result = subprocess.run(

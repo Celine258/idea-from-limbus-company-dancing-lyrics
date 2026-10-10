@@ -6,4 +6,5 @@ build/
 dist/
 artifacts/
 *.spec
+!CityEchoes.spec
 debug.log

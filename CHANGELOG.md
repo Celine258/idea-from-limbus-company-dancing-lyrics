@@ -2,6 +2,23 @@
 
 每次改动按日期追加记录，包含改动目的、涉及文件、测试与验证结果、影响或已知限制。
 
+## 2026-10-11：制作 Mac 双架构实验应用压缩包
+
+### 改动
+
+- 新增 `CityEchoes.spec`、原生 Mac 构建／压缩包审计／LaunchServices 验证工具及双架构工作流；生成内置 Python、Qt 和 NumPy 的 `.app`，用 ditto 保留框架链接和执行权限，剔除个人数据与外部播放读取工具。
+- 冻结 Mac 应用将设置、字体和预设保存在 `~/Library/Application Support/CityEchoes/`，源码版保持原 `.state`；新增显式隔离的静音验证入口及包内安装播放读取工具、使用说明。
+- 公开包标为 `macos.1` 实验构建，分别提供 arm64 和 x86_64；新增发布边界、缺失 QtCore、执行权限、路径和持久数据回归测试。
+
+### 测试与验证
+
+- 本机全量 204 项通过，26.066 秒，日志 `artifacts/mac-package-all-tests.txt`；实际 BAT 静音集成通过，报告 `artifacts/mac-package-windows-20261011/smoke-report.json`、`passed=true`、Qt `windows`。远端 Mac 原生构建与成品验证在发布前补齐，当前不宣称已有可下载成品。
+- 为手写 Mac spec 添加 Git 忽略例外及源码边界检查后，最终全量 204 项通过，17.603 秒，`artifacts/mac-package-final-tests.txt`。
+
+### 影响与限制
+
+- 不改动现有 Windows ZIP。Mac 仍需通过 Homebrew 单独安装 `nowplaying-cli`；应用采用 ad-hoc 签名，未做 Apple Developer ID 公证。模拟数据的成品启动验证不等于真实网易云播放验收。
+
 ## 2026-10-11：记录 macOS 双架构 CI 与源码安装方式
 
 ### 改动

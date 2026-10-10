@@ -7,12 +7,23 @@ from pathlib import Path
 import sys
 
 
+def default_state_directory():
+    # A signed app bundle must remain immutable; updates must not erase user data.
+    if getattr(sys, "frozen", False):
+        return Path.home() / "Library" / "Application Support" / "CityEchoes"
+    return Path(__file__).parent / ".state"
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="都市回响 · macOS 实验版")
     parser.add_argument("--local", action="store_true", help="本地音乐与 LRC 模式")
     parser.add_argument("--check", action="store_true", help="检查系统与 nowplaying-cli，不启动窗口")
     parser.add_argument("--state-dir", type=Path, help="自定义设置目录；默认项目目录中的 .state")
+    parser.add_argument("--smoke", action="store_true", help="隔离的静音打包验证（模拟播放信息）")
+    parser.add_argument("--report-dir", type=Path, help="静音验证报告目录")
     args = parser.parse_args(argv)
+    if args.smoke and (args.local or not args.state_dir or not args.report_dir):
+        parser.error("--smoke 需要独立的 --state-dir 和 --report-dir，且不能与 --local 同用")
     if sys.platform != "darwin":
         print("main_mac.py 仅用于 macOS；Windows 请使用启动.bat。", file=sys.stderr)
         return 2
@@ -32,7 +43,7 @@ def main(argv=None):
     from overlay import LyricsOverlay
     from settings import DEFAULT_FONT_FAMILY, SettingsStore, app_directory
 
-    state_dir = args.state_dir or app_directory() / ".state"
+    state_dir = args.state_dir or default_state_directory()
     state_dir.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(filename=state_dir / "app.log", level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s", encoding="utf-8")
@@ -58,7 +69,7 @@ def main(argv=None):
         from player import MusicPlayer
         player = MusicPlayer()
     else:
-        player = MacNeteasePlayer()
+        player = MacNeteasePlayer(autostart=not args.smoke)
         player.set_offset_store(OffsetStore(state_dir / "offsets.json"))
     overlay = LyricsOverlay(player, prefs)
     library = FontLibrary(state_dir / "fonts")
@@ -81,6 +92,9 @@ def main(argv=None):
     panel.fit_to_screen(app.primaryScreen().availableGeometry())
     overlay.show()
     panel.show()
+    if args.smoke:
+        from macos_smoke import schedule_smoke
+        schedule_smoke(app, panel, overlay, player, store, args.report_dir)
     return app.exec()
 
 
