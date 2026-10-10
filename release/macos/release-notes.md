@@ -14,7 +14,7 @@ Windows 用户继续使用原来的 `v0.6.0-beta.2` Windows ZIP。
 从源码版迁移请先备份 `.state`，再手动复制至成品设置目录。
 
 验证涵盖两个架构的原生构建、运行依赖与压缩包审计、中文路径、解压后冻结程序的 Cocoa 窗口启动与隔离静音模拟数据。
-[实际构建验证](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/actions/runs/38069875108)：Mac 两架构各 92 项测试通过，两个成品启动报告均为 `passed=true`。
+[实际构建验证](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/actions/runs/38070395911)：Mac 两架构各 93 项测试通过，两个成品启动报告均为 `passed=true`。
 **不代表真实网易云歌曲播放或用户电脑上的 Gatekeeper / Finder / 全屏 Spaces 已验收**，请先小范围试用。
 具体测试结果见 [验证记录](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/blob/main/%E9%AA%8C%E8%AF%81%E8%AE%B0%E5%BD%95.md)。
 

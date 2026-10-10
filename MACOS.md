@@ -9,7 +9,7 @@
 Windows ZIP 和已有网易云联动安装流程继续使用；它们不适用于 macOS。
 **尚未完成 macOS 真机播放、用户电脑上的 Finder 双击、全屏 Spaces 与权限验证。**
 
-自动测试已在 macOS 15.7.9 的 Intel 和 Apple Silicon 环境分别通过 92 项（Python 3.12.10），
+自动测试已在 macOS 15.7.9 的 Intel 和 Apple Silicon 环境分别通过 93 项（Python 3.12.10），
 并验证解压后冻结应用的 LaunchServices / Cocoa 窗口启动、中文路径、主题切换和设置保存。
 这些结果不代表真实网易云播放验收；具体 CI 链接与验证范围见 [验证记录](验证记录.md)。
 
