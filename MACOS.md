@@ -7,7 +7,10 @@
 
 目前应用版本 **0.6.0-beta.2**，macOS 部分为实验源码支持。
 Windows ZIP 和已有网易云联动安装流程继续使用；它们不适用于 macOS。
-**尚未完成 macOS 真机播放、Finder 双击、全屏 Spaces、权限及 Intel / Apple Silicon 验证，暂无经过验证的 Mac 安装包。**
+**尚未完成 macOS 真机播放、Finder 双击、全屏 Spaces 与权限验证，暂无经过验证的 Mac 安装包。**
+
+自动测试已在 macOS 15.7.9 的 Intel 和 Apple Silicon 环境分别通过 81 项（Python 3.12.10）。
+这些结果不代表真实网易云播放验收；具体 CI 链接与验证范围见 [验证记录](验证记录.md)。
 
 ## 安装与启动
 
@@ -22,7 +25,8 @@ macOS 与网易云具体版本的兼容范围待真机确认，不套用 Windows
    brew install python@3.12 nowplaying-cli
    ```
 
-2. 下载或克隆包含 macOS 改动的本仓库分支，在项目目录打开终端，运行：
+2. [下载本仓库源码 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/archive/refs/heads/main.zip)
+   并解压，在项目目录打开终端，运行：
 
    ```bash
    bash 安装.sh

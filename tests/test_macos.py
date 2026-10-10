@@ -399,6 +399,8 @@ class MacPlatformTests(unittest.TestCase):
         self.assertIn("@qingyin-alice-zhong", readme)
         self.assertIn("5109df2c99ee87ee6ad5370fed70fa5d880336a5", guide)
         self.assertIn("尚未完成 macOS 真机", guide)
+        self.assertIn("这些结果不代表真实网易云播放验收", guide)
+        self.assertIn("archive/refs/heads/main.zip", guide)
         self.assertIn("macOS", (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8"))
         self.assertFalse((ROOT / "assets/nowplaying-cli").exists())
         self.assertNotIn("requests", (ROOT / "requirements.txt").read_text())
