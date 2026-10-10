@@ -306,7 +306,7 @@ class MacPlatformTests(unittest.TestCase):
     def test_overlay_retains_tool_input_transparency_and_applies_lyric_only_offset(self):
         from overlay import LyricsOverlay
         from settings import Preferences
-        player = mac.MacNeteasePlayer(query=lambda: None, autostart=False)
+        player = mac.MacNeteasePlayer(query=lambda: None, clock=lambda: 0, autostart=False)
         player.apply(info())
         player.adjust_offset(200)
         overlay = LyricsOverlay(player, Preferences(delay_ms=300))
