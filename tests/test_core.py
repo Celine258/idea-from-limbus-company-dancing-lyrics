@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QApplication
 from animation import build_layout, display_regions, graphemes
 from audio_energy import pcm_rms
 from lrc import parse_lrc, load_lrc, LyricTimeline
-from settings import Preferences, SettingsStore
+from settings import Preferences, SettingsStore, DEFAULT_FONT_FAMILY
 
 APP = QApplication.instance() or QApplication([])
 
@@ -148,13 +148,13 @@ class SettingsTests(unittest.TestCase):
             prefs = store.load()
             self.assertEqual((prefs.text_style, prefs.glow_strength), ("glow", 60))
             self.assertEqual((prefs.font_family, prefs.font_size, prefs.color, prefs.jump),
-                             ("Microsoft YaHei UI", 41, "#f4ea5d", 9))
+                             (DEFAULT_FONT_FAMILY, 41, "#f4ea5d", 9))
             prefs.font_family = "SimSun"
             store.save(prefs)
             self.assertEqual(store.load(), prefs)
             for invalid in ("", "\n", "bad\x00family", "x" * 257):
                 store.store.setValue("font_family", invalid)
-                self.assertEqual(store.load().font_family, "Microsoft YaHei UI")
+                self.assertEqual(store.load().font_family, DEFAULT_FONT_FAMILY)
 
     def test_persistence_and_bad_values(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -4,7 +4,7 @@ from functools import lru_cache
 from PySide6.QtCore import Qt, QRectF, QPointF
 from PySide6.QtGui import QColor, QPalette, QPainter, QPainterPath, QPen, QPixmap, QLinearGradient
 from PySide6.QtWidgets import QFrame, QWidget
-from settings import resource_path
+from settings import resource_path, DEFAULT_FONT_FAMILY
 
 THEMES = {
     "light": dict(background="#f7f8fa", text="#293449", sidebar="#f0f3f6", border="#e0e5ed",
@@ -25,7 +25,7 @@ THEMES = {
 }
 
 STYLE = Template("""
-QWidget { background: $background; color: $text; font-family: 'Microsoft YaHei UI'; font-size: 13px; }
+QWidget { background: $background; color: $text; font-family: '$ui_font'; font-size: 13px; }
 QLabel, QCheckBox { background: transparent; }
 QCheckBox { spacing: 7px; }
 QCheckBox::indicator { width: 14px; height: 14px; border: 1px solid $muted; border-radius: 3px; background: $surface; }
@@ -97,7 +97,8 @@ def theme_colors(name):
 
 
 def theme_stylesheet(name):
-    style = STYLE.substitute(theme_colors(name), checkmark=resource_path("assets/check-white.svg").as_posix())
+    style = STYLE.substitute(theme_colors(name), ui_font=DEFAULT_FONT_FAMILY,
+                             checkmark=resource_path("assets/check-white.svg").as_posix())
     if name != "special":
         return style
     style = style.replace("#ff3656", "#ffb526").replace("#f42648", "#ffc24b").replace("#de2342", "#d89619").replace("#c62845", "#c18c32").replace("#ad1833", "#b98731")

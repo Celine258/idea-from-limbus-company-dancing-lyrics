@@ -4,6 +4,10 @@
 特殊主题中的钟头和机械图纸为本项目绘制的风格参考图形，不代表 Project Moon 官方产品或合作。
 演示音乐和示例文本由本项目生成，不包含网易云歌曲音频或用户导入字体。
 
+macOS 初始适配来源于 [qingyin-alice-zhong/mac-version](https://github.com/qingyin-alice-zhong/idea-from-limbus-company-dancing-lyrics/tree/mac-version)，采用 MIT 许可；作者贡献与固定参考提交见 [macOS 说明](MACOS.md)。
+macOS 使用的 [nowplaying-cli](https://github.com/kirtan-shah/nowplaying-cli) 是通过 Homebrew 单独安装的 GPLv3 外部程序，本仓库及 Windows ZIP 不附带该二进制。
+歌词接口沿用原 mac 分支的网易云在线接口，不分发歌曲音频或缓存的个人歌词。
+
 | 组件 | 用途 | 许可与来源 |
 | --- | --- | --- |
 | Python 3.11.8 | 成品内置运行时 | PSF，https://www.python.org/downloads/release/python-3118/ |

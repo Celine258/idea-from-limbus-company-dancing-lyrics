@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 from controls import ControlPanel, app_icon
 from overlay import LyricsOverlay
 from player import MusicPlayer
-from settings import SettingsStore, app_directory
+from settings import SettingsStore, app_directory, DEFAULT_FONT_FAMILY
 from fonts import FontLibrary
 from app_info import APP_NAME, APP_VERSION, set_taskbar_identity
 
@@ -58,7 +58,7 @@ def main():
     app.setOrganizationName("FloatingLyrics")
     app.setWindowIcon(app_icon())
     app.setStyle("Fusion")
-    app.setFont(QFont("Microsoft YaHei UI", 10))
+    app.setFont(QFont(DEFAULT_FONT_FAMILY, 10))
     app.setQuitOnLastWindowClosed(False)
 
     def exception_hook(error_type, error, traceback):

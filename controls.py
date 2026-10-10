@@ -1,8 +1,9 @@
 from pathlib import Path
 import ctypes
-from ctypes import wintypes
-import logging
 import sys
+if sys.platform == "win32":
+    from ctypes import wintypes
+import logging
 from PySide6.QtCore import QPointF, QRect, QRectF, QSize, Qt, QTimer, QElapsedTimer, QSignalBlocker
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPalette, QPen, QPixmap, QPolygonF
 from PySide6.QtWidgets import (
@@ -831,11 +832,20 @@ class ControlPanel(QWidget):
         self.tray.setContextMenu(menu)
         self.tray.activated.connect(self._tray_activated)
         self.tray_available = QSystemTrayIcon.isSystemTrayAvailable()
-        self.tray_button.setEnabled(self.tray_available)
+        self.tray_button.setEnabled(self.tray_available or sys.platform == "darwin")
         if self.tray_available:
             self.tray.show()
+        elif sys.platform == "darwin":
+            self.tray_button.setText("隐藏面板")
+            self.tray_button.setToolTip("点击 Dock 图标可重新打开控制面板。")
         else:
             self.tray_button.setToolTip("当前系统没有可用托盘，请保留控制面板。")
+        if sys.platform == "darwin":
+            QApplication.instance().applicationStateChanged.connect(self._on_app_state_changed)
+
+    def _on_app_state_changed(self, state):
+        if state == Qt.ApplicationState.ApplicationActive and self.isHidden():
+            self.show_panel()
 
     def _tray_activated(self, reason):
         if reason in (QSystemTrayIcon.ActivationReason.Trigger, QSystemTrayIcon.ActivationReason.DoubleClick):
@@ -865,10 +875,10 @@ class ControlPanel(QWidget):
         self.show_panel()
 
     def closeEvent(self, event):
-        if self.tray_available:
+        if self.tray_available or sys.platform == "darwin":
             event.ignore()
             self.hide()
-            if not self._shown_tray_hint:
+            if self.tray_available and not self._shown_tray_hint:
                 self.tray.showMessage("都市回响", "已收起到托盘。右键托盘图标可以退出。")
                 self._shown_tray_hint = True
         else:

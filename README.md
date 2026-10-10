@@ -24,6 +24,17 @@
 
 详细流程见 [使用说明](release/使用说明.txt)。自有源码采用 [MIT](LICENSE)，运行组件保留 [第三方许可](THIRD_PARTY_NOTICES.md)。
 
+macOS：已整合社区适配代码，提供独立入口及 [macOS 安装与验证说明](MACOS.md)。
+当前为**实验源码支持，尚未完成 macOS 真机播放验证**；Windows 下载包不适用于 Mac。
+Intel 与 Apple Silicon 的适配器及共用绘制自动测试已通过，安装方式和待验收项目见上述说明。
+
+## 贡献者
+
+- [@qingyin-alice-zhong](https://github.com/qingyin-alice-zhong)：macOS 初始适配、独立启动入口、系统播放信息读取与平台界面适配方案。
+- [@Celine258](https://github.com/Celine258)：项目创作与维护、macOS 代码整合、可靠性修正及 Windows 回归验证。
+
+## 功能与使用
+
 应用版本 **0.6.0-beta.2**。侧栏显示“创作者：Bilibili-鈴仙優昙華院因幡”和版本号，标语为 **FACE THE SIN. SAVE THE E.G.O**。左侧下方可选择“默认主题／深色主题／特殊主题”，立即生效并自动保存，重启后保留选择。默认主题和深色主题保留原外观；特殊主题采用 Limbus Company 风格的黑金配色、切角双层边框和机械图纸底纹。
 
 特殊主题将侧栏、窗口、运行中的 Windows 任务栏及系统托盘图标换为但丁钟头；切回默认或深色主题恢复红色波形图标。后台运行时托盘也显示当前主题图标。主题不改变歌词颜色、字体、动画、效果预设、播放进度或独立的预览背景；更新保留已有选择。安装目录里的 EXE 文件图标仍为原图标，未运行时的固定快捷方式由 Windows 管理。
