@@ -12,7 +12,7 @@ import tempfile
 import urllib.request
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app_info import APP_VERSION
-from tools.package_macos import APP_BUNDLE, archive_name, audit_archive, MAC_RELEASE_TAG
+from tools.package_macos import APP_BUNDLE, archive_name, audit_archive, MAC_RELEASE_TAG, record_runtime_licenses
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -68,6 +68,7 @@ def build(output_dir):
             with urllib.request.urlopen(url, timeout=30) as response:
                 python_license = response.read()
         (stage / "licenses/Python-LICENSE.txt").write_bytes(python_license)
+        record_runtime_licenses(stage / "licenses", version, metadata.version("numpy"), architecture)
         commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
         info = {"version": APP_VERSION, "release_tag": MAC_RELEASE_TAG, "architecture": architecture,
                 "macos_build": platform.mac_ver()[0], "python": version, "pyside6": metadata.version("PySide6"),

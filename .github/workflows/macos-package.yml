@@ -8,7 +8,8 @@ on:
       - '*.py'
       - CityEchoes.spec
       - tools/*macos.py
-      - release/macos/**
+      - release/macos/*.command
+      - release/macos/使用说明.txt
       - requirements*.txt
       - assets/**
       - tests/test_mac_distribution.py

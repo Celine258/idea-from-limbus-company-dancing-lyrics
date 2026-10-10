@@ -5,14 +5,40 @@
 参考提交固定为 `5109df2c99ee87ee6ad5370fed70fa5d880336a5`；原分支与主线没有共同提交历史，
 因此迁移平台相关改动，在提交中使用共同作者署名，并保留原作者贡献说明。
 
-目前应用版本 **0.6.0-beta.2**，macOS 部分为实验源码支持。
+目前应用版本 **0.6.0-beta.2**，Mac 应用包构建编号为 **macos.1**，提供实验应用包与源码。
 Windows ZIP 和已有网易云联动安装流程继续使用；它们不适用于 macOS。
-**尚未完成 macOS 真机播放、Finder 双击、全屏 Spaces 与权限验证，暂无经过验证的 Mac 安装包。**
+**尚未完成 macOS 真机播放、用户电脑上的 Finder 双击、全屏 Spaces 与权限验证。**
 
-自动测试已在 macOS 15.7.9 的 Intel 和 Apple Silicon 环境分别通过 81 项（Python 3.12.10）。
+自动测试已在 macOS 15.7.9 的 Intel 和 Apple Silicon 环境分别通过 92 项（Python 3.12.10），
+并验证解压后冻结应用的 LaunchServices / Cocoa 窗口启动、中文路径、主题切换和设置保存。
 这些结果不代表真实网易云播放验收；具体 CI 链接与验证范围见 [验证记录](验证记录.md)。
 
-## 安装与启动
+## 下载应用包（普通用户）
+
+[Mac 实验版下载页](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.6.0-beta.2-macos.1)
+提供内置 Python、PySide6 / Qt 与 NumPy 的应用，**不需要安装 Python**。请下载附件中的 ZIP；Source code 是开发源码。
+
+| Mac 芯片 | 下载 |
+| --- | --- |
+| Apple Silicon（M 系列） | [arm64 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.6.0-beta.2-macos.1/city-echoes-0.6.0-beta.2-macos.1-arm64.zip) |
+| Intel | [x86_64 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.6.0-beta.2-macos.1/city-echoes-0.6.0-beta.2-macos.1-x86_64.zip) |
+
+在“苹果菜单 → 关于本机”中查看芯片类型。应用声明最低系统为 macOS 13；实际 CI 验证环境为 macOS 15.7.9，其他系统仍待确认。
+
+1. 完整解压对应 ZIP，将 **都市回响.app** 拖到“应用程序”。
+2. 首次使用运行包内 **安装播放读取工具.command**。已有 Homebrew 时安装 `nowplaying-cli`；
+   未安装 Homebrew 时先按 [Homebrew 官网](https://brew.sh/) 操作再重试，也可以在终端运行 `brew install nowplaying-cli`。
+3. 在网易云 Mac 客户端播放歌曲，再打开 **都市回响.app**。音乐仍由网易云播放，请暂停其他播放器或浏览器媒体。
+
+应用目前采用 ad-hoc 签名，**没有 Apple Developer ID 签名或公证**。
+若提示无法验证开发者，确认来源和 ZIP 校验值后，在“系统设置 → 隐私与安全性”中为本应用选择“仍要打开”，
+详见 [Apple 官方说明](https://support.apple.com/zh-cn/102445)。不需要关闭系统整体安全保护。
+
+成品设置、字体、预设、歌曲偏移和日志存放在 `~/Library/Application Support/CityEchoes/`，更新 `.app` 时保持。
+下载页另附 `.zip.sha256` 校验文件；ZIP 内提供许可、中文说明与 `build-info.json`。
+外部 `nowplaying-cli` 不在 ZIP 中，需单独安装；这不是网易云 Mac 客户端内的 BetterNCM 插件。
+
+## 源码安装与启动（开发者）
 
 需要 Python **3.10–3.12**（推荐 3.11 / 3.12）、网易云 Mac 客户端及 Homebrew 外部工具。
 当前锁定的 NumPy 1.26.4 不支持 Python 3.13；安装脚本会拒绝不支持的解释器。
@@ -40,7 +66,7 @@ macOS 与网易云具体版本的兼容范围待真机确认，不套用 Windows
 
 `启动.command` 在启动失败时保留错误提示。需要帮助时附上终端输出及 `.state/app.log`，
 分享日志前检查是否包含个人文件路径。
-可用 `.venv/bin/python main_mac.py --check` 检查外部工具是否存在；这项检查不代表真实播放已经验证。
+源码版可用 `.venv/bin/python main_mac.py --check` 检查外部工具是否存在；这项检查不代表真实播放已经验证。
 自定义工具路径可设置 `NOWPLAYING_CLI`，自定义设置目录使用 `bash start.sh --state-dir "/可写目录"`。
 `bash start.sh --local` 启动原有本地音乐与 LRC 模式。
 
@@ -65,10 +91,12 @@ macOS 与网易云具体版本的兼容范围待真机确认，不套用 Windows
 
 ## 更新与卸载
 
-退出程序后更新源码，保留 `.state`，再次运行 `bash 安装.sh`。
+应用包：退出程序后替换 `.app`；卸载时移走 `.app`，默认保留用户设置目录和共用外部工具。
+源码版：退出程序后更新源码，保留 `.state`，再次运行 `bash 安装.sh`。
 设置、导入字体、效果预设及歌曲偏移都不删除。
 运行 `bash 卸载.sh` 并确认后，只删除当前项目的 `.venv`；不卸载 Homebrew 或共用 `nowplaying-cli`。
 损坏的偏移文件保留原文件并提示，不自动覆盖。
+从源码版迁移时，先退出程序、备份旧 `.state`，再将其中内容复制到成品用户设置目录；已有成品设置需先备份，避免覆盖。
 
 ## 验证清单
 

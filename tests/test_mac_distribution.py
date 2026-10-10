@@ -4,13 +4,15 @@ from io import StringIO
 from pathlib import Path
 import stat
 import struct
+import json
+import hashlib
 import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
 
 import main_mac
-from tools.package_macos import APP_BUNDLE, archive_name, audit_archive
+from tools.package_macos import APP_BUNDLE, archive_name, audit_archive, record_runtime_licenses
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,6 +43,18 @@ def write_archive(path, entries, extra=(), executable=True):
 
 
 class MacDistributionTests(unittest.TestCase):
+    def test_license_manifest_uses_actual_runtime_and_architecture_specific_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            (directory / "sources.json").write_text(json.dumps([{"python": "3.11.8", "numpy": "old"}]))
+            (directory / "Python-LICENSE.txt").write_bytes(b"actual python runtime license")
+            (directory / "NumPy-LICENSE.txt").write_bytes(b"arm64 wheel license")
+            record_runtime_licenses(directory, "3.12.10", "1.26.4", "arm64")
+            entries = json.loads((directory / "sources.json").read_text())
+            self.assertEqual(entries[0], {"python": "3.12.10", "numpy": "1.26.4", "architecture": "arm64"})
+            for entry in entries[1:]:
+                self.assertEqual(entry["sha256"], hashlib.sha256((directory / entry["file"]).read_bytes()).hexdigest())
+
     def test_frozen_settings_live_outside_app_bundle_and_survive_location_change(self):
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary)

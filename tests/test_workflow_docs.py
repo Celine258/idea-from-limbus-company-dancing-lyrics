@@ -10,10 +10,25 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 DOCUMENTS = tuple(ROOT / name for name in ("AGENTS.md", "CHANGELOG.md", "README.md", "验证记录.md", "NETEASE.md",
                                          "产品设计方案.md", "技术文档.md", "THIRD_PARTY_NOTICES.md",
-                                         "docs/传播文案.md", "release/release-notes.md", "MACOS.md"))
+                                         "docs/传播文案.md", "release/release-notes.md", "MACOS.md",
+                                         "release/macos/release-notes.md"))
 
 
 class WorkflowDocumentationTests(unittest.TestCase):
+    def test_mac_download_guides_distinguish_architecture_dependency_and_validation(self):
+        from tools.package_macos import MAC_RELEASE_TAG, archive_name
+        for name in ("README.md", "MACOS.md"):
+            text = (ROOT / name).read_text(encoding="utf-8")
+            for arch in ("arm64", "x86_64"):
+                self.assertIn(f"releases/download/{MAC_RELEASE_TAG}/{archive_name(arch)}", text)
+            self.assertIn("Homebrew", text)
+            self.assertIn("nowplaying-cli", text)
+            self.assertIn("不需要安装 Python", text)
+        guide = (ROOT / "MACOS.md").read_text(encoding="utf-8")
+        self.assertIn("尚未完成 macOS 真机播放", guide)
+        self.assertIn("没有 Apple Developer ID", guide)
+        self.assertIn("~/Library/Application Support/CityEchoes/", guide)
+
     def test_brand_name_and_existing_plugin_identity(self):
         from app_info import APP_NAME
         self.assertEqual(APP_NAME, "都市回响")

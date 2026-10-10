@@ -1,5 +1,6 @@
 """Audit a ditto archive, including permissions and framework symlinks."""
 import hashlib
+import json
 from pathlib import Path, PurePosixPath
 import posixpath
 import stat
@@ -10,6 +11,20 @@ MAC_PACKAGE_PREFIX = "city-echoes-0.6.0-beta.2-macos.1"
 APP_BUNDLE = "都市回响.app"
 FORBIDDEN = {".git", ".venv", ".state", "__pycache__", "settings.ini", "effect-presets.json",
              "offsets.json", "bridge-config.json", "netease-bridge.json", "nowplaying-cli"}
+
+
+def record_runtime_licenses(directory, python_version, numpy_version, architecture):
+    directory = Path(directory)
+    manifest = json.loads((directory / "sources.json").read_text(encoding="utf-8"))
+    for entry in manifest:
+        if "python" in entry:
+            entry.update(python=python_version, numpy=numpy_version, architecture=architecture)
+    for name, source in (("Python-LICENSE.txt", f"https://raw.githubusercontent.com/python/cpython/v{python_version}/LICENSE"),
+                         ("NumPy-LICENSE.txt", f"installed numpy=={numpy_version} {architecture} wheel LICENSE.txt")):
+        manifest = [entry for entry in manifest if entry.get("file") != name]
+        manifest.append({"file": name, "source": source,
+                         "sha256": hashlib.sha256((directory / name).read_bytes()).hexdigest()})
+    (directory / "sources.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def archive_name(architecture):
