@@ -2,6 +2,69 @@
 
 每次改动按日期追加记录，包含改动目的、涉及文件、测试与验证结果、影响或已知限制。
 
+## 2026-10-11：记录最终 Mac 双架构公开包验证
+
+### 改动
+
+- 更新 `MACOS.md`、Mac 发布说明与验证记录，保存实际公开包源码、下载版本、大小、SHA-256 与两种芯片的原生启动结果；附件采用通过全部检查的最终构建。
+
+### 测试与验证
+
+- 工作流 `38070395911` 成功，源提交 `e611829`；Mac arm64 / x86_64 各 93 项通过（2.607 / 11.464 秒），两份解压后的冻结应用启动报告均通过。压缩包各 529 项，内置运行依赖、框架链接、执行权限及中文路径检查通过。
+- 下载后在本机复核 ZIP / SHA-256 及许可来源清单，两个包均通过；保存至 `artifacts/releases/`。最终全量 207 项通过，8.959 秒，`artifacts/mac-package-release-record-tests.txt`。
+
+### 影响与限制
+
+- 预发行版本 `v0.6.0-beta.2-macos.1`，真实网易云播放与用户电脑上的 Gatekeeper / Finder / Spaces 仍待验收。既有 Windows 公开 ZIP 保持不变。
+
+## 2026-10-11：增加 Mac 成品下载入口与发布说明
+
+### 改动
+
+- README 首屏增加 Apple Silicon / Intel 两个 Mac ZIP 入口；`MACOS.md` 区分普通用户应用包与源码安装，说明外部工具、数据迁移、更新卸载及未公证应用的首次打开方式。增加 Mac 发布说明、文档链接回归和实际成品验证记录。
+- 发布前核对 Mac 许可来源清单，使用实际 Python 版本和对应架构 NumPy 许可摘要替换 Windows 的运行时元数据，新增清单一致性测试；工作流只在包内文件或代码变化时重建，发布记录更新不重复构建。
+
+### 测试与验证
+
+- Mac 实际工作流 `38069875108` 成功，两端各 92 项测试通过；冻结应用、ad-hoc 签名、529 项 ZIP 审计、中文路径及解压后 LaunchServices 原生 Cocoa 启动通过。已查看原生窗口截图；成品大小、SHA-256 与测试边界详见验证记录。
+- 下载说明及许可清单回归更新后，Windows 全量 207 项通过，9.104 秒，`artifacts/mac-package-public-tests.txt`；公开包在修正清单后重新构建与验证。
+
+### 影响与限制
+
+- Mac 附件为 `v0.6.0-beta.2-macos.1` 预发行；已有 Windows 下载继续使用原版本。需单独安装 nowplaying-cli，未做 Apple 公证，真实网易云歌曲与用户电脑的权限 / Finder / Spaces 行为待试用。
+
+## 2026-10-11：修复 Mac 压缩包中文文件名校验
+
+### 改动
+
+- `tools/package_macos.py` 显式使用 UTF-8 读取 ditto 的 ZIP 文件名；ditto 未设置 ZIP 的 UTF-8 标志，默认解码会把中文应用名及说明误读为乱码。增加去除编码标志的真实结构回归测试。
+
+### 测试与验证
+
+- 首轮 Mac 双架构均成功构建 `.app` 并通过 ad-hoc 签名校验，压缩包审计因上述编码误判失败，未执行启动验证、未公开包。下载失败产物核验了原始与 UTF-8 文件名的差异。
+- 修复后 Windows 全量 205 项通过，9.964 秒，`artifacts/mac-package-encoding-tests.txt`；两份真实 ditto 产物重新审计通过（各 529 项）。
+
+### 影响与限制
+
+- 只修正审计器，不改动 Mac 压缩包的链接结构或 Windows 行为。远端成品验证通过前不发布附件。
+
+## 2026-10-11：制作 Mac 双架构实验应用压缩包
+
+### 改动
+
+- 新增 `CityEchoes.spec`、原生 Mac 构建／压缩包审计／LaunchServices 验证工具及双架构工作流；生成内置 Python、Qt 和 NumPy 的 `.app`，用 ditto 保留框架链接和执行权限，剔除个人数据与外部播放读取工具。
+- 冻结 Mac 应用将设置、字体和预设保存在 `~/Library/Application Support/CityEchoes/`，源码版保持原 `.state`；新增显式隔离的静音验证入口及包内安装播放读取工具、使用说明。
+- 公开包标为 `macos.1` 实验构建，分别提供 arm64 和 x86_64；新增发布边界、缺失 QtCore、执行权限、路径和持久数据回归测试。
+
+### 测试与验证
+
+- 本机全量 204 项通过，26.066 秒，日志 `artifacts/mac-package-all-tests.txt`；实际 BAT 静音集成通过，报告 `artifacts/mac-package-windows-20261011/smoke-report.json`、`passed=true`、Qt `windows`。远端 Mac 原生构建与成品验证在发布前补齐，当前不宣称已有可下载成品。
+- 为手写 Mac spec 添加 Git 忽略例外及源码边界检查后，最终全量 204 项通过，17.603 秒，`artifacts/mac-package-final-tests.txt`。
+
+### 影响与限制
+
+- 不改动现有 Windows ZIP。Mac 仍需通过 Homebrew 单独安装 `nowplaying-cli`；应用采用 ad-hoc 签名，未做 Apple Developer ID 公证。模拟数据的成品启动验证不等于真实网易云播放验收。
+
 ## 2026-10-11：记录 macOS 双架构 CI 与源码安装方式
 
 ### 改动

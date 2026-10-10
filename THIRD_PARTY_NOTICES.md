@@ -10,7 +10,7 @@ macOS 使用的 [nowplaying-cli](https://github.com/kirtan-shah/nowplaying-cli) 
 
 | 组件 | 用途 | 许可与来源 |
 | --- | --- | --- |
-| Python 3.11.8 | 成品内置运行时 | PSF，https://www.python.org/downloads/release/python-3118/ |
+| Python 3.11.8（Windows）／3.12.10（Mac CI） | 成品内置运行时，Mac 实际版本另见包内 build-info.json | PSF，https://www.python.org/downloads/source/ |
 | PySide6 / shiboken6 / Qt 6.8.3 | 界面、播放、文字绘制；保持独立 DLL 动态链接 | LGPLv3 / GPL / 商业多许可，使用 LGPL 允许的模块；https://doc.qt.io/qtforpython-6/licenses.html |
 | NumPy 1.26.4 | 光晕遮罩计算 | BSD 与其随附组件许可，https://github.com/numpy/numpy/tree/v1.26.4 |
 | FFmpeg 7.1 | Qt 音频后端随附动态库，已读取 `av_version_info()` 核验 | LGPLv2.1 及归属记录；https://github.com/FFmpeg/FFmpeg/tree/n7.1 |
@@ -18,6 +18,7 @@ macOS 使用的 [nowplaying-cli](https://github.com/kirtan-shah/nowplaying-cli) 
 | BetterNCM 1.3.4 | 网易云插件宿主 | GPLv3，https://github.com/std-microblock/chromatic/tree/1.3.4；官方 DLL 单独下载，不装入 ZIP |
 
 发布包的 `licenses` 文件夹保留上述运行组件的完整许可文本及 Qt 第三方归属记录。
+Mac 包保留独立 framework / dylib 动态库及其符号链接，实际 Python 和各架构 NumPy 许可在构建时从对应运行时收集；不包含 BetterNCM 或 nowplaying-cli 外部二进制。
 公开包剔除自动收集但本程序未使用的 Qt PDF、Qt Virtual Keyboard 及对应插件。
 Qt/PySide 使用独立共享库，保留 `_internal` 结构，允许按相同接口替换库以调试修改；
 不限制用户为修改这些库而进行逆向工程。对应版本源码见下列地址：

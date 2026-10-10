@@ -8,6 +8,17 @@
 
 **[下载 Windows x64 试用版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.6.0-beta.2)** · [问题反馈](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues)
 
+**[下载 Mac 实验版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.6.0-beta.2-macos.1)**（内置 Python）
+
+| Mac 芯片 | 压缩包 |
+| --- | --- |
+| Apple Silicon：M 系列 | [下载 arm64 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.6.0-beta.2-macos.1/city-echoes-0.6.0-beta.2-macos.1-arm64.zip) |
+| Intel | [下载 x86_64 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.6.0-beta.2-macos.1/city-echoes-0.6.0-beta.2-macos.1-x86_64.zip) |
+
+Mac：解压后将 `都市回响.app` 拖到“应用程序”，首次运行包内“安装播放读取工具.command”，然后打开应用。
+读取播放信息需单独安装 `nowplaying-cli`（需要 Homebrew），不需要安装 Python。尚未 Apple 公证；首次打开及详细步骤见 [Mac 安装说明](MACOS.md)。
+下列 BAT 安装步骤仅用于 Windows。
+
 [观看 30 秒无音乐演示](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.6.0-beta.2/dancing-lyrics-demo-30s.mp4)
 
 1. 下载 `dancing-lyrics-0.6.0-beta.2-windows-x64.zip`，完整解压到长期保留且可写的目录。
@@ -25,7 +36,7 @@
 详细流程见 [使用说明](release/使用说明.txt)。自有源码采用 [MIT](LICENSE)，运行组件保留 [第三方许可](THIRD_PARTY_NOTICES.md)。
 
 macOS：已整合社区适配代码，提供独立入口及 [macOS 安装与验证说明](MACOS.md)。
-当前为**实验源码支持，尚未完成 macOS 真机播放验证**；Windows 下载包不适用于 Mac。
+当前提供**实验应用包与源码，尚未完成 macOS 真机播放验证**；Windows 下载包不适用于 Mac。
 Intel 与 Apple Silicon 的适配器及共用绘制自动测试已通过，安装方式和待验收项目见上述说明。
 
 ## 贡献者

@@ -1,0 +1,66 @@
+name: Build experimental macOS packages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/macos-packages]
+    paths:
+      - '*.py'
+      - CityEchoes.spec
+      - tools/*macos.py
+      - release/macos/*.command
+      - release/macos/使用说明.txt
+      - requirements*.txt
+      - assets/**
+      - tests/test_mac_distribution.py
+      - .github/workflows/macos-package.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install pinned dependencies
+        run: python -m pip install -r requirements-build.txt
+      - name: Test adapter and shared renderer
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: >-
+          python -m unittest tests.test_macos tests.test_mac_distribution tests.test_core
+          tests.test_effect_parameters tests.test_glyph_motion tests.test_text_effects -v
+      - name: Build native app archive
+        run: |
+          bash -n release/macos/安装播放读取工具.command
+          python tools/build_macos.py
+      - name: Launch extracted frozen app through LaunchServices
+        run: >-
+          python tools/verify_macos.py
+          artifacts/mac-release/city-echoes-0.6.0-beta.2-macos.1-${{ matrix.arch }}.zip
+          --report-dir artifacts/mac-verification
+      - name: Upload package and verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: |
+            artifacts/mac-release/
+            artifacts/mac-verification/
+          if-no-files-found: warn

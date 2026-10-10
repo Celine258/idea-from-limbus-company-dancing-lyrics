@@ -1,0 +1,29 @@
+都市回响 0.6.0-beta.2 · macOS 实验应用包（macos.1）
+
+选择版本：arm64 对应 Apple Silicon（M 系列）；x86_64 对应 Intel。
+包内含 Python、PySide6/Qt、NumPy，不需要安装 Python 或下载 Windows 的 EXE。
+最低系统声明为 macOS 13；当前验证环境为 macOS 15，其他系统仍待确认。
+
+1. 完整解压 ZIP，将“都市回响.app”拖到“应用程序”。
+2. 首次使用运行“安装播放读取工具.command”。已装 Homebrew 时自动安装 nowplaying-cli；
+   尚未安装 Homebrew 时按 https://brew.sh/ 说明安装，再重新运行此入口。
+   也可以在终端执行：brew install nowplaying-cli。
+3. 打开网易云 Mac 版播放歌曲，再打开“都市回响.app”。请暂停其他音乐和浏览器媒体。
+
+本包尚无 Apple Developer ID 签名及公证。如果 macOS 提示无法验证开发者，
+确认下载来自本项目 Releases 后，在“系统设置 → 隐私与安全性”中为本应用选择“仍要打开”。
+不要关闭系统整体安全保护。具体步骤：https://support.apple.com/zh-cn/102445
+
+音乐控制仍在网易云中操作；本应用只读取播放信息和显示歌词。
+nowplaying-cli 是单独安装的外部工具，ZIP 不含该二进制。
+设置、字体、预设、歌曲偏移和日志保存在：
+~/Library/Application Support/CityEchoes/
+更新时退出应用，再替换 .app；卸载时移走 .app 即可，默认保留个人数据和外部工具。
+从源码版迁移时，先退出两版程序，再把旧项目 .state 中的文件复制到上述目录；先备份，避免覆盖已有数据。
+
+包内 build-info.json 记录源提交、架构、运行时版本和验证边界。
+CI 检查安装依赖、冻结程序、中文路径、原生窗口与静音模拟数据，不代表真实网易云歌曲播放已验收。
+真实歌曲、Finder 双击、Gatekeeper、权限、全屏 / Spaces 与长时间运行仍需 Mac 用户试用确认。
+遇到问题请附上 macOS / 芯片 / 网易云版本和日志，分享日志前检查个人文件路径。
+问题反馈：https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues
+初始 macOS 适配贡献者：@qingyin-alice-zhong。
