@@ -3,6 +3,7 @@ from contextlib import redirect_stderr
 from io import StringIO
 from pathlib import Path
 import stat
+import struct
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -86,6 +87,21 @@ class MacDistributionTests(unittest.TestCase):
                 write_archive(archive, {k: v for k, v in runtime_entries().items() if token not in k})
                 with self.assertRaisesRegex(ValueError, "运行依赖"):
                     audit_archive(archive)
+
+    def test_ditto_utf8_names_without_zip_language_flag_are_supported(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            archive = Path(temporary) / "ditto.zip"
+            write_archive(archive, runtime_entries())
+            data = bytearray(archive.read_bytes())
+            # Match ditto's UTF-8 metadata with the language flag unset.
+            for signature, flag_offset in ((b"PK\x03\x04", 6), (b"PK\x01\x02", 8)):
+                offset = 0
+                while (offset := data.find(signature, offset)) >= 0:
+                    flags = struct.unpack_from("<H", data, offset + flag_offset)[0]
+                    struct.pack_into("<H", data, offset + flag_offset, flags & ~0x800)
+                    offset += 4
+            archive.write_bytes(data)
+            self.assertGreater(audit_archive(archive)["entries"], 10)
 
     def test_private_settings_and_external_binary_cannot_enter_archive(self):
         for private in (".state/settings.ini", "fonts/debug.log", "nowplaying-cli", "effect-presets.json"):

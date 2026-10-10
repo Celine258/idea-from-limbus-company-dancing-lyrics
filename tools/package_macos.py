@@ -19,7 +19,8 @@ def archive_name(architecture):
 
 
 def audit_archive(archive_path):
-    with zipfile.ZipFile(archive_path) as archive:
+    # ditto stores UTF-8 names without setting the ZIP UTF-8 flag.
+    with zipfile.ZipFile(archive_path, metadata_encoding="utf-8") as archive:
         if archive.testzip():
             raise ValueError("ZIP CRC 校验失败")
         names = archive.namelist()
