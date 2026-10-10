@@ -1,6 +1,7 @@
 param(
     [switch]$Smoke,
     [switch]$ForceSource,
+    [switch]$QQMusic,
     [string]$ReportDirectory = '',
     [string]$Executable = ''
 )
@@ -104,6 +105,7 @@ public static class LyricsLauncherWindows {
     }
 
     if ($Smoke) { $taskArguments += '--smoke' }
+    if ($QQMusic) { $taskArguments += '--qqmusic' }
     if ($ReportDirectory) { $taskArguments += @('--report-dir', ('"' + $ReportDirectory + '"')) }
     Write-Output 'Opening the City Echoes control panel...'
     $taskOptions = @{

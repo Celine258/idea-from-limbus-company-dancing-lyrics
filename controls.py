@@ -297,6 +297,8 @@ class ControlPanel(QWidget):
         super().__init__()
         self.player, self.overlay = player, overlay
         self.external = getattr(player, "is_external", False)
+        self.source_name = getattr(player, "source_name", "网易云音乐")
+        self.source_short = getattr(player, "source_short", "网易云")
         self.prefs, self.store = prefs, store
         state = Path(store.store.fileName())
         self.presets = PresetStore(state.parent / ("smoke-effect-presets.json" if state.name.startswith("smoke-") else "effect-presets.json"))
@@ -342,11 +344,15 @@ class ControlPanel(QWidget):
                            self.volume_slider, self.volume_label, self.volume_icon, self.play_button):
                 widget.hide()
             self.external_transport.show()
+            self.external_transport.setText(f"{self.source_short}播放")
             self.progress.display_only = True
-            self.music_hint.setText("在网易云中选择歌曲，这里负责桌面歌词效果。")
+            self.music_hint.setText(f"在{self.source_short}中选择歌曲，这里负责桌面歌词效果。")
             self.player.document_changed.connect(self._external_document)
-            self.lyric_label.setText("网易云播放歌曲后，自动同步歌词，无需选择本地文件。")
-            self.progress.setToolTip("当前网易云进度；请在网易云中拖动进度。")
+            self.lyric_label.setText(f"{self.source_short}播放歌曲后，自动同步歌词，无需选择本地文件。")
+            self.progress.setToolTip(f"当前{self.source_short}进度；请在{self.source_short}中拖动进度。")
+        self.retry_lyrics_button.setVisible(hasattr(player, "retry_lyrics"))
+        if hasattr(player, "retry_lyrics"):
+            self.retry_lyrics_button.clicked.connect(player.retry_lyrics)
         self.player.set_volume(prefs.volume)
         player.changed.connect(self._refresh_state)
         player.error.connect(self.show_notice)
@@ -526,6 +532,10 @@ class ControlPanel(QWidget):
         lyrics, lyrics_body = card("桌面歌词")
         self.lyric_label = label("导入音乐后，自动查找同目录的同名 LRC 歌词。", "muted")
         lyrics_body.addWidget(self.lyric_label)
+        self.retry_lyrics_button = QPushButton("重新获取歌词")
+        self.retry_lyrics_button.setAccessibleName("重新获取当前歌曲歌词")
+        self.retry_lyrics_button.hide()
+        lyrics_body.addWidget(self.retry_lyrics_button)
         self.analysis_label = label("音乐律动将在播放后开启。", "muted")
         lyrics_body.addWidget(self.analysis_label)
         body.addWidget(lyrics)
@@ -892,8 +902,8 @@ class ControlPanel(QWidget):
     def _external_document(self, document):
         self.overlay.set_document(document)
         self._refresh_word_status()
-        self.lyric_label.setText(f"网易云歌词已同步 · {len(document.lines)} 句" if document else
-                                "等待网易云歌词；纯音乐或暂无歌词时保持空白。")
+        self.lyric_label.setText(f"{self.source_short}歌词已同步 · {len(document.lines)} 句" if document else
+                                f"等待{self.source_short}歌词；纯音乐或暂无歌词时保持空白。")
 
     def set_overlay_visible(self, visible):
         # Do not repeat show() every progress packet; preserve native focus behavior.
@@ -1177,19 +1187,22 @@ class ControlPanel(QWidget):
         if self.external:
             self.play_button.setEnabled(False)
             self.play_button.setIcon(symbol_icon("pause" if self.player.playing else "play", accent_text(self.prefs.theme)))
-            self.play_button.setToolTip("播放、暂停和音量请在网易云中操作。")
-            self.play_button.setAccessibleName("由网易云控制播放")
+            self.play_button.setToolTip(f"播放、暂停和音量请在{self.source_short}中操作。")
+            self.play_button.setAccessibleName(f"由{self.source_short}控制播放")
             self.tray_play.setEnabled(False)
-            self.tray_play.setText("由网易云控制播放")
-            title = self.player.title or "等待网易云播放音乐"
-            self._set_song_title(title, "网易云音乐 · " + self.player.artist)
-            self.source_label.setText(self.player.artist or "请在网易云中点击“都市回响”启用效果。")
+            self.tray_play.setText(f"由{self.source_short}控制播放")
+            title = self.player.title or f"等待{self.source_short}播放音乐"
+            self._set_song_title(title, self.source_name + " · " + self.player.artist)
+            self.source_label.setText(self.player.artist or getattr(self.player, "connect_hint", "请在网易云中点击“都市回响”启用效果。"))
             self.footer_detail.setText(self.player.artist or self.player.status)
-            self.format_label.setText("网易云")
+            self.format_label.setText(self.source_short)
             self.track_number.setText("01" if self.player.song_id else "—")
             self.playback_status.setText("播放中" if self.player.playing else "已暂停" if self.player.connected else "未连接")
             self.notice.setText(self.player.status)
             self.notice.show()
+            if hasattr(self.player, "lyric_status"):
+                self.lyric_label.setText(self.player.lyric_status)
+                self.retry_lyrics_button.setEnabled(self.player.connected)
             return
         self.play_button.setEnabled(self.player.path is not None)
         action = "暂停音乐" if self.player.playing else "开始播放"

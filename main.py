@@ -29,7 +29,10 @@ def main():
     parser.add_argument("--installer-report", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--demo", action="store_true", help="启动并播放内置合成演示")
     parser.add_argument("--smoke", action="store_true", help="静音执行集成检查并退出")
-    parser.add_argument("--netease", action="store_true", help="接收网易云插件的播放和歌词数据")
+    sources = parser.add_mutually_exclusive_group()
+    sources.add_argument("--netease", action="store_true", help="接收网易云插件的播放和歌词数据")
+    sources.add_argument("--qqmusic", action="store_true", help="只读跟随 Windows QQ 音乐播放和歌词")
+    parser.add_argument("--qqmusic-smoke", action="store_true", help="采集真实 QQ 音乐联动验证并退出")
     parser.add_argument("--background", action="store_true", help="联动模式启动到托盘")
     parser.add_argument("--netease-smoke", action="store_true", help="采集 45 秒真实网易云联动验证并退出")
     parser.add_argument("--settings-smoke", action="store_true", help="联动验证同时要求实际打开歌词效果窗口")
@@ -40,6 +43,10 @@ def main():
     parser.add_argument("--font-smoke-file", type=Path, help="本地或网易云验证时用于测试导入的字体文件")
     parser.add_argument("--report-dir", type=Path, default=app_directory() / "artifacts")
     args = parser.parse_args()
+    if args.qqmusic_smoke and not args.qqmusic:
+        parser.error("--qqmusic-smoke 需要 --qqmusic")
+    external = args.netease or args.qqmusic
+    checking = args.smoke or args.netease_smoke or args.qqmusic_smoke
     if args.install_netease or args.uninstall_netease:
         from installer_ui import run_installer
         from settings import resource_path
@@ -68,10 +75,16 @@ def main():
         app.exit(1)
 
     sys.excepthook = exception_hook
-    store = SettingsStore(state_dir / ("smoke-settings.ini" if args.smoke or args.netease_smoke else "settings.ini"))
+    store = SettingsStore(state_dir / ("smoke-settings.ini" if checking else "settings.ini"))
     prefs = store.load()
     app.setWindowIcon(app_icon(prefs.theme))
-    if args.netease:
+    if args.qqmusic:
+        from qqmusic import QQMusicPlayer
+        from process_audio import ProcessAudio, qqmusic_pid
+        player = QQMusicPlayer()
+        audio = ProcessAudio(player, pid_finder=qqmusic_pid)
+        app.aboutToQuit.connect(audio.close)
+    elif args.netease:
         from netease import NeteasePlayer, NeteaseBridge, read_bridge_config
         from process_audio import ProcessAudio
         try:
@@ -88,30 +101,33 @@ def main():
     else:
         player = MusicPlayer()
     overlay = LyricsOverlay(player, prefs)
-    fonts = FontLibrary(state_dir / ("smoke-fonts" if args.smoke or args.netease_smoke else "fonts"))
+    fonts = FontLibrary(state_dir / ("smoke-fonts" if checking else "fonts"))
     panel = ControlPanel(player, overlay, prefs, store, font_library=fonts)
     app.aboutToQuit.connect(lambda: store.save(prefs))
-    app.aboutToQuit.connect(player.stop if args.netease else player.media.stop)
+    app.aboutToQuit.connect(player.stop if external else player.media.stop)
     app.aboutToQuit.connect(panel.tray.hide)
     panel.fit_to_screen(app.primaryScreen().availableGeometry())
     overlay.show()
     if args.netease:
         bridge.show_panel.connect(panel.show_effects)
         bridge.enabled_changed.connect(lambda enabled: panel.set_overlay_visible(enabled))
-    if not (args.netease and args.background and panel.tray_available):
+    if not (external and args.background and panel.tray_available):
         panel.show()
     logging.info("Control panel initialized; Qt visible=%s", panel.isVisible())
-    if args.netease_smoke and args.netease:
+    if args.qqmusic_smoke or (args.qqmusic and args.smoke):
+        from qqmusic_validation import QQMusicSmokeCheck
+        check = QQMusicSmokeCheck(app, panel, args.report_dir)
+    elif args.netease_smoke and args.netease:
         from netease_validation import NeteaseSmokeCheck
         check = NeteaseSmokeCheck(app, panel, args.report_dir, require_settings=args.settings_smoke,
                                  font_fixture=args.font_smoke_file, require_effects=args.effects_smoke,
                                  require_animations=args.animations_smoke, require_singing=args.singing_smoke,
                                  require_translation=args.translation_smoke)
-    elif args.smoke and not args.netease:
+    elif args.smoke and not external:
         from validation import SmokeCheck
         check = SmokeCheck(app, panel, args.report_dir, font_fixture=args.font_smoke_file)
         QTimer.singleShot(200, check.start)
-    elif args.demo and not args.netease:
+    elif args.demo and not external:
         QTimer.singleShot(200, panel.play_demo)
     return app.exec()
 

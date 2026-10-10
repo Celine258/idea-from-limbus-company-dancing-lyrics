@@ -1,4 +1,4 @@
-"""Find NetEase's main HWND and collect only its process-tree audio energy."""
+"""Find the selected player's HWND and collect only its process-tree audio energy."""
 import ctypes
 from ctypes import wintypes
 import json
@@ -8,6 +8,14 @@ from settings import resource_path
 
 
 def netease_pid():
+    return window_process_pid("cloudmusic.exe", "OrpheusBrowserHost")
+
+
+def qqmusic_pid():
+    return window_process_pid("qqmusic.exe")
+
+
+def window_process_pid(executable, window_class=None):
     if sys.platform != "win32":
         return 0
     user, kernel = ctypes.windll.user32, ctypes.windll.kernel32
@@ -25,14 +33,14 @@ def netease_pid():
     def visit(hwnd, _):
         name = ctypes.create_unicode_buffer(256)
         user.GetClassNameW(hwnd, name, 256)
-        if name.value != "OrpheusBrowserHost":
+        if window_class and name.value != window_class:
             return True
         pid = wintypes.DWORD()
         user.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
         handle = kernel.OpenProcess(0x1000, False, pid.value)
         if handle:
             path, size = ctypes.create_unicode_buffer(32768), wintypes.DWORD(32768)
-            if kernel.QueryFullProcessImageNameW(handle, 0, path, ctypes.byref(size)) and path.value.lower().endswith("\\cloudmusic.exe"):
+            if kernel.QueryFullProcessImageNameW(handle, 0, path, ctypes.byref(size)) and path.value.lower().endswith("\\" + executable.lower()):
                 found.append(pid.value)
             kernel.CloseHandle(handle)
         return True
@@ -42,9 +50,10 @@ def netease_pid():
 
 
 class ProcessAudio(QObject):
-    def __init__(self, player, parent=None):
+    def __init__(self, player, parent=None, pid_finder=None):
         super().__init__(parent)
         self.player = player
+        self.pid_finder = pid_finder or netease_pid
         self.process = QProcess(self)
         self.process.readyReadStandardOutput.connect(self._read)
         self.process.errorOccurred.connect(lambda _: self._failed("音频助手无法启动"))
@@ -59,7 +68,7 @@ class ProcessAudio(QObject):
         self.timer.start()
 
     def _poll(self):
-        pid = netease_pid() if self.player.connected and self.player.enabled else 0
+        pid = self.pid_finder() if self.player.connected and self.player.enabled else 0
         if pid != self.pid:
             self.stop_process()
             self.pid = pid

@@ -1,12 +1,12 @@
 # 都市回响
 
-让歌词在桌面随音乐跳动。支持网易云联动、逐字动画、字体效果、预设及主题切换。
+让歌词在桌面随音乐跳动。Windows 支持网易云与 QQ 音乐联动、逐字动画、字体效果、预设及主题切换。
 
 ![网易云联动与桌面歌词实机演示](docs/images/lyrics-demo.gif)
 
 桌面实机录屏，约 18 秒，循环播放（GIF 无声）。
 
-**[下载 Windows x64 试用版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.6.0-beta.2)** · [问题反馈](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues)
+**[下载 Windows x64 试用版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.7.0-beta.1)** · [问题反馈](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues)
 
 **[下载 Mac 实验版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.6.0-beta.2-macos.1)**（内置 Python）
 
@@ -21,7 +21,11 @@ Mac：解压后将 `都市回响.app` 拖到“应用程序”，首次运行包
 
 [观看 30 秒无音乐演示](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.6.0-beta.2/dancing-lyrics-demo-30s.mp4)
 
-1. 下载 `dancing-lyrics-0.6.0-beta.2-windows-x64.zip`，完整解压到长期保留且可写的目录。
+**使用 QQ 音乐**：下载新版并完整解压 → 打开 QQ 音乐播放歌曲 → 双击 **启动QQ音乐联动.bat**。无需运行网易云安装器，详细说明见下方 QQ 联动说明。
+
+**使用网易云音乐**：
+
+1. 下载 `dancing-lyrics-0.7.0-beta.1-windows-x64.zip`，完整解压到长期保留且可写的目录。
 2. 完全退出网易云（包括托盘），双击 **安装网易云联动.bat**，在窗口点击安装。
 3. 重开网易云，点击播放栏的“都市回响”；右键或点击“设置”调整效果。
 **注意版本注意版本****最好取消自动更新**
@@ -35,6 +39,10 @@ Mac：解压后将 `都市回响.app` 拖到“应用程序”，首次运行包
 
 详细流程见 [使用说明](release/使用说明.txt)。自有源码采用 [MIT](LICENSE)，运行组件保留 [第三方许可](THIRD_PARTY_NOTICES.md)。
 
+QQ 音乐：打开 QQ 音乐播放歌曲，双击新版包内 **启动QQ音乐联动.bat**，无需安装客户端插件或 BetterNCM。使用同一个 EXE 和已有字体、主题、动画与预设。第一版本机适配 QQ 音乐 **22.52**，使用整句歌词与可用中文译文；暂无 QQ 逐字演唱时间，其他客户端版本仍待验证。详见 [QQ 音乐使用说明](QQMUSIC.md)。QQ 与网易云请选择对应入口，同一时间只运行一个歌词实例。
+
+![QQ 音乐联动实机窗口](docs/images/qqmusic-panel.png)
+
 macOS：已整合社区适配代码，提供独立入口及 [macOS 安装与验证说明](MACOS.md)。
 当前提供**实验应用包与源码，尚未完成 macOS 真机播放验证**；Windows 下载包不适用于 Mac。
 Intel 与 Apple Silicon 的适配器及共用绘制自动测试已通过，安装方式和待验收项目见上述说明。
@@ -46,7 +54,7 @@ Intel 与 Apple Silicon 的适配器及共用绘制自动测试已通过，安�
 
 ## 功能与使用
 
-应用版本 **0.6.0-beta.2**。侧栏显示“创作者：Bilibili-鈴仙優昙華院因幡”和版本号，标语为 **FACE THE SIN. SAVE THE E.G.O**。左侧下方可选择“默认主题／深色主题／特殊主题”，立即生效并自动保存，重启后保留选择。默认主题和深色主题保留原外观；特殊主题采用 Limbus Company 风格的黑金配色、切角双层边框和机械图纸底纹。
+应用版本 **0.7.0-beta.1**；现有 Mac 公开包仍为 0.6.0-beta.2 实验版，本轮 QQ 适配仅用于 Windows。侧栏显示“创作者：Bilibili-鈴仙優昙華院因幡”和版本号，标语为 **FACE THE SIN. SAVE THE E.G.O**。左侧下方可选择“默认主题／深色主题／特殊主题”，立即生效并自动保存，重启后保留选择。默认主题和深色主题保留原外观；特殊主题采用 Limbus Company 风格的黑金配色、切角双层边框和机械图纸底纹。
 
 特殊主题将侧栏、窗口、运行中的 Windows 任务栏及系统托盘图标换为但丁钟头；切回默认或深色主题恢复红色波形图标。后台运行时托盘也显示当前主题图标。主题不改变歌词颜色、字体、动画、效果预设、播放进度或独立的预览背景；更新保留已有选择。安装目录里的 EXE 文件图标仍为原图标，未运行时的固定快捷方式由 Windows 管理。
 

@@ -222,7 +222,8 @@ class ReleaseTests(unittest.TestCase):
         filename = f"dancing-lyrics-{APP_VERSION}-windows-x64.zip"
         readme = (ROOT / "README.md").read_text(encoding="utf-8-sig")
         self.assertIn(f"{repository}/releases/tag/v{APP_VERSION}", readme)
-        self.assertIn(f"{repository}/releases/download/v{APP_VERSION}/dancing-lyrics-demo-30s.mp4", readme)
+        # The existing NetEase recording stays pinned to the release that owns it.
+        self.assertIn(f"{repository}/releases/download/v0.6.0-beta.2/dancing-lyrics-demo-30s.mp4", readme)
         self.assertIn(filename, readme)
         guide = (ROOT / "release/使用说明.txt").read_text(encoding="utf-8-sig")
         self.assertIn(APP_VERSION, guide.splitlines()[0])
@@ -274,6 +275,7 @@ class ReleaseTests(unittest.TestCase):
                 guide = archive.read("DancingLyrics/使用说明.txt").decode("utf-8-sig")
                 self.assertIn(APP_VERSION, guide.splitlines()[0])
                 self.assertTrue(any(name.endswith("安装网易云联动.bat") for name in names))
+                self.assertTrue(any(name.endswith("启动QQ音乐联动.bat") for name in names))
                 self.assertTrue(any(name.endswith("licenses/LGPL-3.0.txt") for name in names))
                 self.assertFalse(any(".state" in name or "bridge-config" in name or name.endswith(".log") for name in names))
                 self.assertFalse(any(Path(name).name in ("Qt6VirtualKeyboard.dll", "qtvirtualkeyboardplugin.dll", "Qt6Pdf.dll", "qpdf.dll") for name in names))
