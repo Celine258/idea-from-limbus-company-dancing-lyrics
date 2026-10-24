@@ -144,7 +144,7 @@ class SingingSyncTests(unittest.TestCase):
             self.assertFalse(overlay._warm_jobs)
             return overlay.grab().toImage()
         try:
-            overlay.grab();seed,layout=overlay.seed,overlay.layouts[0]
+            settled_frame();seed,layout=overlay.seed,overlay.layouts[0]
             overlay.set_document(LyricDocument([replace(plain.lines[0],words=(TimedWord(1700,2100,0,2),))],[]))
             first=settled_frame()
             self.assertEqual(overlay.seed,seed)

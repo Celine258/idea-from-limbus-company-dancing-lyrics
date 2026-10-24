@@ -115,6 +115,17 @@ def _glyph_layout(text: str, pixels: int, max_width: float, family: str = DEFAUL
 
 def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRectF],
                  prefs: Preferences, secondary_start=-1) -> LineLayout | None:
+    """Synchronous adapter for callers without an animation event loop."""
+    result = None
+    for ready in build_layout_steps(text, seed, regions, occupied, prefs, secondary_start):
+        if ready is not None:
+            result = ready
+    return result
+
+
+def build_layout_steps(text: str, seed: int, regions: list[QRectF], occupied: list[QRectF],
+                       prefs: Preferences, secondary_start=-1):
+    """Yield between font-fit attempts so an upcoming cue cannot stall a frame."""
     rng = random.Random(seed)
     regions = list(regions)
     rng.shuffle(regions)
@@ -122,6 +133,7 @@ def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRe
     for region in regions:
         angle = rng.uniform(-prefs.angle, prefs.angle) * prefs.motion_strength / 100
         for pixels in range(prefs.font_size, 9, -1):
+            yield None
             reserve = 50
             if prefs.animation_style != "classic":
                 reserve += prefs.jump * .6 + 8
@@ -159,7 +171,8 @@ def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRe
                                 rotated_w, rotated_h)
                 item = LineLayout(glyphs, center, angle, bounds, pixels)
                 if not any(bounds.intersects(rect.adjusted(-12, -12, 12, 12)) for rect in occupied):
-                    return item
+                    yield item
+                    return
             # Try fixed empty slots before using a smaller font or dropping the older sentence.
             for fraction in (0.18, 0.5, 0.82):
                 center = QPointF((x_low + x_high) / 2, y_low + (y_high - y_low) * fraction)
@@ -168,9 +181,11 @@ def build_layout(text: str, seed: int, regions: list[QRectF], occupied: list[QRe
                 item = LineLayout(glyphs, center, angle, bounds, pixels)
                 fallback = fallback or item
                 if not any(bounds.intersects(rect.adjusted(-12, -12, 12, 12)) for rect in occupied):
-                    return item
+                    yield item
+                    return
             break
     if fallback is None and prefs.animation_style != "classic" and prefs.angle:
         # Very narrow bands with long imported glyphs may only fit without sentence tilt.
-        return build_layout(text, seed, regions, occupied, replace(prefs, angle=0), secondary_start)
-    return fallback  # Overlay drops conflicting older instances in this rare case.
+        yield from build_layout_steps(text, seed, regions, occupied, replace(prefs, angle=0), secondary_start)
+        return
+    yield fallback  # Overlay drops conflicting older instances in this rare case.

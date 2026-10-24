@@ -90,22 +90,28 @@ def validate(output, scale):
         for _ in steps:
             pass
         full_ready_ms = (time.perf_counter() - started) * 1000
-        samples = []
+        samples, exit_samples = [], []
         surfaces = (surface, renderer.prepare(glyphs, 32, options, scale))
-        for frame in range(90):
-            position = 1100 + (frame % 60) * 70
+        # Include the actual 6400-7000 ms exit, not only entry/hold frames.
+        for position in [1100 + frame * 70 for frame in range(60)] + [6401 + frame * 9 for frame in range(60)]:
             item = timeline.visible(position, 40000)[0]
             began = time.perf_counter()
             for prepared in surfaces:
                 states = glyph_states(glyphs, options, item, position, .5, 32, 730)
                 renderer.render(prepared, options, states=states)
-            samples.append((time.perf_counter() - began) * 1000)
+            elapsed = (time.perf_counter() - began) * 1000
+            samples.append(elapsed)
+            if position >= item.exit_start_ms:
+                exit_samples.append(elapsed)
         p95 = float(np.percentile(samples[10:], 95))
+        exit_p95 = float(np.percentile(exit_samples, 95))
         checks[style + "_warm_two_long_lines_p95_under_33ms"] = p95 <= 33
+        checks[style + "_actual_scramble_exit_p95_under_33ms"] = exit_p95 <= 33
         checks[style + "_no_residue_after_deadline"] = not timeline.visible(7000, 40000)
         measurements.append(dict(style=style, characters=len(text), lines=2, scramble_exit=True,
             material="gradient_outline", entrance_ready_ms=round(entrance_ready_ms, 3),
             full_ready_ms=round(full_ready_ms, 3), warm_render_p95_ms=round(p95, 3),
+            exit_samples=len(exit_samples), warm_exit_render_p95_ms=round(exit_p95, 3),
             synthetic_lyric_times=True))
         if style == "ripple_wave":
             picture = transparent_image(QRectF(0, 0, 960, 720), scale)

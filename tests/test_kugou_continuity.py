@@ -2,6 +2,7 @@
 from dataclasses import replace
 import unittest
 from PySide6.QtWidgets import QApplication
+from PySide6.QtTest import QTest
 from kugou import KugouPlayer, KugouSnapshot
 from lrc import LyricDocument, LyricLine, LyricTimeline
 from test_kugou import Executor
@@ -146,6 +147,13 @@ class ContinuityTests(unittest.TestCase):
                                            LyricLine(6400, "Third")], []))
         identities = set()
         try:
+            overlay.show()
+            overlay.grab()
+            for _ in range(100):
+                if 1 in overlay.layouts and overlay.layouts[1].surface is not None:
+                    break
+                QTest.qWait(10)
+            self.assertIn(1, overlay.layouts)
             for frame in range(300):
                 self.tick[0] = 10 + frame / 60
                 if frame % 25 == 0:

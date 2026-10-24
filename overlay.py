@@ -5,7 +5,7 @@ from bisect import bisect_right
 from PySide6.QtCore import Qt, QTimer, QEvent
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QApplication, QWidget
-from animation import build_layout, display_regions
+from animation import build_layout_steps, display_regions
 from lrc import LyricTimeline, LyricDocument, display_document
 from settings import Preferences, display_mode
 from text_effects import TEXT_EFFECTS
@@ -117,18 +117,25 @@ class LyricsOverlay(QWidget):
         wanted = {index for index, _ in candidates}
         self.layouts = {key: value for key, value in self.layouts.items() if key in wanted}
         self._warm_jobs = {key: value for key, value in self._warm_jobs.items() if key in wanted}
-        regions = display_regions(self.width(), self.height(), self.prefs.region)
         for index, line in candidates:
-            if index in self.layouts:
+            if index in self.layouts or index in self._warm_jobs:
                 continue
-            occupied = [layout.bounds for layout in self.layouts.values()]
-            layout = build_layout(line.text, self.seed + index * 7919, regions, occupied, self.prefs, line.secondary_start)
-            if layout:
-                self.layouts[index] = layout
-                self._warm_jobs[index] = TEXT_EFFECTS.prepare_steps(
-                    layout.glyphs, layout.font_size, self.prefs, self.devicePixelRatioF(), self.prefs.jump, layout.angle)
+            self._warm_jobs[index] = self._prepare_line(index, line)
         if self._warm_jobs and self.isVisible() and not self._warm_timer.isActive():
             self._warm_timer.start()
+
+    def _prepare_line(self, index, line):
+        regions = display_regions(self.width(), self.height(), self.prefs.region)
+        occupied = [layout.bounds for layout in self.layouts.values()]
+        for layout in build_layout_steps(line.text, self.seed + index * 7919, regions, occupied,
+                                         self.prefs, line.secondary_start):
+            if layout is None:
+                yield None
+                continue
+            self.layouts[index] = layout
+            yield None
+            yield from TEXT_EFFECTS.prepare_steps(
+                layout.glyphs, layout.font_size, self.prefs, self.devicePixelRatioF(), self.prefs.jump, layout.angle)
 
     def _warm_step(self):
         if not self.isVisible() or not self.timeline or self.player.ended:
@@ -138,7 +145,7 @@ class LyricsOverlay(QWidget):
         changed = False
         while self._warm_jobs and time.perf_counter() < deadline:
             # Entrance materials first, optional scramble-exit symbols second.
-            index = min(self._warm_jobs, key=lambda key: (self.layouts[key].surface is not None, key))
+            index = min(self._warm_jobs, key=lambda key: (key in self.layouts and self.layouts[key].surface is not None, key))
             try:
                 ready = next(self._warm_jobs[index])
                 if ready is not None:

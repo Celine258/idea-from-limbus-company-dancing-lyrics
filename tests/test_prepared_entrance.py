@@ -7,7 +7,7 @@ import numpy as np
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
-from animation import _glyph_layout
+from animation import _glyph_layout, build_layout, build_layout_steps, display_regions
 from lrc import LyricTimeline, parse_lrc
 from settings import Preferences
 from glyph_motion import glyph_states
@@ -28,6 +28,69 @@ class Player(QObject):
 
 
 class PreparedEntranceTests(unittest.TestCase):
+    def test_paint_only_schedules_layout_even_at_a_cold_song_transition(self):
+        player = Player()
+        prefs = Preferences(font_size=64, animation_style="ripple_wave", scramble_exit=True,
+                            glow_variant="gradient")
+        overlay = LyricsOverlay(player, prefs)
+        overlay.set_document(parse_lrc("[00:00]" + LONG_TEXT + "\n[00:02]" + LONG_TEXT + " again"))
+        overlay.show()
+        try:
+            # Neither the old nor the upcoming cue may fit fonts inside paint.
+            with patch("animation._glyph_layout", side_effect=AssertionError("layout blocked paint")):
+                overlay.grab()
+                player.clock = 2100
+                overlay.grab()
+            self.assertTrue(overlay._warm_jobs)
+            self.assertFalse(overlay.layouts)
+            self.assertEqual(player.clock, 2100)
+            player.discontinuity.emit()
+            self.assertFalse(overlay._warm_jobs)
+        finally:
+            overlay.hide()
+            overlay.deleteLater()
+
+    def test_layout_fitting_yields_without_changing_font_positions_or_collision_rules(self):
+        prefs = Preferences(font_size=64, animation_style="ripple_wave", angle=12)
+        regions = display_regions(1280, 720, "edges")
+        expected = build_layout(LONG_TEXT, 730, regions, [], prefs)
+        steps = build_layout_steps(LONG_TEXT, 730, regions, [], prefs)
+        actual = None
+        attempts = 0
+        with patch("animation._glyph_layout", wraps=_glyph_layout) as fits:
+            for ready in steps:
+                # At most one complete font-fit attempt per resumable step.
+                self.assertLessEqual(fits.call_count - attempts, 1)
+                attempts = fits.call_count
+                if ready is not None:
+                    actual = ready
+        self.assertGreater(attempts, 1)
+        self.assertEqual((actual.font_size, actual.center, actual.bounds, actual.angle),
+                         (expected.font_size, expected.center, expected.bounds, expected.angle))
+        self.assertEqual([(g.x, g.baseline, g.path) for g in actual.glyphs],
+                         [(g.x, g.baseline, g.path) for g in expected.glyphs])
+
+    def test_base_material_preparation_yields_before_processing_the_whole_sentence(self):
+        glyphs, _, _ = _glyph_layout(LONG_TEXT, 64, 1200)
+        prefs = Preferences(animation_style="ripple_wave", scramble_exit=True, glow_variant="gradient")
+        renderer = TextEffects()
+        steps = renderer.prepare_steps(glyphs, 64, prefs, 1.5)
+        # The first visible surface must not call the blocking material adapter.
+        with patch.object(renderer, "_materials", side_effect=AssertionError("whole-sentence preparation")):
+            surface = next(ready for ready in steps if ready is not None)
+        self.assertEqual(len(surface.materials), len(glyphs))
+        self.assertIsNone(surface.replacements)
+        steps.close()
+        item = LyricTimeline(parse_lrc("[00:01]" + LONG_TEXT + "\n[00:08]"),
+                             scramble_exit=True, animation_style=prefs.animation_style,
+                             max_display_ms=6000).visible(6500)[0]
+        samples = []
+        for position in (6400, 6520, 6640, 6760, 6880, 6999):
+            states = glyph_states(glyphs, prefs, item, position, 0, 64)
+            renderer.render(surface, prefs, states=states)
+            samples.append(sum(state.opacity for state in states))
+        self.assertTrue(all(a > b for a, b in zip(samples, samples[1:])))
+
     def test_incremental_base_can_enter_before_scramble_symbols_finish(self):
         glyphs, _, _ = _glyph_layout(LONG_TEXT, 32, 700)
         prefs = Preferences(animation_style="ripple_wave", scramble_exit=True, glow_variant="gradient", jump=0)

@@ -179,7 +179,7 @@ class TextEffects:
         surface.gradient_bounds = gradient_bounds
         surface.gradient_regions = gradient_regions
         if prefs.animation_style != "classic" or prefs.singing_sync or gradients.enabled(prefs) or prefs.scramble_exit:
-            self._materials(surface, prefs)
+            yield from self._material_steps(surface, prefs)
         yield surface
         if prefs.scramble_exit and _replacements:
             variants = []
@@ -226,6 +226,11 @@ class TextEffects:
         yield surface
 
     def _materials(self, surface, prefs):
+        for _ in self._material_steps(surface, prefs):
+            pass
+        return surface.materials
+
+    def _material_steps(self, surface, prefs):
         """Cache complete glyph materials; fades multiply their final RGBA once.
 
         Disjoint halo/body pixels allow all halos to precede the white cores.
@@ -234,7 +239,7 @@ class TextEffects:
         key = (prefs.text_style, prefs.color, prefs.glow_strength, prefs.singing_sync, prefs.glow_variant,
                prefs.gradient_colors, prefs.gradient_direction)
         if surface.material_key == key:
-            return surface.materials
+            return
         materials = []
         dpr = surface.image.devicePixelRatio()
         stroke, radius = effect_geometry(surface.pixels, prefs.text_style, prefs.glow_variant)
@@ -242,6 +247,7 @@ class TextEffects:
         for index, glyph in enumerate(surface.glyphs):
             if glyph.path.isEmpty():
                 materials.append(None)
+                yield None
                 continue
             glyph_pixels = glyph.pixels or surface.pixels
             stroke, radius = effect_geometry(glyph_pixels, prefs.text_style, prefs.glow_variant)
@@ -302,8 +308,8 @@ class TextEffects:
                 painter.end()
                 pixels_view(halo)[body_pixels] = 0
             materials.append((halo, body, origin))
+            yield None
         surface.materials, surface.material_key = materials, key
-        return materials
 
     def _render_states(self, surface, prefs, states):
         materials = self._materials(surface, prefs)
