@@ -2,6 +2,25 @@
 
 每次改动按日期追加记录，包含改动目的、涉及文件、测试与验证结果、影响或已知限制。
 
+## 2026-10-24：乱码退场修复的三个 Windows 成品发布
+
+### 改动
+
+- 发布网易云／QQ `v0.8.0-beta.3` 与酷狗 `v0.8.0-beta.3-kugou.1`，三个 ZIP 均使用运行时提交 `c4a8c7b` 与同一新引擎。六个附件包含三份独立 SHA-256，旧发行附件保留。
+- README 更新下载入口、最终 EXE 截图与 [成品验证摘要](docs/research/scramble-release-20261024.json)，酷狗指南区分本版验收和上一版实曲观察；新增成品证据及截图校验测试。该交付提交只更新文档、图片、测试和记录，不再次修改运行时。
+
+### 测试与验证
+
+- 运行时全量 498 项、最终交付全量 499 项测试通过；源码实际 BAT、网易云最终 ZIP 启动 BAT、酷狗最终 ZIP 本地演示 BAT 的静音验证各有 75 个结果字段、63 个布尔检查通过，Windows 原生窗口可见。
+- 最终 EXE 在中文／空格路径解压、移除开发环境路径后直接执行 `--scramble-smoke`，150% 缩放下五种动画的冷准备与连续切句 36 项全部通过：绘制 P95 最大 12.444ms，准备回调最大 11.756ms，心跳间隔最大 28.330ms。测试使用明确的演示时钟，没有称为新实曲验证。
+- 网易云隔离源码安装／更新／恢复／卸载、成品运行中保护与实际安装 BAT 共 9 项；QQ 成品窗口／版本／控件／实例复用 6 项；酷狗实际安装／卸载 BAT、中文快捷方式、双击默认联动及实例复用 8 项均通过，原快捷方式恢复。
+- ZIP CRC、QtCore／Gui／Widgets、许可精确字节、私人文件排除与共同引擎 SHA-256 通过。GitHub 服务器大小、摘要和两个标签与本地一致，六个附件匿名 HEAD 均为 200；临时 TLS 上传中断后按服务器摘要续传。个人设置／字体／预设 3 文件哈希不变。
+- 命令：`python -m unittest discover -s tests -v`、`artifacts/build-scramble-beta3.ps1`、`artifacts/verify-scramble-netease-public.py`、`artifacts/verify-scramble-frozen.py`、`artifacts/verify-scramble-qq-public.py`、`artifacts/verify-scramble-kugou-entries.py`、`artifacts/verify-scramble-publication.py`。详见 [验证记录](验证记录.md)。
+
+### 影响与限制
+
+- 本轮更新 Windows 公开下载，不覆盖本机正在运行的旧 EXE，不改写用户配置，不重启或控制音乐客户端。未补做三款客户端的新实曲、成品正向网易云安装、第二台干净电脑、长期稳定性或新的 Mac 成品验证。统计为软件绘制与事件循环时间，不包括桌面合成器最终呈现延迟。
+
 ## 2026-10-24：准备乱码切句修复的三个 Windows 更新包
 
 ### 改动

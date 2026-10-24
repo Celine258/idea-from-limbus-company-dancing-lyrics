@@ -119,9 +119,9 @@ Intel 与 Apple Silicon 的适配器及共用绘制自动测试已通过，安�
 - 勾选“纯音乐时不显示歌词或提示”后，明确纯音乐提示与作曲／编曲等已识别署名混在一起时，也能整曲隐藏。仅有署名、没有明确纯音乐提示，或混有正常歌词时不猜测隐藏；关闭开关仍显示原歌词。
 - 长句先准备入场文字，再分批准备乱码退场素材，并预加载下一句，减少首次生成材质挤占逐字渐入时间。动画仍按歌曲进度计算；网络歌词迟到或数据缺失时，无法补回已经过去的入场阶段。
 
-![新版成品的歌词最长显示时间设置](docs/images/display-deadline-release.png)
+![新版 Windows 成品设置界面](docs/images/scramble-release-beta3.png)
 
-[长句入退场分帧示例（演示时间）](docs/images/long-entrance-frames.png) · [上一版成品验收](docs/research/display-release-20261024.json) · [乱码切句源码验证](docs/research/scramble-transitions-20261024.json)。源码测试与最终成品验收分开记录，演示时钟不作为真实歌曲验证。
+[长句入退场分帧示例（演示时间）](docs/images/long-entrance-frames.png) · [本版成品验收与下载校验](docs/research/scramble-release-20261024.json) · [乱码切句源码验证](docs/research/scramble-transitions-20261024.json)。三个 Windows 下载包均已更新，旧发行附件保留；源码、成品和实曲验证分别记录，演示时钟不作为真实歌曲验证。
 
 应用版本 **0.8.0-beta.3**；现有 Mac 公开包仍为 0.6.0-beta.2 实验版，本轮修复仅更新 Windows 成品。侧栏显示“创作者：Bilibili-鈴仙優昙華院因幡”和版本号，标语为 **FACE THE SIN. SAVE THE E.G.O**。左侧下方可选择“默认主题／深色主题／特殊主题”，立即生效并自动保存，重启后保留选择。默认主题和深色主题保留原外观；特殊主题采用 Limbus Company 风格的黑金配色、切角双层边框和机械图纸底纹。
 
