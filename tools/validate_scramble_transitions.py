@@ -119,9 +119,13 @@ def validate(output, scale):
     return 0 if report["passed"] else 1
 
 
-if __name__ == "__main__":
+def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--scale", type=float, default=1.5)
-    args = parser.parse_args()
-    raise SystemExit(validate(args.output, args.scale))
+    args = parser.parse_args(argv)
+    return validate(args.output, args.scale)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

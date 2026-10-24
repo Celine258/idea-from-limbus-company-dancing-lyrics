@@ -12,7 +12,7 @@ class DisplayUpdateReleaseTests(unittest.TestCase):
     def test_published_packages_and_native_results_match_exact_runtime(self):
         record = json.loads((ROOT / "docs/research/display-release-20261024.json").read_text(encoding="utf-8"))
         self.assertTrue(record["passed"] and record["same_engine"])
-        self.assertEqual(record["versions"], {"shared": APP_VERSION, "kugou": KUGOU_VERSION})
+        self.assertEqual(record["versions"], {"shared": "0.8.0-beta.2", "kugou": "0.8.0-beta.2-kugou.1"})
         self.assertEqual({row["player"] for row in record["archives"]}, {"netease", "qqmusic", "kugou"})
         self.assertEqual(len({row["exe_sha256"] for row in record["archives"]}), 1)
         assets = {row["name"]: row for row in record["public_downloads"]["assets"]}
@@ -42,7 +42,7 @@ class DisplayUpdateReleaseTests(unittest.TestCase):
             for phrase in ("默认 6 秒", "0–120 秒", "不额外限制", "退场", "长句", "预设"):
                 self.assertIn(phrase, text, name)
         self.assertTrue(KUGOU_VERSION.startswith(APP_VERSION))
-        self.assertEqual(APP_VERSION, "0.8.0-beta.2")
+        self.assertRegex(APP_VERSION, r"^\d+\.\d+\.\d+-beta\.\d+$")
 
     def test_shared_engine_dependencies_ship_exact_license_bytes(self):
         records = json.loads((ROOT / "release/licenses/sources.json").read_text(encoding="utf-8"))

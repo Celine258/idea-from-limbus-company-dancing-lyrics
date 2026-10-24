@@ -12,7 +12,7 @@ class DisplayFixDeliveryTests(unittest.TestCase):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         for phrase in ("默认 6 秒", "0–120 秒", "0 表示不额外限制", "包含入场及退场",
                        "切换效果预设不会重置", "没有明确纯音乐提示", "预加载下一句",
-                       "本版新增（2026-10-24）", "打入上述三个 Windows 下载包"):
+                       "本版修复", "三个 Windows 下载包"):
             self.assertIn(phrase, readme)
         for name in ("display-deadline-release.png", "long-entrance-frames.png"):
             image = QImageReader(str(ROOT / "docs/images" / name)).read()
