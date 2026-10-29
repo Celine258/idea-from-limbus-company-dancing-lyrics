@@ -157,11 +157,19 @@ def limit_display_window(item, maximum_ms, exit_duration):
                    exit_start_ms=min(item.exit_start_ms, end - min(exit_duration, maximum_ms * .3)))
 
 
+def extended_display_window(index, line, end, entry_duration, exit_duration):
+    """One finite lifetime, including entry/exit; new cues do not end this line."""
+    life = max(0, end - line.start_ms)
+    return ActiveLine(index, line.text, line.start_ms, end, 1,
+                      line.start_ms + min(entry_duration, life * .35),
+                      end - min(exit_duration, life * .3), line.words, line.secondary_start)
+
+
 class LyricTimeline:
     """Position is authoritative: pause and seek need no event replay."""
     def __init__(self, document: LyricDocument, delay_ms: int = 0, animation_style: str = "classic",
                  entry_speed: int = 100, exit_speed: int = 100, scramble_exit: bool = False,
-                 max_display_ms: int | None = None):
+                 max_display_ms: int | None = None, extended_display_ms: int = 0):
         # A positive LRC offset advances timestamps; a positive UI delay postpones them.
         shift = delay_ms - document.offset_ms
         self.lines = [replace(line, start_ms=line.start_ms + shift,
@@ -175,6 +183,44 @@ class LyricTimeline:
         self.exit_duration = 600 * 100 / exit_speed
         self.classic_entry = 300 * 100 / entry_speed
         self.max_display_ms = max_display_ms
+        self.extended_display_ms = extended_display_ms
+        self._nonblank = [i for i, line in enumerate(self.lines) if line.text.strip()]
+        self._nonblank_starts = [self.lines[i].start_ms for i in self._nonblank]
+        self._extended_ends = {}
+        if extended_display_ms:
+            next_blank = float("inf")
+            blank_limits = {}
+            for i in range(len(self.lines) - 1, -1, -1):
+                if not self.lines[i].text.strip():
+                    next_blank = self.lines[i].start_ms
+                else:
+                    blank_limits[i] = next_blank
+            for rank, i in enumerate(self._nonblank):
+                # Retire the oldest before a fifth block arrives, including its exit.
+                capacity_limit = (self._nonblank_starts[rank + 4]
+                                  if rank + 4 < len(self._nonblank) else float("inf"))
+                self._extended_ends[i] = min(self.lines[i].start_ms + extended_display_ms,
+                                              blank_limits[i], capacity_limit)
+
+    def _extended_visible(self, position, duration):
+        rank = bisect_right(self._nonblank_starts, position)
+        active = []
+        for i in self._nonblank[max(0, rank - 4):rank]:
+            end = self._extended_ends[i]
+            if duration > 0:
+                end = min(end, duration)
+            line = self.lines[i]
+            if not line.start_ms <= position < end:
+                continue
+            item = extended_display_window(i, line, end,
+                self.classic_entry if self.animation_style == "classic" else self.entry_duration,
+                self.exit_duration)
+            if self.animation_style == "classic" and not self.scramble_exit:
+                item = replace(item, opacity=max(0., min(1.,
+                    (position - item.start_ms) / max(1, item.entry_end_ms - item.start_ms),
+                    (end - position) / max(1, end - item.exit_start_ms))))
+            active.append(item)
+        return active
 
     def _animated_window(self, index, duration):
         line = self.lines[index]
@@ -207,6 +253,8 @@ class LyricTimeline:
         return ActiveLine(index, line.text, line.start_ms, end, 1, entry_end, exit_start, line.words, line.secondary_start)
 
     def visible(self, position_ms: float, duration_ms: int = 0) -> list[ActiveLine]:
+        if self.extended_display_ms:
+            return self._extended_visible(position_ms, duration_ms)
         index = bisect_right(self.starts, position_ms) - 1
         active = []
         for i in range(max(0, index - 1), index + 1):

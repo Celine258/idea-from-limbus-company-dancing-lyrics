@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QMenu, QPushButton, QScrollArea, QSizePolicy, QInputDialog, QMessageBox, QCheckBox,
     QSlider as QtSlider, QSpinBox as QtSpinBox, QStackedWidget, QStyle, QStyleOptionSlider, QSystemTrayIcon, QVBoxLayout, QWidget,
 )
-from lrc import load_lrc, ActiveLine, TimedWord, LyricLine, LyricDocument, word_timing_status, display_document, limit_display_window
+from lrc import load_lrc, ActiveLine, TimedWord, LyricLine, LyricDocument, word_timing_status, display_document, limit_display_window, extended_display_window
 from fonts import FontLibrary
 from animation import _glyph_layout
 from text_effects import TEXT_EFFECTS
@@ -271,6 +271,10 @@ class FontPreview(QWidget):
         item = ActiveLine(0, line.text, 0, end, 1,
                           min((300 if self.prefs.animation_style == "classic" else 700) * 100 / self.prefs.entry_speed,
                               end / 2 if classic else 3200 * .35), exit_start, line.words, line.secondary_start)
+        if self.prefs.extended_display:
+            return extended_display_window(0, line, self.prefs.extended_display_seconds * 1000,
+                (300 if self.prefs.animation_style == "classic" else 700) * 100 / self.prefs.entry_speed,
+                600 * 100 / self.prefs.exit_speed)
         return limit_display_window(item, self.prefs.max_display_seconds * 1000, 600 * 100 / self.prefs.exit_speed)
 
     def _stop_preview(self):
@@ -691,6 +695,11 @@ class ControlPanel(QWidget):
         self.scramble_checkbox = QCheckBox("乱码退场 · 替代原退场效果")
         self.scramble_checkbox.setChecked(self.prefs.scramble_exit)
         self.scramble_checkbox.toggled.connect(lambda value: self._set_preference("scramble_exit", value))
+        self.extended_checkbox = QCheckBox("新句出现后保留旧句")
+        self.extended_checkbox.setAccessibleName("延长歌词显示")
+        self.extended_checkbox.setChecked(self.prefs.extended_display)
+        self.extended_checkbox.setToolTip("从句首计时，包含入场和退场；最多同时四组，双语算一组。空间不足时优先显示新句。")
+        self.extended_checkbox.toggled.connect(lambda value: self._set_preference("extended_display", value))
         self.singing_checkbox = QCheckBox("开启逐字演唱强调")
         self.singing_checkbox.setChecked(self.prefs.singing_sync)
         self.singing_checkbox.setAccessibleName("逐字演唱同步")
@@ -704,6 +713,7 @@ class ControlPanel(QWidget):
             ("angle", 0, 25, " °"), ("opacity", 10, 100, " %"),
             ("delay_ms", -10000, 10000, " ms"),
             ("max_display_seconds", 0, 120, " 秒"),
+            ("extended_display_seconds", 1, 120, " 秒"),
         ):
             spin = QSpinBox()
             spin.setRange(minimum, maximum)
@@ -717,6 +727,10 @@ class ControlPanel(QWidget):
         self.spins["max_display_seconds"].setToolTip(
             "从每句开始计时，包含入场和退场；默认 6 秒，0 表示不额外限制。\n"
             "长句可能提前消失，可调长或关闭。空白段和歌曲结束仍会清除；末句未知时长仍以 6 秒兜底。")
+        self.spins["extended_display_seconds"].setAccessibleName("延长显示时间")
+        self.spins["extended_display_seconds"].setToolTip(
+            "默认 10 秒，范围 1–120 秒；延长显示开启时替代最长显示上限。\n"
+            "第五组到来前最旧组提前退场；空白歌词和歌曲结束优先清除。")
         self.parameter_fields = {}
         self.parameter_sliders = {}
         for name, low, high, suffix in (("entry_speed", 25, 300, " %"), ("exit_speed", 25, 300, " %"),
@@ -833,6 +847,8 @@ class ControlPanel(QWidget):
             ("律动与同步", (("总运动强度（0% 静止）", self.spins["motion_strength"]), ("歌词动画", self.animation_combo),
                           ("乱码退场", self.scramble_checkbox),
                           ("歌词最长显示时间（0 不限制）", self.spins["max_display_seconds"]),
+                          ("延长歌词显示", self.extended_checkbox),
+                          ("延长显示时间", self.spins["extended_display_seconds"]),
                           ("入场速度", self.parameter_fields["entry_speed"]), ("退场速度", self.parameter_fields["exit_speed"]),
                           ("抖动频率", self.parameter_fields["shake_frequency"]), ("跌落距离（32px 字号）", self.parameter_fields["fall_distance"]),
                           ("预览背景", self.preview_background), ("效果预览", self.font_preview), ("动画预览", self.replay_button),
@@ -1151,7 +1167,7 @@ class ControlPanel(QWidget):
         self.overlay.refresh_preferences()
         self._update_effect_controls()
         self.font_preview.update()
-        if key in ("animation_style", "entry_speed", "exit_speed", "shake_frequency", "fall_distance", "singing_sync", "lyric_display_mode", "scramble_exit", "max_display_seconds"):
+        if key in ("animation_style", "entry_speed", "exit_speed", "shake_frequency", "fall_distance", "singing_sync", "lyric_display_mode", "scramble_exit", "max_display_seconds", "extended_display", "extended_display_seconds"):
             self.font_preview.replay()
 
     def _update_effect_controls(self):
@@ -1182,6 +1198,8 @@ class ControlPanel(QWidget):
         self.glow_value.setText(f"{self.prefs.glow_strength}%")
         self.parameter_fields["shake_frequency"].setEnabled(self.prefs.animation_style.endswith("_shake"))
         self.parameter_fields["fall_distance"].setEnabled(self.prefs.animation_style.startswith("fall_") and not self.prefs.scramble_exit)
+        self.spins["max_display_seconds"].setEnabled(not self.prefs.extended_display)
+        self.spins["extended_display_seconds"].setEnabled(self.prefs.extended_display)
         self._refresh_word_status()
 
     def _gradient_middle_changed(self, checked):
@@ -1235,7 +1253,7 @@ class ControlPanel(QWidget):
 
     def _sync_effect_widgets(self):
         widgets = [self.animation_combo, self.text_style, self.glow_variant, self.motion, self.font_combo, self.glow_slider,
-                   self.singing_checkbox, self.translation_checkbox, self.theme_combo, self.scramble_checkbox, self.instrumental_checkbox,
+                   self.singing_checkbox, self.translation_checkbox, self.theme_combo, self.scramble_checkbox, self.instrumental_checkbox, self.extended_checkbox,
                    *self.spins.values(), *self.parameter_sliders.values()]
         blockers = [QSignalBlocker(widget) for widget in widgets]
         for widget, key in ((self.animation_combo, "animation_style"), (self.text_style, "text_style"),
@@ -1248,6 +1266,7 @@ class ControlPanel(QWidget):
         self.glow_slider.setValue(self.prefs.glow_strength)
         self.singing_checkbox.setChecked(self.prefs.singing_sync)
         self.scramble_checkbox.setChecked(self.prefs.scramble_exit)
+        self.extended_checkbox.setChecked(self.prefs.extended_display)
         self.instrumental_checkbox.setChecked(self.prefs.hide_instrumental)
         self.language_combo.setCurrentIndex(self.language_combo.findData(display_mode(self.prefs)))
         self.theme_combo.setCurrentIndex(self.theme_combo.findData(self.prefs.theme))

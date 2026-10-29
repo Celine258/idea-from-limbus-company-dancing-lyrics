@@ -37,6 +37,7 @@ class LyricsOverlay(QWidget):
         self.timeline = None
         self.layouts = {}
         self._warm_jobs = {}
+        self._warm_priority = {}
         self._warm_timer = QTimer(self)
         self._warm_timer.setInterval(10)
         self._warm_timer.timeout.connect(self._warm_step)
@@ -100,16 +101,18 @@ class LyricsOverlay(QWidget):
         delay = self.prefs.delay_ms - getattr(self.player, "lyric_offset_ms", 0)
         return LyricTimeline(document, delay, self.prefs.animation_style,
                              self.prefs.entry_speed, self.prefs.exit_speed, self.prefs.scramble_exit,
-                             self.prefs.max_display_seconds * 1000)
+                             self.prefs.max_display_seconds * 1000,
+                             self.prefs.extended_display_seconds * 1000 if self.prefs.extended_display else 0)
 
     def clear_layouts(self):
         self._warm_timer.stop()
         self._warm_jobs.clear()
+        self._warm_priority.clear()
         self.layouts.clear()
         self.update()
 
     def _prepare_lines(self, active, position):
-        """Retain at most two visible sentences plus one upcoming sentence."""
+        """Retain visible blocks (at most four) and one upcoming block."""
         candidates = [(item.index, self.timeline.lines[item.index]) for item in active]
         for index in range(bisect_right(self.timeline.starts, position), len(self.timeline.lines)):
             line = self.timeline.lines[index]
@@ -117,6 +120,9 @@ class LyricsOverlay(QWidget):
                 candidates.append((index, line))
                 break
         wanted = {index for index, _ in candidates}
+        self._warm_priority = {item.index: rank for rank, item in enumerate(reversed(active))}
+        for index, _ in candidates:
+            self._warm_priority.setdefault(index, len(active))
         self.layouts = {key: value for key, value in self.layouts.items() if key in wanted}
         self._warm_jobs = {key: value for key, value in self._warm_jobs.items() if key in wanted}
         for index, line in candidates:
@@ -147,7 +153,9 @@ class LyricsOverlay(QWidget):
         changed = False
         while self._warm_jobs and time.perf_counter() < deadline:
             # Entrance materials first, optional scramble-exit symbols second.
-            index = min(self._warm_jobs, key=lambda key: (key in self.layouts and self.layouts[key].surface is not None, key))
+            index = min(self._warm_jobs, key=lambda key: (
+                key in self.layouts and self.layouts[key].surface is not None,
+                self._warm_priority.get(key, key)))
             try:
                 ready = next(self._warm_jobs[index])
                 if ready is not None:
@@ -231,7 +239,8 @@ class LyricsOverlay(QWidget):
                 continue
             # A constrained screen may only have room for the newer sentence.
             if any(layout.bounds.intersects(self.layouts[new.index].bounds)
-                   for new in active if new.index > item.index and new.index in self.layouts):
+                   for new in active if new.index > item.index and new.index in self.layouts
+                   and self.layouts[new.index].surface is not None):
                 continue
             age = position - item.start_ms
             remaining = item.end_ms - position

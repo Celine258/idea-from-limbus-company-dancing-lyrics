@@ -4,6 +4,10 @@ import os
 from pathlib import Path
 import sys
 
+if __name__ == "__main__" and sys.argv[1:2] == ["--display-smoke"]:
+    from tools.validate_extended_display import main as validate_display
+    raise SystemExit(validate_display(sys.argv[2:]))
+
 if __name__ == "__main__" and sys.argv[1:2] == ["--scramble-smoke"]:
     from tools.validate_scramble_transitions import main as validate_scramble
     raise SystemExit(validate_scramble(sys.argv[2:]))
