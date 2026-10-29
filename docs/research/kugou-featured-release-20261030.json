@@ -1,0 +1,260 @@
+{
+  "date": "2026-10-30",
+  "passed": true,
+  "version": "0.8.0-beta.4-kugou.2",
+  "runtime_source_commit": "e089501c3828376f4b964b5f680bb8f94ea3d45c",
+  "package": {
+    "passed": true,
+    "version": "0.8.0-beta.4-kugou.2",
+    "archive": "dancing-lyrics-0.8.0-beta.4-kugou.2-windows-x64.zip",
+    "bytes": 71983705,
+    "sha256": "c45139f2eefbeb995247a0a8eeb2168d523c071bd4119c0f1d3681e3ac99a84d",
+    "exe_sha256": "63e2f5528126b6b90a00df53355ce94d55b37621915daaa540d60503f485f9fa",
+    "runtime_source_commit": "e089501c3828376f4b964b5f680bb8f94ea3d45c",
+    "crc_verified": true,
+    "qt_modules_present": true,
+    "licenses_verified": true,
+    "personal_data_excluded": true
+  },
+  "public_downloads": {
+    "passed": true,
+    "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.8.0-beta.4-kugou.2",
+    "tag": "v0.8.0-beta.4-kugou.2",
+    "tag_commit": "e089501c3828376f4b964b5f680bb8f94ea3d45c",
+    "assets": [
+      {
+        "name": "dancing-lyrics-0.8.0-beta.4-kugou.2-windows-x64.zip",
+        "bytes": 71983705,
+        "sha256": "c45139f2eefbeb995247a0a8eeb2168d523c071bd4119c0f1d3681e3ac99a84d",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4-kugou.2/dancing-lyrics-0.8.0-beta.4-kugou.2-windows-x64.zip",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-beta.4-kugou.2-windows-x64.zip.sha256",
+        "bytes": 119,
+        "sha256": "25fc8ee81fc5c1addeb8fae64c0f70e3ab7297b577d0d85bb6172e748c4bad23",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4-kugou.2/dancing-lyrics-0.8.0-beta.4-kugou.2-windows-x64.zip.sha256",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true
+      }
+    ],
+    "authenticated_download": false
+  },
+  "initial_public_failure_retained": true,
+  "initial_public_probe": {
+    "passed": false,
+    "checks": {
+      "connected": true,
+      "nativePanelVisible": true,
+      "realLyricsReceived": false,
+      "advancing": true,
+      "effectsKeepTransport": false,
+      "continuousClockNeverRewinds": true,
+      "continuousClockNoPacketJumps": true,
+      "backgroundConnected": false,
+      "backgroundChannelIndependentOfWindow": false,
+      "backgroundLyricsReceived": false,
+      "backgroundProgressAdvances": true,
+      "coldStartMinimized": false,
+      "nativeBackgroundAfterMinimizeObserved": true
+    },
+    "packaged": true,
+    "actual_bat_entry": true,
+    "developer_path_removed": true,
+    "clean_machine": false,
+    "simulated_live_data": false,
+    "playback_commands": 0,
+    "window_states": [
+      {
+        "seconds": 0.14,
+        "phase": "cold_minimized"
+      },
+      {
+        "seconds": 10.17,
+        "phase": "restored"
+      },
+      {
+        "seconds": 18.02,
+        "phase": "minimized"
+      },
+      {
+        "seconds": 28.09,
+        "phase": "tray_hidden"
+      }
+    ],
+    "seconds": 47.59,
+    "max_lines": 0,
+    "max_words": 0,
+    "max_translations": 0
+  },
+  "source_fix_regression": {
+    "passed": true,
+    "checks": {
+      "connected": true,
+      "nativePanelVisible": true,
+      "realLyricsReceived": true,
+      "advancing": true,
+      "effectsKeepTransport": true,
+      "continuousClockNeverRewinds": true,
+      "continuousClockNoPacketJumps": true,
+      "nativeClockWithin350ms": true,
+      "backgroundConnected": true,
+      "backgroundChannelIndependentOfWindow": true,
+      "backgroundLyricsReceived": true,
+      "backgroundProgressAdvances": true,
+      "coldStartMinimized": true,
+      "nativeBackgroundAfterMinimizeObserved": true
+    },
+    "packaged": false,
+    "actual_bat_entry": false,
+    "developer_path_removed": false,
+    "clean_machine": false,
+    "simulated_live_data": false,
+    "playback_commands": 0,
+    "window_states": [
+      {
+        "seconds": 0.08,
+        "phase": "cold_minimized"
+      },
+      {
+        "seconds": 10.12,
+        "phase": "restored"
+      },
+      {
+        "seconds": 18.02,
+        "phase": "minimized"
+      },
+      {
+        "seconds": 28.06,
+        "phase": "tray_hidden"
+      }
+    ],
+    "seconds": 47.31,
+    "max_lines": 70,
+    "max_words": 388,
+    "max_translations": 69
+  },
+  "captured_failed_song_metadata_replay": {
+    "native_identity_accepted": true,
+    "real_cache_received": true,
+    "lines": 72,
+    "dynamic_playback_verified": false
+  },
+  "frozen_live_regression": {
+    "passed": true,
+    "checks": {
+      "connected": true,
+      "nativePanelVisible": true,
+      "realLyricsReceived": true,
+      "advancing": true,
+      "effectsKeepTransport": true,
+      "continuousClockNeverRewinds": true,
+      "continuousClockNoPacketJumps": true,
+      "nativeClockWithin350ms": true,
+      "backgroundConnected": true,
+      "backgroundChannelIndependentOfWindow": true,
+      "backgroundLyricsReceived": true,
+      "backgroundProgressAdvances": true,
+      "coldStartMinimized": true,
+      "nativeBackgroundAfterMinimizeObserved": true
+    },
+    "packaged": true,
+    "actual_bat_entry": true,
+    "developer_path_removed": true,
+    "clean_machine": false,
+    "simulated_live_data": false,
+    "playback_commands": 0,
+    "window_states": [
+      {
+        "seconds": 0.12,
+        "phase": "cold_minimized"
+      },
+      {
+        "seconds": 10.16,
+        "phase": "restored"
+      },
+      {
+        "seconds": 18.06,
+        "phase": "minimized"
+      },
+      {
+        "seconds": 28.12,
+        "phase": "tray_hidden"
+      }
+    ],
+    "seconds": 47.41,
+    "max_lines": 41,
+    "max_words": 377,
+    "max_translations": 0,
+    "client_window_restored": true
+  },
+  "failed_song_dynamic_verified": false,
+  "failed_song_live_samples": 0,
+  "synthetic_live_data": false,
+  "frozen_smoke": {
+    "passed": true,
+    "checks": 75,
+    "actual_bat_entry": true
+  },
+  "native_entries": {
+    "passed": true,
+    "checks": {
+      "native_install": true,
+      "unicode_shortcuts_target_current_exe": true,
+      "native_uninstall": true,
+      "uninstall_removes_owned_shortcuts": true,
+      "double_click_defaults_to_kugou": true,
+      "dedicated_version_visible": true,
+      "native_control_panel_visible": true,
+      "second_entry_reuses_existing_instance": true
+    },
+    "developer_path_removed": true,
+    "clean_machine": false,
+    "personal_shortcuts_restored": true,
+    "playback_commands": 0
+  },
+  "installed_ui": {
+    "passed": true,
+    "version": "0.8.0-beta.4-kugou.2",
+    "native_channel_visible": true,
+    "local_cache_received": true,
+    "music_commands": 0
+  },
+  "personal_data": {
+    "passed": true,
+    "original_setting_keys": 31,
+    "changed_old_keys": [],
+    "fonts_presets_unchanged": true,
+    "profile_directory_preserved": true,
+    "old_runtime_backup_available": true,
+    "installed_exe_sha256": "63e2f5528126b6b90a00df53355ce94d55b37621915daaa540d60503f485f9fa",
+    "original_launch_path_preserved": true,
+    "music_commands": 0
+  },
+  "other_player_packages": [
+    {
+      "player": "netease",
+      "name": "dancing-lyrics-0.8.0-beta.4-netease-windows-x64.zip",
+      "sha256": "f046d8f63037f1c7ea3adbd6aa33eb3cfadea60992fa3a2b84ae9a49c640ae44",
+      "unchanged": true
+    },
+    {
+      "player": "qqmusic",
+      "name": "dancing-lyrics-0.8.0-beta.4-qqmusic-windows-x64.zip",
+      "sha256": "171c973a333bc1996212bdf91398614036befe45f1e0c9aa370b5cf3afb24051",
+      "unchanged": true
+    }
+  ],
+  "other_player_packages_unchanged": true,
+  "music_playback_commands": 0,
+  "runtime_automated_tests": 529,
+  "final_automated_tests": 531,
+  "not_verified": [
+    "all_song_credit_formats",
+    "other_computers",
+    "new_real_netease_qq_playback",
+    "mac_native_runtime",
+    "same_failed_featured_song_dynamic_playback"
+  ]
+}
