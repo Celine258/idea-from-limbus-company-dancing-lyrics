@@ -55,3 +55,24 @@ class FeaturedReleaseTests(unittest.TestCase):
         self.assertTrue(record['native_entries']['passed'])
         readme=(ROOT/'README.md').read_text(encoding='utf-8')
         self.assertIn('kugou-featured-release-20261030.json',readme)
+
+    def test_same_original_track_is_verified_in_each_observed_window_state(self):
+        record=self.record()
+        followup=record['same_failed_song_regression']
+        self.assertTrue(record['failed_song_dynamic_verified'])
+        self.assertTrue(followup['passed'] and followup['same_previously_failed_song_verified'])
+        self.assertTrue(followup['preflight_hash_matches_original'] and followup['client_window_restored'])
+        self.assertTrue(followup['packaged'] and followup['actual_bat_entry'] and followup['developer_path_removed'])
+        self.assertTrue(all(followup['checks'].values()))
+        self.assertFalse(followup['simulated_live_data'])
+        self.assertEqual(followup['runtime_exe_sha256'],record['package']['exe_sha256'])
+        self.assertEqual(followup['phase_filter'],'observed_main_window_state')
+        self.assertEqual(set(followup['per_phase']),{'cold_minimized','restored','minimized','tray_hidden'})
+        for phase in followup['per_phase'].values():
+            self.assertGreater(phase['samples'],1)
+            self.assertTrue(phase['lyrics_received'] and phase['native_only'] and phase['advances'])
+        self.assertGreater(followup['sampled_seconds'],40)
+        self.assertEqual(record['failed_song_live_samples'],followup['target_playing_lyric_samples'])
+        self.assertNotIn('same_failed_featured_song_dynamic_playback',record['not_verified'])
+        self.assertEqual(followup['playback_commands'],0)
+        self.assertFalse(record['initial_public_probe']['passed'])

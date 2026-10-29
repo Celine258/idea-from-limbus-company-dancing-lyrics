@@ -189,8 +189,8 @@
     "max_translations": 0,
     "client_window_restored": true
   },
-  "failed_song_dynamic_verified": false,
-  "failed_song_live_samples": 0,
+  "failed_song_dynamic_verified": true,
+  "failed_song_live_samples": 2718,
   "synthetic_live_data": false,
   "frozen_smoke": {
     "passed": true,
@@ -254,7 +254,87 @@
     "all_song_credit_formats",
     "other_computers",
     "new_real_netease_qq_playback",
-    "mac_native_runtime",
-    "same_failed_featured_song_dynamic_playback"
-  ]
+    "mac_native_runtime"
+  ],
+  "same_failed_song_regression": {
+    "passed": true,
+    "checks": {
+      "connected": true,
+      "nativePanelVisible": true,
+      "realLyricsReceived": true,
+      "advancing": true,
+      "effectsKeepTransport": true,
+      "continuousClockNeverRewinds": true,
+      "continuousClockNoPacketJumps": true,
+      "nativeClockWithin350ms": true,
+      "backgroundConnected": true,
+      "backgroundChannelIndependentOfWindow": true,
+      "backgroundLyricsReceived": true,
+      "backgroundProgressAdvances": true,
+      "coldStartMinimized": true,
+      "nativeBackgroundAfterMinimizeObserved": true
+    },
+    "packaged": true,
+    "actual_bat_entry": true,
+    "developer_path_removed": true,
+    "clean_machine": false,
+    "simulated_live_data": false,
+    "playback_commands": 0,
+    "window_states": [
+      {
+        "seconds": 0.09,
+        "phase": "cold_minimized"
+      },
+      {
+        "seconds": 10.12,
+        "phase": "restored"
+      },
+      {
+        "seconds": 18.17,
+        "phase": "minimized"
+      },
+      {
+        "seconds": 28.03,
+        "phase": "tray_hidden"
+      }
+    ],
+    "seconds": 47.7,
+    "max_lines": 72,
+    "max_words": 347,
+    "max_translations": 68,
+    "client_window_restored": true,
+    "same_previously_failed_song_verified": true,
+    "target_playing_lyric_samples": 2718,
+    "per_phase": {
+      "cold_minimized": {
+        "samples": 404,
+        "lyrics_received": true,
+        "native_only": true,
+        "advances": true
+      },
+      "restored": {
+        "samples": 500,
+        "lyrics_received": true,
+        "native_only": true,
+        "advances": true
+      },
+      "minimized": {
+        "samples": 626,
+        "lyrics_received": true,
+        "native_only": true,
+        "advances": true
+      },
+      "tray_hidden": {
+        "samples": 1118,
+        "lyrics_received": true,
+        "native_only": true,
+        "advances": true
+      }
+    },
+    "preflight_hash_matches_original": true,
+    "sampled_seconds": 44.95,
+    "phase_filter": "observed_main_window_state",
+    "runtime_exe_sha256": "63e2f5528126b6b90a00df53355ce94d55b37621915daaa540d60503f485f9fa"
+  },
+  "automated_tests_after_same_song_followup": 532
 }
