@@ -12,6 +12,7 @@ from text_effects import TEXT_EFFECTS
 from glyph_motion import glyph_states
 from app_info import APP_NAME
 from screens import select_screen
+from window_layer import TopmostGuard
 
 
 class LyricsOverlay(QWidget):
@@ -39,6 +40,7 @@ class LyricsOverlay(QWidget):
         self._warm_timer = QTimer(self)
         self._warm_timer.setInterval(10)
         self._warm_timer.timeout.connect(self._warm_step)
+        self._layer = TopmostGuard(self)
         self.seed = random.randrange(1_000_000)
         self._screen = None
         self.refresh_screen()
@@ -161,6 +163,7 @@ class LyricsOverlay(QWidget):
     def showEvent(self, event):
         super().showEvent(event)
         self._protect_native_focus()
+        self._layer.start()
         self._sync_timer()
 
     def _sync_timer(self):
@@ -192,11 +195,15 @@ class LyricsOverlay(QWidget):
         user32.SetWindowPos(hwnd, None, 0, 0, 0, 0, 0x37)
 
     def hideEvent(self, event):
+        self._layer.stop()
         self.timer.stop()
         self._warm_timer.stop()
         super().hideEvent(event)
 
     def event(self, event):
+        if event.type() in (QEvent.Type.WinIdChange, QEvent.Type.WindowStateChange,
+                            QEvent.Type.DevicePixelRatioChange) and hasattr(self, "_layer"):
+            self._layer.request(force=True)
         if event.type() == QEvent.Type.DevicePixelRatioChange and hasattr(self, "layouts"):
             TEXT_EFFECTS.clear()
             self.clear_layouts()

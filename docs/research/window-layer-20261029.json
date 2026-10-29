@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "checks": {
+    "native_windows": true,
+    "shown_topmost": true,
+    "shown_noactivate": true,
+    "foreign_cover_reproduced": true,
+    "foreign_process_raised_itself": true,
+    "foreign_reorder_recovered": true,
+    "focus_preserved": true,
+    "lost_native_style_reproduced": true,
+    "lost_native_style_recovered": true,
+    "paused_render_timer_still_stopped": true,
+    "hidden_repair_stopped": true,
+    "hidden_stays_hidden": true,
+    "restored_topmost": true,
+    "restore_keeps_focus": true
+  },
+  "foreign_window_is_fixture": true,
+  "actual_exclusive_fullscreen_game_verified": false,
+  "music_client_commands": 0
+}

@@ -15,7 +15,7 @@ PREFIX = "DancingLyrics-Kugou-Mac-Source"
 SOURCE_FILES = (
     "main_mac.py", "main_mac_kugou.py", "macos_kugou.py", "macos_netease.py", "macos_smoke.py",
     "kugou_lyrics.py", "kugou_identity.py", "lrc.py", "controls.py", "overlay.py", "player.py",
-    "audio_energy.py", "animation.py", "glyph_motion.py", "text_effects.py", "gradients.py",
+    "audio_energy.py", "animation.py", "glyph_motion.py", "text_effects.py", "gradients.py", "window_layer.py",
     "scramble.py", "fonts.py", "settings.py", "presets.py", "screens.py", "themes.py", "app_info.py",
     "CityEchoes.spec", "requirements.txt", "requirements-build.txt", "LICENSE", "THIRD_PARTY_NOTICES.md",
     "AGENTS.md", "CHANGELOG.md", "MACOS.md", "KUGOU-MACOS.md", "安装酷狗Mac.command", "启动酷狗Mac.command",
