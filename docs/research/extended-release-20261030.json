@@ -1,0 +1,454 @@
+{
+  "date": "2026-10-30",
+  "passed": true,
+  "runtime_source_commit": "681c56e91642110eeb2156e5cac4458d03ba640f",
+  "versions": {
+    "shared": "0.8.0-beta.4",
+    "kugou": "0.8.0-beta.4-kugou.1"
+  },
+  "same_engine": true,
+  "archives": [
+    {
+      "player": "netease",
+      "name": "dancing-lyrics-0.8.0-beta.4-netease-windows-x64.zip",
+      "bytes": 71979986,
+      "sha256": "f046d8f63037f1c7ea3adbd6aa33eb3cfadea60992fa3a2b84ae9a49c640ae44",
+      "exe_sha256": "ba55d1791290271d4d1a59bed932d10838cac2ec558c61f1110de885e11c549c"
+    },
+    {
+      "player": "qqmusic",
+      "name": "dancing-lyrics-0.8.0-beta.4-qqmusic-windows-x64.zip",
+      "bytes": 71972223,
+      "sha256": "171c973a333bc1996212bdf91398614036befe45f1e0c9aa370b5cf3afb24051",
+      "exe_sha256": "ba55d1791290271d4d1a59bed932d10838cac2ec558c61f1110de885e11c549c"
+    },
+    {
+      "player": "kugou",
+      "name": "dancing-lyrics-0.8.0-beta.4-kugou.1-windows-x64.zip",
+      "bytes": 71981781,
+      "sha256": "05e826dad3dbe8853408c1b559ba60474a10d11997c7a3dbf4cb7eb52580cc4f",
+      "exe_sha256": "ba55d1791290271d4d1a59bed932d10838cac2ec558c61f1110de885e11c549c"
+    }
+  ],
+  "public_packages_updated": true,
+  "public_downloads": {
+    "passed": true,
+    "authenticated_download": false,
+    "tag_commits_match": true,
+    "assets": [
+      {
+        "name": "dancing-lyrics-0.8.0-beta.4-kugou.1-windows-x64.zip",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4-kugou.1/dancing-lyrics-0.8.0-beta.4-kugou.1-windows-x64.zip",
+        "bytes": 71981781,
+        "sha256": "05e826dad3dbe8853408c1b559ba60474a10d11997c7a3dbf4cb7eb52580cc4f",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag": "v0.8.0-beta.4-kugou.1",
+        "tag_commit": "681c56e91642110eeb2156e5cac4458d03ba640f"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-beta.4-kugou.1-windows-x64.zip.sha256",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4-kugou.1/dancing-lyrics-0.8.0-beta.4-kugou.1-windows-x64.zip.sha256",
+        "bytes": 119,
+        "sha256": "954f5a92ad456b444565fd5b9ab515e371454cdd9b050d2f4d9696848a95212b",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag": "v0.8.0-beta.4-kugou.1",
+        "tag_commit": "681c56e91642110eeb2156e5cac4458d03ba640f"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-beta.4-netease-windows-x64.zip",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4/dancing-lyrics-0.8.0-beta.4-netease-windows-x64.zip",
+        "bytes": 71979986,
+        "sha256": "f046d8f63037f1c7ea3adbd6aa33eb3cfadea60992fa3a2b84ae9a49c640ae44",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag": "v0.8.0-beta.4",
+        "tag_commit": "681c56e91642110eeb2156e5cac4458d03ba640f"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-beta.4-netease-windows-x64.zip.sha256",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4/dancing-lyrics-0.8.0-beta.4-netease-windows-x64.zip.sha256",
+        "bytes": 119,
+        "sha256": "e79ed0e4affa1f0348e25c8540f7762bc4131f3bc3ea3a175b5ce7df65546b62",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag": "v0.8.0-beta.4",
+        "tag_commit": "681c56e91642110eeb2156e5cac4458d03ba640f"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-beta.4-qqmusic-windows-x64.zip",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4/dancing-lyrics-0.8.0-beta.4-qqmusic-windows-x64.zip",
+        "bytes": 71972223,
+        "sha256": "171c973a333bc1996212bdf91398614036befe45f1e0c9aa370b5cf3afb24051",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag": "v0.8.0-beta.4",
+        "tag_commit": "681c56e91642110eeb2156e5cac4458d03ba640f"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-beta.4-qqmusic-windows-x64.zip.sha256",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4/dancing-lyrics-0.8.0-beta.4-qqmusic-windows-x64.zip.sha256",
+        "bytes": 119,
+        "sha256": "1d25c26fd7e891c66edb434499368e67aaaa7d40a0902c0308bf512d14f22b8b",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag": "v0.8.0-beta.4",
+        "tag_commit": "681c56e91642110eeb2156e5cac4458d03ba640f"
+      }
+    ],
+    "zip_count": 3
+  },
+  "netease_public": {
+    "passed": true,
+    "checks": {
+      "isolated_source_install_update_restore": true,
+      "isolated_source_uninstall_preserves_settings_and_framework": true,
+      "isolated_source_offline_stage": true,
+      "frozen_running_client_guard": true,
+      "frozen_guard_keeps_plugin_absent": true,
+      "native_安装网易云联动.bat": true,
+      "native_卸载网易云联动.bat": true,
+      "native_恢复网易云联动.bat": true,
+      "public_start_bat_smoke": true
+    },
+    "version": "0.8.0-beta.4",
+    "zipSha256": "f046d8f63037f1c7ea3adbd6aa33eb3cfadea60992fa3a2b84ae9a49c640ae44",
+    "developerPathRemoved": true,
+    "cleanMachine": false,
+    "realClientBuild": "3.1.41.205529",
+    "frameworkHashVerified": true,
+    "frozen_positive_install_rerun": false,
+    "source_target_idle_probe_is_fixture": true,
+    "actual_client_restarted": false,
+    "playback_commands": 0,
+    "packaged_smoke_checks": 75
+  },
+  "qq_public": {
+    "passed": true,
+    "checks": {
+      "native_window_visible": true,
+      "correct_version": true,
+      "capability_hint": true,
+      "startup_control": true,
+      "cache_control": true,
+      "reuses_existing_instance": true
+    },
+    "developerPathRemoved": true,
+    "cleanMachine": false,
+    "realQQPlayback": false,
+    "zipSha256": "171c973a333bc1996212bdf91398614036befe45f1e0c9aa370b5cf3afb24051"
+  },
+  "kugou_entries": {
+    "passed": true,
+    "checks": {
+      "native_install": true,
+      "unicode_shortcuts_target_current_exe": true,
+      "native_uninstall": true,
+      "uninstall_removes_owned_shortcuts": true,
+      "double_click_defaults_to_kugou": true,
+      "dedicated_version_visible": true,
+      "native_control_panel_visible": true,
+      "second_entry_reuses_existing_instance": true
+    },
+    "developer_path_removed": true,
+    "clean_machine": false,
+    "personal_shortcuts_restored": true,
+    "playback_commands": 0
+  },
+  "kugou_packaged_smoke": {
+    "passed": true,
+    "checks": 75,
+    "actual_bat_entry": true
+  },
+  "frozen_extended_display": {
+    "passed": true,
+    "checks": {
+      "windows_platform": true,
+      "actual_dpr": true,
+      "default_extended_reachable": true,
+      "default_seconds_reachable": true,
+      "default_footer_visible": true,
+      "minimum_extended_reachable": true,
+      "minimum_seconds_reachable": true,
+      "minimum_footer_visible": true,
+      "saved_immediately": true,
+      "preset_preserves_duration": true,
+      "classic_visible_blocks_do_not_overlap": true,
+      "classic_layout_within_screen": true,
+      "classic_warm_four_bilingual_p95_under_33ms": true,
+      "classic_glow_and_fall_not_clipped": true,
+      "ripple_wave_visible_blocks_do_not_overlap": true,
+      "ripple_wave_layout_within_screen": true,
+      "ripple_wave_warm_four_bilingual_p95_under_33ms": true,
+      "ripple_wave_glow_and_fall_not_clipped": true,
+      "ripple_shake_visible_blocks_do_not_overlap": true,
+      "ripple_shake_layout_within_screen": true,
+      "ripple_shake_warm_four_bilingual_p95_under_33ms": true,
+      "ripple_shake_glow_and_fall_not_clipped": true,
+      "fall_wave_visible_blocks_do_not_overlap": true,
+      "fall_wave_layout_within_screen": true,
+      "fall_wave_warm_four_bilingual_p95_under_33ms": true,
+      "fall_wave_glow_and_fall_not_clipped": true,
+      "fall_shake_visible_blocks_do_not_overlap": true,
+      "fall_shake_layout_within_screen": true,
+      "fall_shake_warm_four_bilingual_p95_under_33ms": true,
+      "fall_shake_glow_and_fall_not_clipped": true,
+      "actual_four_surfaces_ready": true,
+      "pause_freezes_frame": true,
+      "seek_rebuilds_from_song_position": true,
+      "song_end_clears_alpha": true,
+      "blank_cue_clears_alpha": true
+    },
+    "dpr": 1.5,
+    "measurements": [
+      {
+        "style": "classic",
+        "simultaneous_blocks": 4,
+        "bilingual": true,
+        "scramble_exit": true,
+        "visible_without_collisions": 2,
+        "warm_render_p95_ms": 11.766,
+        "synthetic_lyric_times": true
+      },
+      {
+        "style": "ripple_wave",
+        "simultaneous_blocks": 4,
+        "bilingual": true,
+        "scramble_exit": true,
+        "visible_without_collisions": 3,
+        "warm_render_p95_ms": 7.169,
+        "synthetic_lyric_times": true
+      },
+      {
+        "style": "ripple_shake",
+        "simultaneous_blocks": 4,
+        "bilingual": true,
+        "scramble_exit": true,
+        "visible_without_collisions": 3,
+        "warm_render_p95_ms": 9.725,
+        "synthetic_lyric_times": true
+      },
+      {
+        "style": "fall_wave",
+        "simultaneous_blocks": 4,
+        "bilingual": true,
+        "scramble_exit": true,
+        "visible_without_collisions": 2,
+        "warm_render_p95_ms": 8.058,
+        "synthetic_lyric_times": true
+      },
+      {
+        "style": "fall_shake",
+        "simultaneous_blocks": 4,
+        "bilingual": true,
+        "scramble_exit": true,
+        "visible_without_collisions": 2,
+        "warm_render_p95_ms": 10.062,
+        "synthetic_lyric_times": true
+      }
+    ],
+    "music_client_commands": 0,
+    "real_playback": false,
+    "synthetic_lyric_times": true,
+    "user_settings_modified": false,
+    "packaged": true,
+    "developer_path_removed": true
+  },
+  "frozen_scramble_transitions": {
+    "passed": true,
+    "checks": {
+      "native_windows": true,
+      "classic_native_visible": true,
+      "classic_requested_dpr": true,
+      "classic_paint_p95_under_33ms": true,
+      "classic_preparation_step_under_33ms": true,
+      "classic_no_100ms_event_loop_stall": true,
+      "classic_both_exits_have_multiple_frames": true,
+      "classic_blank_boundary_clears": true,
+      "ripple_wave_native_visible": true,
+      "ripple_wave_requested_dpr": true,
+      "ripple_wave_paint_p95_under_33ms": true,
+      "ripple_wave_preparation_step_under_33ms": true,
+      "ripple_wave_no_100ms_event_loop_stall": true,
+      "ripple_wave_both_exits_have_multiple_frames": true,
+      "ripple_wave_blank_boundary_clears": true,
+      "ripple_shake_native_visible": true,
+      "ripple_shake_requested_dpr": true,
+      "ripple_shake_paint_p95_under_33ms": true,
+      "ripple_shake_preparation_step_under_33ms": true,
+      "ripple_shake_no_100ms_event_loop_stall": true,
+      "ripple_shake_both_exits_have_multiple_frames": true,
+      "ripple_shake_blank_boundary_clears": true,
+      "fall_wave_native_visible": true,
+      "fall_wave_requested_dpr": true,
+      "fall_wave_paint_p95_under_33ms": true,
+      "fall_wave_preparation_step_under_33ms": true,
+      "fall_wave_no_100ms_event_loop_stall": true,
+      "fall_wave_both_exits_have_multiple_frames": true,
+      "fall_wave_blank_boundary_clears": true,
+      "fall_shake_native_visible": true,
+      "fall_shake_requested_dpr": true,
+      "fall_shake_paint_p95_under_33ms": true,
+      "fall_shake_preparation_step_under_33ms": true,
+      "fall_shake_no_100ms_event_loop_stall": true,
+      "fall_shake_both_exits_have_multiple_frames": true,
+      "fall_shake_blank_boundary_clears": true
+    },
+    "measurements": [
+      {
+        "style": "classic",
+        "font_size": 64,
+        "bilingual": false,
+        "dpr": 1.5,
+        "frames": 139,
+        "paint_p95_ms": 12.883,
+        "paint_max_ms": 16.278,
+        "preparation_max_ms": 10.432,
+        "heartbeat_p95_ms": 20.811,
+        "heartbeat_max_ms": 27.319,
+        "transition_exit_frames": [
+          19,
+          18
+        ],
+        "final_position": 4460,
+        "pending_jobs": 0
+      },
+      {
+        "style": "ripple_wave",
+        "font_size": 32,
+        "bilingual": false,
+        "dpr": 1.5,
+        "frames": 141,
+        "paint_p95_ms": 8.446,
+        "paint_max_ms": 15.17,
+        "preparation_max_ms": 5.406,
+        "heartbeat_p95_ms": 16.731,
+        "heartbeat_max_ms": 27.373,
+        "transition_exit_frames": [
+          18,
+          18
+        ],
+        "final_position": 4458,
+        "pending_jobs": 0
+      },
+      {
+        "style": "ripple_shake",
+        "font_size": 64,
+        "bilingual": true,
+        "dpr": 1.5,
+        "frames": 141,
+        "paint_p95_ms": 7.122,
+        "paint_max_ms": 7.94,
+        "preparation_max_ms": 6.071,
+        "heartbeat_p95_ms": 17.161,
+        "heartbeat_max_ms": 18.72,
+        "transition_exit_frames": [
+          19,
+          18
+        ],
+        "final_position": 4442,
+        "pending_jobs": 0
+      },
+      {
+        "style": "fall_wave",
+        "font_size": 32,
+        "bilingual": false,
+        "dpr": 1.5,
+        "frames": 142,
+        "paint_p95_ms": 6.065,
+        "paint_max_ms": 7.363,
+        "preparation_max_ms": 5.666,
+        "heartbeat_p95_ms": 16.19,
+        "heartbeat_max_ms": 18.32,
+        "transition_exit_frames": [
+          19,
+          19
+        ],
+        "final_position": 4460,
+        "pending_jobs": 0
+      },
+      {
+        "style": "fall_shake",
+        "font_size": 64,
+        "bilingual": true,
+        "dpr": 1.5,
+        "frames": 138,
+        "paint_p95_ms": 6.963,
+        "paint_max_ms": 7.933,
+        "preparation_max_ms": 5.97,
+        "heartbeat_p95_ms": 16.459,
+        "heartbeat_max_ms": 19.164,
+        "transition_exit_frames": [
+          18,
+          18
+        ],
+        "final_position": 4450,
+        "pending_jobs": 0
+      }
+    ],
+    "synthetic_clock": true,
+    "real_music_playback_verified": false,
+    "music_client_commands": 0,
+    "user_settings_modified": false,
+    "packaged": true,
+    "developer_path_removed": true
+  },
+  "installed": {
+    "versions_verified": true,
+    "old_launch_paths_preserved": true,
+    "kugou_version": "0.8.0-beta.4-kugou.1",
+    "kugou_controls": {
+      "passed": true,
+      "version": "0.8.0-beta.4-kugou.1",
+      "new_controls_present": true,
+      "default_mode_off": true,
+      "seconds": 10.0,
+      "minimum": 1.0,
+      "maximum": 120.0,
+      "music_commands": 0
+    },
+    "netease_smoke": {
+      "passed": true,
+      "checks": 75
+    },
+    "old_directories_backed_up": true,
+    "actual_client_restarted": false
+  },
+  "kugou_current_client": {
+    "connected": true,
+    "playing": false,
+    "mode": "native",
+    "has_title": true,
+    "has_artist": true,
+    "has_position": true,
+    "reader_exit_code": 0,
+    "music_commands": 0,
+    "local_cache_received": true,
+    "playback_continuity_verified": false,
+    "minimized_playback_current_release_verified": false
+  },
+  "personal_data": {
+    "passed": true,
+    "netease_personal_files": 12,
+    "netease_changed_files": [],
+    "kugou_profile_directory_preserved": true,
+    "kugou_after_old_exit_settings_unchanged": true,
+    "old_kugou_exit_rewrote_settings_ini": true,
+    "before_old_exit_values_comparison_available": false,
+    "settings_fonts_presets_not_deleted": true,
+    "installed_paths_preserved": true,
+    "old_runtime_backup_available": true,
+    "playback_commands": 0
+  },
+  "music_playback_commands": 0,
+  "not_verified": [
+    "current_release_kugou_playback_continuity_while_client_paused",
+    "new_real_netease_qq_playback",
+    "actual_exclusive_fullscreen_game",
+    "clean_second_machine",
+    "mac_native_runtime",
+    "kugou_setting_values_before_old_runtime_exit"
+  ],
+  "final_automated_tests": 523
+}
