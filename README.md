@@ -15,7 +15,7 @@ Windows 请按播放器选择独立压缩包：
 
 | 使用的播放器 | 下载 | 使用入口 |
 | --- | --- | --- |
-| 酷狗音乐 | [下载酷狗音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4-kugou.1/dancing-lyrics-0.8.0-beta.4-kugou.1-windows-x64.zip) | 开启酷狗桌面歌词，双击“启动酷狗联动.bat” |
+| 酷狗音乐 | [下载酷狗音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4-kugou.2/dancing-lyrics-0.8.0-beta.4-kugou.2-windows-x64.zip) | 开启酷狗桌面歌词，双击“启动酷狗联动.bat” |
 | QQ 音乐 | [下载 QQ 音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4/dancing-lyrics-0.8.0-beta.4-qqmusic-windows-x64.zip) | 打开 QQ 音乐，双击“启动QQ音乐联动.bat” |
 | 网易云音乐 | [下载网易云音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4/dancing-lyrics-0.8.0-beta.4-netease-windows-x64.zip) | 首次安装联动，之后从网易云播放栏打开 |
 
@@ -32,6 +32,8 @@ Windows 请按播放器选择独立压缩包：
 ![新版成品的延长显示设置](docs/images/extended-display-beta4.png)
 
 歌词始终置顶，不增加开关。Windows 版会在被其他不透明置顶窗口覆盖时恢复层级，不抢输入焦点；隐藏后不会自行弹回。无边框全屏通常仍属于桌面窗口层级，但真实游戏需要分别验证，**不能保证覆盖独占全屏游戏或系统安全桌面**。本地循环播放暂不改动，OBS 透明输出留待后续。
+
+酷狗 `.2` 修复合作歌曲匹配：系统媒体只提供主歌手，但原生歌词／缓存包含客串歌手时，仅在双方完整歌名一致、歌名明确写明 feat./ft./featuring、其余歌手完全对应时接受。未署名合作、不同主歌手、现场／翻唱版本或哈希冲突仍拒绝；没有扩大时长容差或修改酷狗播放回调。
 
 **酷狗音乐修复版**：完整解压 → 酷狗播放歌曲并开启桌面歌词 → 双击“启动酷狗联动.bat”。显示“原生歌词通道”或“系统媒体接口”后可最小化酷狗。本版修复 `Mili`／`Mili（ミリー）` 等别名导致的后台断连；未知结构仍会回退到需展开窗口的界面兼容模式，不承诺所有客户端后台可用。可选安装个人快捷方式及开启“随酷狗启动”；升级保留 `%LOCALAPPDATA%\DancingLyrics-Kugou\.state`，移动后需重新设置自动启动。详见 [酷狗安装与后台使用说明](KUGOU.md)。基于 [CAR0TT0 的 PR #4](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/pull/4) 继续修复，保留作者贡献。本轮网易云、QQ 与酷狗分别更新独立下载包。
 

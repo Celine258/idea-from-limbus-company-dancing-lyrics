@@ -12,7 +12,7 @@ import re
 import struct
 import time
 import unicodedata
-from kugou_identity import titles_match, artists_match
+from kugou_identity import titles_match, track_artists_match
 
 
 LIMIT_MS = 86400000
@@ -341,7 +341,8 @@ class NativeLyricsReader:
             try:
                 row = read_object(self.process, obj, layout)
                 if media and (not titles_match(row["title"], media["title"]) or
-                              media["artist"] and not artists_match(row["artist"], media["artist"])):
+                              media["artist"] and not track_artists_match(
+                                  row["artist"], media["artist"], row["title"], media["title"])):
                     continue
                 key = obj, row["document"]
                 previous = self.previous.get(key)

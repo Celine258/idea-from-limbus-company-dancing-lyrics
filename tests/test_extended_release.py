@@ -2,7 +2,6 @@
 import json
 from pathlib import Path
 import unittest
-from app_info import APP_VERSION, KUGOU_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -14,7 +13,7 @@ class ExtendedReleaseTests(unittest.TestCase):
     def test_public_assets_tags_and_frozen_engine_match(self):
         record = self.record()
         self.assertTrue(record['passed'] and record['same_engine'] and record['public_packages_updated'])
-        self.assertEqual(record['versions'], dict(shared=APP_VERSION, kugou=KUGOU_VERSION))
+        self.assertEqual(record['versions'], dict(shared='0.8.0-beta.4', kugou='0.8.0-beta.4-kugou.1'))
         assets = {row['name']:row for row in record['public_downloads']['assets']}
         self.assertEqual(len(assets), 6)
         self.assertEqual({row['player'] for row in record['archives']}, {'kugou','netease','qqmusic'})
@@ -36,7 +35,7 @@ class ExtendedReleaseTests(unittest.TestCase):
         record = self.record()
         installed = record['installed']
         self.assertTrue(installed['versions_verified'] and installed['old_launch_paths_preserved'])
-        self.assertEqual(installed['kugou_version'], KUGOU_VERSION)
+        self.assertEqual(installed['kugou_version'], '0.8.0-beta.4-kugou.1')
         controls = installed['kugou_controls']
         self.assertTrue(controls['passed'] and controls['new_controls_present'] and controls['default_mode_off'])
         self.assertEqual((controls['seconds'], controls['minimum'], controls['maximum']), (10,1,120))

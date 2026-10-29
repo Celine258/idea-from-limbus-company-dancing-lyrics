@@ -247,9 +247,10 @@ async def sample_channels(manager, native, windows, window=None):
         if media is not None and (after is None or (media["title"], media["artist"]) != (after["title"], after["artist"])):
             return None, "正在切歌，等待歌曲信息稳定。", window
         if media is None and after is not None:
-            from kugou_identity import titles_match, artists_match
+            from kugou_identity import titles_match, track_artists_match
             if (not titles_match(native_snapshot["title"], after["title"]) or
-                    after["artist"] and not artists_match(native_snapshot["artist"], after["artist"])):
+                    after["artist"] and not track_artists_match(native_snapshot["artist"], after["artist"],
+                                                               native_snapshot["title"], after["title"])):
                 return None, "正在切歌，等待歌曲信息稳定。", window
             native_snapshot["playing"], native_snapshot["rate"] = after["playing"], after["rate"]
         message = "原生歌词通道 · 支持最小化；毫秒进度，显示时长取歌词时间范围。"

@@ -13,7 +13,7 @@ import urllib.request
 import zlib
 
 from lrc import LyricDocument, LyricLine, TimedWord, parse_lrc, chinese_translation
-from kugou_identity import title_keys, titles_match, artists_match
+from kugou_identity import title_keys, titles_match, track_artists_match
 
 LIMIT = 2 * 1024 * 1024
 KRC_KEY = bytes((64, 71, 97, 119, 94, 50, 116, 71, 81, 54, 49, 45, 206, 210, 110, 105))
@@ -141,7 +141,8 @@ def local_lyrics(snapshot, directories=None, cancelled=lambda: False):
                 if artist:
                     valid_names = {artist + value for value in titles} | {value + artist for value in titles}
                 parts = stem.split(" - ", 1)
-                alias_match = (len(parts) == 2 and bool(artist) and artists_match(parts[0], snapshot.artist)
+                alias_match = (len(parts) == 2 and bool(artist) and track_artists_match(
+                                   parts[0], snapshot.artist, parts[1], snapshot.title)
                                and bool(title_keys(parts[1]) & titles))
                 hash_named = bool(expected_hash) and bool(re.search(
                     r"(?<![0-9a-f])" + re.escape(expected_hash) + r"(?![0-9a-f])", path.stem, re.I))
@@ -194,7 +195,8 @@ def choose_candidate(candidates, snapshot, *, diagnostics=None):
         if not isinstance(row, dict) or not titles_match(row.get("song", ""), snapshot.title):
             continue
         counts["title"] += 1
-        if not snapshot.artist or not artists_match(row.get("singer", ""), snapshot.artist):
+        if not snapshot.artist or not track_artists_match(
+                row.get("singer", ""), snapshot.artist, row.get("song", ""), snapshot.title):
             continue
         counts["artist"] += 1
         duration = row.get("duration")

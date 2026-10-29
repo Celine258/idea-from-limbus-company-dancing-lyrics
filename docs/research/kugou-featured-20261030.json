@@ -1,0 +1,122 @@
+{
+  "date": "2026-10-30",
+  "passed": true,
+  "initial_packaged_probe": {
+    "passed": false,
+    "checks": {
+      "connected": true,
+      "nativePanelVisible": true,
+      "realLyricsReceived": false,
+      "advancing": true,
+      "effectsKeepTransport": false,
+      "continuousClockNeverRewinds": true,
+      "continuousClockNoPacketJumps": true,
+      "backgroundConnected": false,
+      "backgroundChannelIndependentOfWindow": false,
+      "backgroundLyricsReceived": false,
+      "backgroundProgressAdvances": true,
+      "coldStartMinimized": false,
+      "nativeBackgroundAfterMinimizeObserved": true
+    },
+    "packaged": true,
+    "actual_bat_entry": true,
+    "developer_path_removed": true,
+    "clean_machine": false,
+    "simulated_live_data": false,
+    "playback_commands": 0,
+    "window_states": [
+      {
+        "seconds": 0.14,
+        "phase": "cold_minimized"
+      },
+      {
+        "seconds": 10.17,
+        "phase": "restored"
+      },
+      {
+        "seconds": 18.02,
+        "phase": "minimized"
+      },
+      {
+        "seconds": 28.09,
+        "phase": "tray_hidden"
+      }
+    ],
+    "seconds": 47.59,
+    "max_lines": 0,
+    "max_words": 0,
+    "max_translations": 0
+  },
+  "original_public_runtime_sha256": "ba55d1791290271d4d1a59bed932d10838cac2ec558c61f1110de885e11c549c",
+  "root_cause": {
+    "smtc_omits_featured_artist": true,
+    "native_and_cache_include_featured_artist": true,
+    "full_titles_match": true,
+    "title_explicitly_credits_guest": true,
+    "matching_native_object_count": 6,
+    "changed_tolerance": false,
+    "changed_playback_callbacks": false
+  },
+  "captured_metadata_replay": {
+    "native_identity_accepted": true,
+    "real_cache_received": true,
+    "lines": 72,
+    "dynamic_playback_verified": false
+  },
+  "source_regression": {
+    "passed": true,
+    "checks": {
+      "connected": true,
+      "nativePanelVisible": true,
+      "realLyricsReceived": true,
+      "advancing": true,
+      "effectsKeepTransport": true,
+      "continuousClockNeverRewinds": true,
+      "continuousClockNoPacketJumps": true,
+      "nativeClockWithin350ms": true,
+      "backgroundConnected": true,
+      "backgroundChannelIndependentOfWindow": true,
+      "backgroundLyricsReceived": true,
+      "backgroundProgressAdvances": true,
+      "coldStartMinimized": true,
+      "nativeBackgroundAfterMinimizeObserved": true
+    },
+    "packaged": false,
+    "actual_bat_entry": false,
+    "developer_path_removed": false,
+    "clean_machine": false,
+    "simulated_live_data": false,
+    "playback_commands": 0,
+    "window_states": [
+      {
+        "seconds": 0.08,
+        "phase": "cold_minimized"
+      },
+      {
+        "seconds": 10.12,
+        "phase": "restored"
+      },
+      {
+        "seconds": 18.02,
+        "phase": "minimized"
+      },
+      {
+        "seconds": 28.06,
+        "phase": "tray_hidden"
+      }
+    ],
+    "seconds": 47.31,
+    "max_lines": 70,
+    "max_words": 388,
+    "max_translations": 69
+  },
+  "same_previously_failed_song_verified": false,
+  "synthetic_live_data": false,
+  "music_playback_commands": 0,
+  "not_verified": [
+    "updated_frozen_runtime_at_source_fix_commit",
+    "same_failed_featured_song_dynamic_playback",
+    "all_other_collaborator_formats",
+    "other_computers"
+  ]
+}
