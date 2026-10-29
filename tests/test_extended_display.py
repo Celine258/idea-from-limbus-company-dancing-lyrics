@@ -35,6 +35,16 @@ class ExtendedTimelineTests(unittest.TestCase):
         for text in ("新句出现后保留旧句", "1–120 秒", "四组", "独占全屏"):
             self.assertIn(text, readme)
 
+    def test_current_player_guides_ship_extended_display_and_topmost_instructions(self):
+        from app_info import APP_VERSION
+        root = Path(__file__).resolve().parents[1]
+        for name in ("README.md", "NETEASE.md", "QQMUSIC.md", "KUGOU.md", "release/使用说明.txt",
+                     "release/netease/使用说明.txt", "release/qqmusic/使用说明.txt", "release/kugou-guide.txt",
+                     "release/release-notes.md", "release/kugou-release-notes.md"):
+            text = (root / name).read_text(encoding="utf-8")
+            for phrase in (APP_VERSION, "新句出现后保留旧句", "1–120 秒", "四组", "不抢焦点"):
+                self.assertIn(phrase, text, name)
+
     def test_packaged_diagnostic_dispatch_does_not_start_a_music_client(self):
         from tools import validate_extended_display
         arguments = ["main.py", "--display-smoke", "--scale", "1.5", "--output", "中文 测试"]

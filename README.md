@@ -9,23 +9,23 @@
 
 桌面实机录屏，约 18 秒，循环播放（GIF 无声）。
 
-**[下载 Windows x64 试用版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.8.0-beta.3)** · [问题反馈](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues)
+**[下载 Windows x64 试用版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.8.0-beta.4)** · [问题反馈](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues)
 
 Windows 请按播放器选择独立压缩包：
 
 | 使用的播放器 | 下载 | 使用入口 |
 | --- | --- | --- |
-| 酷狗音乐 | [下载酷狗音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.3-kugou.1/dancing-lyrics-0.8.0-beta.3-kugou.1-windows-x64.zip) | 开启酷狗桌面歌词，双击“启动酷狗联动.bat” |
-| QQ 音乐 | [下载 QQ 音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.3/dancing-lyrics-0.8.0-beta.3-qqmusic-windows-x64.zip) | 打开 QQ 音乐，双击“启动QQ音乐联动.bat” |
-| 网易云音乐 | [下载网易云音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.3/dancing-lyrics-0.8.0-beta.3-netease-windows-x64.zip) | 首次安装联动，之后从网易云播放栏打开 |
+| 酷狗音乐 | [下载酷狗音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4-kugou.1/dancing-lyrics-0.8.0-beta.4-kugou.1-windows-x64.zip) | 开启酷狗桌面歌词，双击“启动酷狗联动.bat” |
+| QQ 音乐 | [下载 QQ 音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4/dancing-lyrics-0.8.0-beta.4-qqmusic-windows-x64.zip) | 打开 QQ 音乐，双击“启动QQ音乐联动.bat” |
+| 网易云音乐 | [下载网易云音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.4/dancing-lyrics-0.8.0-beta.4-netease-windows-x64.zip) | 首次安装联动，之后从网易云播放栏打开 |
 
 各播放器使用不同解压目录，入口与说明各自独立，均内置运行环境。QQ／网易云旧通用包升级时，先退出歌词程序，将旧 `.state` 整个复制到对应新目录；网易云版还需退出网易云并重新安装联动以更新路径。同一时间只运行一个歌词实例。
 
-**升级后核对实际运行版本**：左侧应显示 **0.8.0-beta.3**（酷狗带独立后缀）。下载新版 ZIP 不会自动替换旧目录里的程序；网易云仍会调用安装时记录的路径。手动升级前退出网易云和歌词程序，完整更新原目录的 EXE 与 `_internal`，保留 `.state`；换目录后重新安装联动，避免再次打开旧版。
+**升级后核对实际运行版本**：左侧应显示 **0.8.0-beta.4**（酷狗带独立后缀）。下载新版 ZIP 不会自动替换旧目录里的程序；网易云仍会调用安装时记录的路径。手动升级前退出网易云和歌词程序，完整更新原目录的 EXE 与 `_internal`，保留 `.state`；换目录后重新安装联动，避免再次打开旧版。
 
 “歌词最长显示时间”位于 **歌词效果 → 律动与同步 → 乱码退场下方**，需要向下滚动；默认 6 秒，0 不限制。若找不到该项，请先检查左侧版本号与实际启动路径。
 
-**延长显示（源码新功能）**：在同一分组勾选“新句出现后保留旧句”，再设置“延长显示时间”（默认 10 秒，1–120 秒）。此时原来的“歌词最长显示时间”暂停生效，原数值保留。时间从句首算起，包含入场和退场；最多同时四组，双语算一组，空间不足时优先显示新句。空白段和歌曲结束优先清除，切换预设不会重置此设置。
+**延长显示（本版新功能）**：在同一分组勾选“新句出现后保留旧句”，再设置“延长显示时间”（默认 10 秒，1–120 秒）。此时原来的“歌词最长显示时间”暂停生效，原数值保留。时间从句首算起，包含入场和退场；最多同时四组，双语算一组，空间不足时优先显示新句。空白段和歌曲结束优先清除，切换预设不会重置此设置。
 
 ![延长歌词显示设置](docs/images/extended-display-settings.png)
 
@@ -75,7 +75,7 @@ Mac：解压后将 `都市回响.app` 拖到“应用程序”，首次运行包
 
 **使用网易云音乐**：
 
-1. 下载 `dancing-lyrics-0.8.0-beta.3-netease-windows-x64.zip`，完整解压到长期保留且可写的目录。
+1. 下载 `dancing-lyrics-0.8.0-beta.4-netease-windows-x64.zip`，完整解压到长期保留且可写的目录。
 2. 完全退出网易云（包括托盘），双击 **安装网易云联动.bat**，在窗口点击安装。
 3. 重开网易云，点击播放栏的“都市回响”；右键或点击“设置”调整效果。
 无需 Python 或 Git。请下载 ZIP 成品，页面的 Source code 是源码。同一个 ZIP 自动识别 **网易云 3.1.40.205461／3.1.41.205529 x64**。已验证 Windows 11 x64、BetterNCM 1.3.4；尚未在第二台干净电脑完成试装。
@@ -90,7 +90,7 @@ QQ 音乐沿用系统媒体与本地缓存检测，不设客户端版本白名�
 
 ![网易云兼容检测与实验性安装窗口](docs/images/compatibility-installer.png)
 
-**安装一直等待或无法关闭？** v0.8.0-beta.3 会显示具体阶段及已用时间，支持“取消操作”，右上角关闭和 Esc 也会请求取消。当前检查返回后退出；文件写入期间先完成或回滚再退出。框架下载设有 45 秒总预算、5 秒单次网络等待，进程检查最多 15 秒。详见 [安装排查与本地 DLL 使用方法](NETEASE.md)。
+**安装一直等待或无法关闭？** v0.8.0-beta.4 会显示具体阶段及已用时间，支持“取消操作”，右上角关闭和 Esc 也会请求取消。当前检查返回后退出；文件写入期间先完成或回滚再退出。框架下载设有 45 秒总预算、5 秒单次网络等待，进程检查最多 15 秒。详见 [安装排查与本地 DLL 使用方法](NETEASE.md)。
 
 离线安装框架时，在“本地框架 DLL → 选择”中选中文件，**确认输入框出现实际 DLL 路径**，再安装；只有“BetterNCM 数据目录”路径或 DLL 栏仍为灰色提示文字时，尚未选择 DLL。文件来源和校验要求见上述说明。
 
@@ -119,7 +119,13 @@ Intel 与 Apple Silicon 的适配器及共用绘制自动测试已通过，安�
 
 ## 功能与使用
 
-**本版修复（0.8.0-beta.3，2026-10-24）**：
+**本版更新（0.8.0-beta.4，2026-10-30）**：
+
+本版新增“延长歌词显示”：在“歌词效果 → 律动与同步”勾选“新句出现后保留旧句”，默认关闭，开启后时长默认 10 秒、范围 1–120 秒，从句首计算并包含退场。最多四组（双语算一组），空间不足优先新句，空白段与歌曲结束清除；原最长显示上限保留数值但暂停生效，不随预设切换。
+
+歌词继续始终置顶，不增加开关；被其他不透明置顶窗口覆盖时恢复且不抢焦点。独占全屏游戏、系统安全桌面不能保证。酷狗增加迟到缓存重查、精确哈希定位及可区分原因的匹配失败提示，官方接口无候选仍需可用本地歌词。保留设置、字体、预设和原播放方式；本地循环与 OBS 输出未改动。
+
+
 
 - 修复乱码退场切句时旧歌词停住、下一句闪现的问题。字号适配和逐字发光材质改为帧间分批准备，保留音乐进度及原有设置；此修复同步提供网易云、QQ 和酷狗三个 Windows 下载包。
 
@@ -133,7 +139,7 @@ Intel 与 Apple Silicon 的适配器及共用绘制自动测试已通过，安�
 
 [长句入退场分帧示例（演示时间）](docs/images/long-entrance-frames.png) · [本版成品验收与下载校验](docs/research/scramble-release-20261024.json) · [乱码切句源码验证](docs/research/scramble-transitions-20261024.json)。三个 Windows 下载包均已更新，旧发行附件保留；源码、成品和实曲验证分别记录，演示时钟不作为真实歌曲验证。
 
-应用版本 **0.8.0-beta.3**；现有 Mac 公开包仍为 0.6.0-beta.2 实验版，本轮修复仅更新 Windows 成品。侧栏显示“创作者：Bilibili-鈴仙優昙華院因幡”和版本号，标语为 **FACE THE SIN. SAVE THE E.G.O**。左侧下方可选择“默认主题／深色主题／特殊主题”，立即生效并自动保存，重启后保留选择。默认主题和深色主题保留原外观；特殊主题采用 Limbus Company 风格的黑金配色、切角双层边框和机械图纸底纹。
+应用版本 **0.8.0-beta.4**；现有 Mac 公开包仍为 0.6.0-beta.2 实验版，本轮修复仅更新 Windows 成品。侧栏显示“创作者：Bilibili-鈴仙優昙華院因幡”和版本号，标语为 **FACE THE SIN. SAVE THE E.G.O**。左侧下方可选择“默认主题／深色主题／特殊主题”，立即生效并自动保存，重启后保留选择。默认主题和深色主题保留原外观；特殊主题采用 Limbus Company 风格的黑金配色、切角双层边框和机械图纸底纹。
 
 特殊主题将侧栏、窗口、运行中的 Windows 任务栏及系统托盘图标换为但丁钟头；切回默认或深色主题恢复红色波形图标。后台运行时托盘也显示当前主题图标。主题不改变歌词颜色、字体、动画、效果预设、播放进度或独立的预览背景；更新保留已有选择。安装目录里的 EXE 文件图标仍为原图标，未运行时的固定快捷方式由 Windows 管理。
 
