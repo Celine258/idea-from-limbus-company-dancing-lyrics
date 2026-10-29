@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-29",
+  "scope": "source_fix_pending_packaging",
+  "real_case": {
+    "mode": "native",
+    "native_duration_ms": 157790,
+    "native_hash_available": false,
+    "current_source_cache_lines": 41,
+    "old_runtime_version": "0.8.0-beta.1",
+    "old_suffix_pattern_strips_id_flags": true,
+    "official_candidate_count": 0,
+    "without_duration_candidate_count": 0,
+    "old_runtime_failure_branch_confirmed": false
+  },
+  "changes": [
+    "Exact native hash can locate renamed cache files; KRC hash must still agree.",
+    "Separate empty provider results from metadata, duration and ambiguous-candidate rejection.",
+    "Keep 2500 ms candidate tolerance; this case did not prove a duration defect.",
+    "Recheck cache after network lookup fails, covering a file written during the request."
+  ],
+  "automatic_tests": {
+    "passed": true,
+    "count": 507
+  },
+  "windows_smoke": {
+    "passed": true,
+    "fields": 75
+  },
+  "music_playback_commands": 0,
+  "client_modified": false,
+  "packaged_runtime_retested": false
+}
