@@ -1,0 +1,406 @@
+{
+  "passed": true,
+  "runtime_source_commit": "0e2ca8cd8fb20e836b1fecac28d0a33812de90e6",
+  "archives": [
+    {
+      "player": "netease",
+      "name": "dancing-lyrics-0.8.0-beta.5-netease-windows-x64.zip",
+      "bytes": 71990870,
+      "sha256": "900581b60c3d388830a8b869a83dea78f879e0e540c88787c60ae3bac4820d83",
+      "exe_sha256": "ced4758cc65a46223838d770fec9c54263dcb37eb961868c0a76255fc7f9ac02",
+      "crc": true,
+      "private_files_excluded": true,
+      "qt_runtime_complete": true,
+      "license_bytes_verified": true,
+      "native_pause": {
+        "passed": true,
+        "checks": {
+          "windows_platform": true,
+          "actual_dpr": true,
+          "default_off": true,
+          "default_option_reachable": true,
+          "default_footer_visible": true,
+          "minimum_option_reachable": true,
+          "minimum_footer_visible": true,
+          "saved_immediately": true,
+          "preset_preserves_option": true,
+          "local_transport_untouched": true,
+          "netease_playing_has_pixels": true,
+          "netease_pause_clears_alpha": true,
+          "netease_pause_stops_work": true,
+          "netease_window_choice_preserved": true,
+          "netease_pause_stays_blank": true,
+          "netease_resume_same_frame": true,
+          "netease_resume_reuses_cache": true,
+          "netease_disabled_freezes_frame": true,
+          "netease_paused_seek_and_late_data_blank": true,
+          "netease_resume_current_progress": true,
+          "netease_manual_hide_stays_hidden": true,
+          "qqmusic_playing_has_pixels": true,
+          "qqmusic_pause_clears_alpha": true,
+          "qqmusic_pause_stops_work": true,
+          "qqmusic_window_choice_preserved": true,
+          "qqmusic_pause_stays_blank": true,
+          "qqmusic_resume_same_frame": true,
+          "qqmusic_resume_reuses_cache": true,
+          "qqmusic_disabled_freezes_frame": true,
+          "qqmusic_paused_seek_and_late_data_blank": true,
+          "qqmusic_resume_current_progress": true,
+          "qqmusic_manual_hide_stays_hidden": true,
+          "kugou_playing_has_pixels": true,
+          "kugou_pause_clears_alpha": true,
+          "kugou_pause_stops_work": true,
+          "kugou_window_choice_preserved": true,
+          "kugou_pause_stays_blank": true,
+          "kugou_resume_same_frame": true,
+          "kugou_resume_reuses_cache": true,
+          "kugou_disabled_freezes_frame": true,
+          "kugou_paused_seek_and_late_data_blank": true,
+          "kugou_resume_current_progress": true,
+          "kugou_manual_hide_stays_hidden": true
+        },
+        "dpr": 1.0,
+        "app_version": "0.8.0-beta.5",
+        "kugou_version": "0.8.0-beta.5-kugou.1",
+        "packaged": true,
+        "synthetic_source_packets": true,
+        "real_client_pause_verified": false,
+        "music_client_commands": 0,
+        "user_settings_modified": false
+      },
+      "smoke_checks": 75,
+      "developer_path_removed": true,
+      "clean_machine": false
+    },
+    {
+      "player": "qqmusic",
+      "name": "dancing-lyrics-0.8.0-beta.5-qqmusic-windows-x64.zip",
+      "bytes": 71983097,
+      "sha256": "de8d1619d24e8cd2e6f05bc0b052184ad3e4304090aa34fa3a7f1c96780b87f3",
+      "exe_sha256": "ced4758cc65a46223838d770fec9c54263dcb37eb961868c0a76255fc7f9ac02",
+      "crc": true,
+      "private_files_excluded": true,
+      "qt_runtime_complete": true,
+      "license_bytes_verified": true,
+      "native_pause": {
+        "passed": true,
+        "checks": {
+          "windows_platform": true,
+          "actual_dpr": true,
+          "default_off": true,
+          "default_option_reachable": true,
+          "default_footer_visible": true,
+          "minimum_option_reachable": true,
+          "minimum_footer_visible": true,
+          "saved_immediately": true,
+          "preset_preserves_option": true,
+          "local_transport_untouched": true,
+          "netease_playing_has_pixels": true,
+          "netease_pause_clears_alpha": true,
+          "netease_pause_stops_work": true,
+          "netease_window_choice_preserved": true,
+          "netease_pause_stays_blank": true,
+          "netease_resume_same_frame": true,
+          "netease_resume_reuses_cache": true,
+          "netease_disabled_freezes_frame": true,
+          "netease_paused_seek_and_late_data_blank": true,
+          "netease_resume_current_progress": true,
+          "netease_manual_hide_stays_hidden": true,
+          "qqmusic_playing_has_pixels": true,
+          "qqmusic_pause_clears_alpha": true,
+          "qqmusic_pause_stops_work": true,
+          "qqmusic_window_choice_preserved": true,
+          "qqmusic_pause_stays_blank": true,
+          "qqmusic_resume_same_frame": true,
+          "qqmusic_resume_reuses_cache": true,
+          "qqmusic_disabled_freezes_frame": true,
+          "qqmusic_paused_seek_and_late_data_blank": true,
+          "qqmusic_resume_current_progress": true,
+          "qqmusic_manual_hide_stays_hidden": true,
+          "kugou_playing_has_pixels": true,
+          "kugou_pause_clears_alpha": true,
+          "kugou_pause_stops_work": true,
+          "kugou_window_choice_preserved": true,
+          "kugou_pause_stays_blank": true,
+          "kugou_resume_same_frame": true,
+          "kugou_resume_reuses_cache": true,
+          "kugou_disabled_freezes_frame": true,
+          "kugou_paused_seek_and_late_data_blank": true,
+          "kugou_resume_current_progress": true,
+          "kugou_manual_hide_stays_hidden": true
+        },
+        "dpr": 1.25,
+        "app_version": "0.8.0-beta.5",
+        "kugou_version": "0.8.0-beta.5-kugou.1",
+        "packaged": true,
+        "synthetic_source_packets": true,
+        "real_client_pause_verified": false,
+        "music_client_commands": 0,
+        "user_settings_modified": false
+      },
+      "smoke_checks": null,
+      "developer_path_removed": true,
+      "clean_machine": false
+    },
+    {
+      "player": "kugou",
+      "name": "dancing-lyrics-0.8.0-beta.5-kugou.1-windows-x64.zip",
+      "bytes": 71992854,
+      "sha256": "25afdb026b9db8a95ccb7e0291f0f7eda42e18a6d64fc0a8b75090948413212f",
+      "exe_sha256": "ced4758cc65a46223838d770fec9c54263dcb37eb961868c0a76255fc7f9ac02",
+      "crc": true,
+      "private_files_excluded": true,
+      "qt_runtime_complete": true,
+      "license_bytes_verified": true,
+      "native_pause": {
+        "passed": true,
+        "checks": {
+          "windows_platform": true,
+          "actual_dpr": true,
+          "default_off": true,
+          "default_option_reachable": true,
+          "default_footer_visible": true,
+          "minimum_option_reachable": true,
+          "minimum_footer_visible": true,
+          "saved_immediately": true,
+          "preset_preserves_option": true,
+          "local_transport_untouched": true,
+          "netease_playing_has_pixels": true,
+          "netease_pause_clears_alpha": true,
+          "netease_pause_stops_work": true,
+          "netease_window_choice_preserved": true,
+          "netease_pause_stays_blank": true,
+          "netease_resume_same_frame": true,
+          "netease_resume_reuses_cache": true,
+          "netease_disabled_freezes_frame": true,
+          "netease_paused_seek_and_late_data_blank": true,
+          "netease_resume_current_progress": true,
+          "netease_manual_hide_stays_hidden": true,
+          "qqmusic_playing_has_pixels": true,
+          "qqmusic_pause_clears_alpha": true,
+          "qqmusic_pause_stops_work": true,
+          "qqmusic_window_choice_preserved": true,
+          "qqmusic_pause_stays_blank": true,
+          "qqmusic_resume_same_frame": true,
+          "qqmusic_resume_reuses_cache": true,
+          "qqmusic_disabled_freezes_frame": true,
+          "qqmusic_paused_seek_and_late_data_blank": true,
+          "qqmusic_resume_current_progress": true,
+          "qqmusic_manual_hide_stays_hidden": true,
+          "kugou_playing_has_pixels": true,
+          "kugou_pause_clears_alpha": true,
+          "kugou_pause_stops_work": true,
+          "kugou_window_choice_preserved": true,
+          "kugou_pause_stays_blank": true,
+          "kugou_resume_same_frame": true,
+          "kugou_resume_reuses_cache": true,
+          "kugou_disabled_freezes_frame": true,
+          "kugou_paused_seek_and_late_data_blank": true,
+          "kugou_resume_current_progress": true,
+          "kugou_manual_hide_stays_hidden": true
+        },
+        "dpr": 1.5,
+        "app_version": "0.8.0-beta.5",
+        "kugou_version": "0.8.0-beta.5-kugou.1",
+        "packaged": true,
+        "synthetic_source_packets": true,
+        "real_client_pause_verified": false,
+        "music_client_commands": 0,
+        "user_settings_modified": false
+      },
+      "smoke_checks": 75,
+      "developer_path_removed": true,
+      "clean_machine": false
+    }
+  ],
+  "same_engine": true,
+  "music_client_commands": 0,
+  "real_client_pause_verified": false,
+  "versions": {
+    "shared": "0.8.0-beta.5",
+    "kugou": "0.8.0-beta.5-kugou.1"
+  },
+  "runtime_automated_tests": 540,
+  "public_packages_updated": true,
+  "prerelease": true,
+  "releases": [
+    {
+      "passed": true,
+      "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.8.0-beta.5",
+      "tag": "v0.8.0-beta.5",
+      "commit": "0e2ca8cd8fb20e836b1fecac28d0a33812de90e6",
+      "prerelease": true,
+      "assets": [
+        {
+          "name": "dancing-lyrics-0.8.0-beta.5-netease-windows-x64.zip",
+          "bytes": 71990870,
+          "sha256": "900581b60c3d388830a8b869a83dea78f879e0e540c88787c60ae3bac4820d83",
+          "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5/dancing-lyrics-0.8.0-beta.5-netease-windows-x64.zip"
+        },
+        {
+          "name": "dancing-lyrics-0.8.0-beta.5-netease-windows-x64.zip.sha256",
+          "bytes": 119,
+          "sha256": "ab6fa7643fad42129ffda88d4096ea16189d2c5236835a2f2ef776d279ff9d8b",
+          "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5/dancing-lyrics-0.8.0-beta.5-netease-windows-x64.zip.sha256"
+        },
+        {
+          "name": "dancing-lyrics-0.8.0-beta.5-qqmusic-windows-x64.zip",
+          "bytes": 71983097,
+          "sha256": "de8d1619d24e8cd2e6f05bc0b052184ad3e4304090aa34fa3a7f1c96780b87f3",
+          "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5/dancing-lyrics-0.8.0-beta.5-qqmusic-windows-x64.zip"
+        },
+        {
+          "name": "dancing-lyrics-0.8.0-beta.5-qqmusic-windows-x64.zip.sha256",
+          "bytes": 119,
+          "sha256": "1e50db5fb0968f3ec6b7937bf291ed89edb51ff7b4d2b0f578c1933377182ca0",
+          "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5/dancing-lyrics-0.8.0-beta.5-qqmusic-windows-x64.zip.sha256"
+        }
+      ]
+    },
+    {
+      "passed": true,
+      "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.8.0-beta.5-kugou.1",
+      "tag": "v0.8.0-beta.5-kugou.1",
+      "commit": "0e2ca8cd8fb20e836b1fecac28d0a33812de90e6",
+      "prerelease": true,
+      "assets": [
+        {
+          "name": "dancing-lyrics-0.8.0-beta.5-kugou.1-windows-x64.zip",
+          "bytes": 71992854,
+          "sha256": "25afdb026b9db8a95ccb7e0291f0f7eda42e18a6d64fc0a8b75090948413212f",
+          "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5-kugou.1/dancing-lyrics-0.8.0-beta.5-kugou.1-windows-x64.zip"
+        },
+        {
+          "name": "dancing-lyrics-0.8.0-beta.5-kugou.1-windows-x64.zip.sha256",
+          "bytes": 119,
+          "sha256": "f789f994fc17900c23db7ca03ae1f71928c363b5ed084235cec3ef889225f936",
+          "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5-kugou.1/dancing-lyrics-0.8.0-beta.5-kugou.1-windows-x64.zip.sha256"
+        }
+      ]
+    }
+  ],
+  "public_downloads": {
+    "passed": true,
+    "assets": [
+      {
+        "name": "dancing-lyrics-0.8.0-beta.5-netease-windows-x64.zip",
+        "bytes": 71990870,
+        "sha256": "900581b60c3d388830a8b869a83dea78f879e0e540c88787c60ae3bac4820d83",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5/dancing-lyrics-0.8.0-beta.5-netease-windows-x64.zip",
+        "anonymous_head_status": 200,
+        "tag_commit": "0e2ca8cd8fb20e836b1fecac28d0a33812de90e6"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-beta.5-netease-windows-x64.zip.sha256",
+        "bytes": 119,
+        "sha256": "ab6fa7643fad42129ffda88d4096ea16189d2c5236835a2f2ef776d279ff9d8b",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5/dancing-lyrics-0.8.0-beta.5-netease-windows-x64.zip.sha256",
+        "anonymous_head_status": 200,
+        "tag_commit": "0e2ca8cd8fb20e836b1fecac28d0a33812de90e6"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-beta.5-qqmusic-windows-x64.zip",
+        "bytes": 71983097,
+        "sha256": "de8d1619d24e8cd2e6f05bc0b052184ad3e4304090aa34fa3a7f1c96780b87f3",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5/dancing-lyrics-0.8.0-beta.5-qqmusic-windows-x64.zip",
+        "anonymous_head_status": 200,
+        "tag_commit": "0e2ca8cd8fb20e836b1fecac28d0a33812de90e6"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-beta.5-qqmusic-windows-x64.zip.sha256",
+        "bytes": 119,
+        "sha256": "1e50db5fb0968f3ec6b7937bf291ed89edb51ff7b4d2b0f578c1933377182ca0",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5/dancing-lyrics-0.8.0-beta.5-qqmusic-windows-x64.zip.sha256",
+        "anonymous_head_status": 200,
+        "tag_commit": "0e2ca8cd8fb20e836b1fecac28d0a33812de90e6"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-beta.5-kugou.1-windows-x64.zip",
+        "bytes": 71992854,
+        "sha256": "25afdb026b9db8a95ccb7e0291f0f7eda42e18a6d64fc0a8b75090948413212f",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5-kugou.1/dancing-lyrics-0.8.0-beta.5-kugou.1-windows-x64.zip",
+        "anonymous_head_status": 200,
+        "tag_commit": "0e2ca8cd8fb20e836b1fecac28d0a33812de90e6"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-beta.5-kugou.1-windows-x64.zip.sha256",
+        "bytes": 119,
+        "sha256": "f789f994fc17900c23db7ca03ae1f71928c363b5ed084235cec3ef889225f936",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5-kugou.1/dancing-lyrics-0.8.0-beta.5-kugou.1-windows-x64.zip.sha256",
+        "anonymous_head_status": 200,
+        "tag_commit": "0e2ca8cd8fb20e836b1fecac28d0a33812de90e6"
+      }
+    ]
+  },
+  "qq_entries": {
+    "passed": true,
+    "checks": {
+      "native_window_visible": true,
+      "correct_version": true,
+      "capability_hint": true,
+      "startup_control": true,
+      "cache_control": true,
+      "reuses_existing_instance": true
+    },
+    "developerPathRemoved": true,
+    "cleanMachine": false,
+    "realQQPlayback": false,
+    "zipSha256": "de8d1619d24e8cd2e6f05bc0b052184ad3e4304090aa34fa3a7f1c96780b87f3"
+  },
+  "kugou_entries": {
+    "passed": true,
+    "checks": {
+      "native_install": true,
+      "unicode_shortcuts_target_current_exe": true,
+      "native_uninstall": true,
+      "uninstall_removes_owned_shortcuts": true,
+      "double_click_defaults_to_kugou": true,
+      "dedicated_version_visible": true,
+      "native_control_panel_visible": true,
+      "second_entry_reuses_existing_instance": true
+    },
+    "developer_path_removed": true,
+    "clean_machine": false,
+    "personal_shortcuts_restored": true,
+    "playback_commands": 0
+  },
+  "installed": {
+    "passed": true,
+    "upgrades": [
+      {
+        "path_preserved": true,
+        "backup_available": true,
+        "exe_sha256": "ced4758cc65a46223838d770fec9c54263dcb37eb961868c0a76255fc7f9ac02"
+      },
+      {
+        "path_preserved": true,
+        "backup_available": true,
+        "exe_sha256": "ced4758cc65a46223838d770fec9c54263dcb37eb961868c0a76255fc7f9ac02"
+      },
+      {
+        "path_preserved": true,
+        "backup_available": true,
+        "exe_sha256": "ced4758cc65a46223838d770fec9c54263dcb37eb961868c0a76255fc7f9ac02"
+      }
+    ],
+    "profiles_preserved": 2,
+    "old_setting_values_unchanged": true,
+    "fonts_presets_and_bridge_files_unchanged": true,
+    "music_client_commands": 0
+  },
+  "installed_ui": {
+    "exe_sha256": "ced4758cc65a46223838d770fec9c54263dcb37eb961868c0a76255fc7f9ac02",
+    "toggle_works": true,
+    "version": "0.8.0-beta.5-kugou.1",
+    "passed": true,
+    "native_option_present": true,
+    "music_client_commands": 0,
+    "original_option_restored": true
+  },
+  "not_verified": [
+    "three_real_clients_manual_pause_resume",
+    "clean_second_machine",
+    "mac_binary_update"
+  ],
+  "final_automated_tests": 542
+}
