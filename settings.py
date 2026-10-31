@@ -56,6 +56,7 @@ class Preferences:
     prefer_translation: bool = False
     lyric_display_mode: str = "legacy"
     hide_instrumental: bool = False
+    hide_on_pause: bool = False
     max_display_seconds: int = 6
     extended_display: bool = False
     extended_display_seconds: int = 10

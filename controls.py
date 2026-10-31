@@ -835,6 +835,11 @@ class ControlPanel(QWidget):
         self.instrumental_checkbox.setChecked(self.prefs.hide_instrumental)
         self.instrumental_checkbox.setToolTip("隐藏纯音乐标记及附带的作曲／编曲等署名；混有正常歌词时不整曲隐藏。不根据歌曲名或暂无歌词猜测。")
         self.instrumental_checkbox.toggled.connect(lambda value: self._set_preference("hide_instrumental", value))
+        self.pause_checkbox = QCheckBox("暂停播放时隐藏歌词")
+        self.pause_checkbox.setAccessibleName("暂停播放时隐藏歌词")
+        self.pause_checkbox.setChecked(self.prefs.hide_on_pause)
+        self.pause_checkbox.setToolTip("开启后暂停音乐即隐藏，继续播放时按当前进度显示；关闭时暂停冻结。独立于效果预设，不影响手动隐藏。")
+        self.pause_checkbox.toggled.connect(lambda value: self._set_preference("hide_on_pause", value))
         self._reload_fonts()
         self.font_combo.currentIndexChanged.connect(self._font_selected)
         for title, fields in (
@@ -845,6 +850,7 @@ class ControlPanel(QWidget):
                           (self.color_label, self.color_button), ("发光强度", self.glow_field),
                           ("歌词透明度", self.spins["opacity"]), ("歌词语言", self.translation_checkbox), ("纯音乐显示", self.instrumental_checkbox))),
             ("律动与同步", (("总运动强度（0% 静止）", self.spins["motion_strength"]), ("歌词动画", self.animation_combo),
+                          ("暂停时显示", self.pause_checkbox),
                           ("乱码退场", self.scramble_checkbox),
                           ("歌词最长显示时间（0 不限制）", self.spins["max_display_seconds"]),
                           ("延长歌词显示", self.extended_checkbox),
@@ -1164,7 +1170,10 @@ class ControlPanel(QWidget):
             self._preset_modified = True
             self._reload_presets()
         self.store.save(self.prefs)
-        self.overlay.refresh_preferences()
+        if key == "hide_on_pause":
+            self.overlay.update()
+        else:
+            self.overlay.refresh_preferences()
         self._update_effect_controls()
         self.font_preview.update()
         if key in ("animation_style", "entry_speed", "exit_speed", "shake_frequency", "fall_distance", "singing_sync", "lyric_display_mode", "scramble_exit", "max_display_seconds", "extended_display", "extended_display_seconds"):
@@ -1253,7 +1262,7 @@ class ControlPanel(QWidget):
 
     def _sync_effect_widgets(self):
         widgets = [self.animation_combo, self.text_style, self.glow_variant, self.motion, self.font_combo, self.glow_slider,
-                   self.singing_checkbox, self.translation_checkbox, self.theme_combo, self.scramble_checkbox, self.instrumental_checkbox, self.extended_checkbox,
+                   self.singing_checkbox, self.translation_checkbox, self.theme_combo, self.scramble_checkbox, self.instrumental_checkbox, self.extended_checkbox, self.pause_checkbox,
                    *self.spins.values(), *self.parameter_sliders.values()]
         blockers = [QSignalBlocker(widget) for widget in widgets]
         for widget, key in ((self.animation_combo, "animation_style"), (self.text_style, "text_style"),
@@ -1268,6 +1277,7 @@ class ControlPanel(QWidget):
         self.scramble_checkbox.setChecked(self.prefs.scramble_exit)
         self.extended_checkbox.setChecked(self.prefs.extended_display)
         self.instrumental_checkbox.setChecked(self.prefs.hide_instrumental)
+        self.pause_checkbox.setChecked(self.prefs.hide_on_pause)
         self.language_combo.setCurrentIndex(self.language_combo.findData(display_mode(self.prefs)))
         self.theme_combo.setCurrentIndex(self.theme_combo.findData(self.prefs.theme))
         if self.styleSheet() != theme_stylesheet(self.prefs.theme):

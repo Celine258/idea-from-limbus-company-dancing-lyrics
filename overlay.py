@@ -146,7 +146,7 @@ class LyricsOverlay(QWidget):
                 layout.glyphs, layout.font_size, self.prefs, self.devicePixelRatioF(), self.prefs.jump, layout.angle)
 
     def _warm_step(self):
-        if not self.isVisible() or not self.timeline or self.player.ended:
+        if not self.isVisible() or not self.timeline or self.player.ended or self._hidden_for_pause():
             self._warm_timer.stop()
             return
         deadline = time.perf_counter() + .004
@@ -179,7 +179,14 @@ class LyricsOverlay(QWidget):
             self.timer.start()
         else:
             self.timer.stop()
+        if self._hidden_for_pause():
+            self._warm_timer.stop()
         self.update()
+
+    def _hidden_for_pause(self):
+        # Clear the alpha surface without hiding the window: the user's manual
+        # visibility choice and prepared glyphs must survive pause and resume.
+        return self.prefs.hide_on_pause and not self.player.playing
 
     def _protect_native_focus(self):
         # Qt handles focus messages, but 6.8 does not add WS_EX_NOACTIVATE itself.
@@ -223,7 +230,7 @@ class LyricsOverlay(QWidget):
         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Source)
         painter.fillRect(self.rect(), Qt.GlobalColor.transparent)
         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
-        if not self.timeline or self.player.ended:
+        if not self.timeline or self.player.ended or self._hidden_for_pause():
             return
         position = self.player.position()
         active = self.timeline.visible(position, self.player.duration)

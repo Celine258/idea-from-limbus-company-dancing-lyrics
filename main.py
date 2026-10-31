@@ -4,6 +4,10 @@ import os
 from pathlib import Path
 import sys
 
+if __name__ == "__main__" and sys.argv[1:2] == ["--pause-display-smoke"]:
+    from tools.validate_pause_display import main as validate_pause
+    raise SystemExit(validate_pause(sys.argv[2:]))
+
 if __name__ == "__main__" and sys.argv[1:2] == ["--display-smoke"]:
     from tools.validate_extended_display import main as validate_display
     raise SystemExit(validate_display(sys.argv[2:]))
