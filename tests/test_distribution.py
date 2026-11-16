@@ -215,12 +215,13 @@ class InstallerTests(unittest.TestCase):
 
 
 class ReleaseTests(unittest.TestCase):
-    def test_download_links_and_bundled_guide_match_application_version(self):
+    def test_download_links_match_published_versions_and_guides_match_local_build(self):
         from app_info import APP_VERSION, EFFECT_PREVIEW_TEXT
 
         repository = "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics"
+        published = json.loads((ROOT / "release/published-windows.json").read_text(encoding="utf-8"))["shared"]
         readme = (ROOT / "README.md").read_text(encoding="utf-8-sig")
-        self.assertIn(f"{repository}/releases/tag/v{APP_VERSION}", readme)
+        self.assertIn(f"{repository}/releases/tag/v{published}", readme)
         # The existing NetEase recording stays pinned to the release that owns it.
         self.assertIn(f"{repository}/releases/download/v0.6.0-beta.2/dancing-lyrics-demo-30s.mp4", readme)
         guide = (ROOT / "release/使用说明.txt").read_text(encoding="utf-8-sig")
@@ -229,7 +230,8 @@ class ReleaseTests(unittest.TestCase):
         self.assertIn(f"v{APP_VERSION}", notes.splitlines()[0])
         for player in ("qqmusic", "netease"):
             filename = archive_name(player)
-            self.assertIn(f"{repository}/releases/download/v{APP_VERSION}/{filename}", readme)
+            public_filename = f"dancing-lyrics-{published}-{player}-windows-x64.zip"
+            self.assertIn(f"{repository}/releases/download/v{published}/{public_filename}", readme)
             self.assertIn(filename, notes)
             provider_guide = (ROOT / f"release/{player}/使用说明.txt").read_text(encoding="utf-8")
             self.assertIn(APP_VERSION, provider_guide.splitlines()[0])

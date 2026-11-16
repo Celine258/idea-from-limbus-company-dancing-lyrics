@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "moved_items": 952,
+  "deleted_files": 0,
+  "archive": "artifacts/archive/2026-11-17",
+  "manifest": "artifacts/archive/2026-11-17/归档清单.json",
+  "manifest_sha256": "248489c3b666a846e2657d308027a02dcbc39253a860cdc9c7760bf3bdbdf365",
+  "skipped_items": 0,
+  "active_runtime_paths_preserved": true,
+  "personal_settings_directories_preserved": true,
+  "source_structure_unchanged": true,
+  "public_release_created": false,
+  "git_push_performed": false
+}

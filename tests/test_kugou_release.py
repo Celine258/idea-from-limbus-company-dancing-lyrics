@@ -31,7 +31,8 @@ class KugouReleaseTests(unittest.TestCase):
             for phrase in (KUGOU_VERSION,'最小化','LOCALAPPDATA','完整解压'):
                 self.assertIn(phrase,text)
         readme=(root/'README.md').read_text(encoding='utf-8')
-        self.assertIn(f'releases/download/v{KUGOU_VERSION}/dancing-lyrics-{KUGOU_VERSION}-windows-x64.zip',readme)
+        published=json.loads((root/'release/published-windows.json').read_text(encoding='utf-8'))['kugou']
+        self.assertIn(f'releases/download/v{published}/dancing-lyrics-{published}-windows-x64.zip',readme)
         self.assertIn('CAR0TT0',readme)
 
     def test_double_click_defaults_are_scoped_to_dedicated_package(self):

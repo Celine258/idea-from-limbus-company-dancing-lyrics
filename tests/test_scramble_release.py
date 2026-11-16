@@ -65,4 +65,5 @@ class ScrambleReleaseTests(unittest.TestCase):
             for phrase in (APP_VERSION, "乱码退场", "切句", "分批", "保留"):
                 self.assertIn(phrase, text, name)
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn(f"releases/download/v{KUGOU_VERSION}/dancing-lyrics-{KUGOU_VERSION}-windows-x64.zip", readme)
+        published = json.loads((ROOT / "release/published-windows.json").read_text(encoding="utf-8"))["kugou"]
+        self.assertIn(f"releases/download/v{published}/dancing-lyrics-{published}-windows-x64.zip", readme)

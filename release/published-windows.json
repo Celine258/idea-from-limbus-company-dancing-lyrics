@@ -1,0 +1,5 @@
+{
+  "shared": "0.8.0-beta.5",
+  "kugou": "0.8.0-beta.5-kugou.1",
+  "note": "Public download versions stay pinned while beta.6 is tested locally. Update only after publication."
+}

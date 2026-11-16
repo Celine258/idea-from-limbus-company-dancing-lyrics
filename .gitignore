@@ -6,6 +6,7 @@ build/
 dist/
 dist-kugou/
 artifacts/
+本地测试包/
 *.spec
 !CityEchoes.spec
 debug.log
