@@ -102,7 +102,8 @@ class LyricsOverlay(QWidget):
         return LyricTimeline(document, delay, self.prefs.animation_style,
                              self.prefs.entry_speed, self.prefs.exit_speed, self.prefs.scramble_exit,
                              self.prefs.max_display_seconds * 1000,
-                             self.prefs.extended_display_seconds * 1000 if self.prefs.extended_display else 0)
+                             self.prefs.extended_display_seconds * 1000 if self.prefs.extended_display else 0,
+                             self.prefs.extended_display_limit)
 
     def clear_layouts(self):
         self._warm_timer.stop()

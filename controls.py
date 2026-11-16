@@ -698,8 +698,16 @@ class ControlPanel(QWidget):
         self.extended_checkbox = QCheckBox("新句出现后保留旧句")
         self.extended_checkbox.setAccessibleName("延长歌词显示")
         self.extended_checkbox.setChecked(self.prefs.extended_display)
-        self.extended_checkbox.setToolTip("从句首计时，包含入场和退场；最多同时四组，双语算一组。空间不足时优先显示新句。")
+        self.extended_checkbox.setToolTip("从句首计时，包含入场和退场；同时显示上限可选 2／3／4 组，双语算一组。空间不足时优先显示新句。")
         self.extended_checkbox.toggled.connect(lambda value: self._set_preference("extended_display", value))
+        self.extended_limit_combo = QComboBox()
+        for count in (2, 3, 4):
+            self.extended_limit_combo.addItem(f"{count} 组", count)
+        self.extended_limit_combo.setCurrentIndex(self.extended_limit_combo.findData(self.prefs.extended_display_limit))
+        self.extended_limit_combo.setAccessibleName("同时显示上限")
+        self.extended_limit_combo.setToolTip("默认 4 组；超过上限前最旧组完成退场。双语算一组，实际数量受时长与可用空间影响。切换效果预设不会重置。")
+        self.extended_limit_combo.currentIndexChanged.connect(
+            lambda _: self._set_preference("extended_display_limit", self.extended_limit_combo.currentData()))
         self.singing_checkbox = QCheckBox("开启逐字演唱强调")
         self.singing_checkbox.setChecked(self.prefs.singing_sync)
         self.singing_checkbox.setAccessibleName("逐字演唱同步")
@@ -730,7 +738,7 @@ class ControlPanel(QWidget):
         self.spins["extended_display_seconds"].setAccessibleName("延长显示时间")
         self.spins["extended_display_seconds"].setToolTip(
             "默认 10 秒，范围 1–120 秒；延长显示开启时替代最长显示上限。\n"
-            "第五组到来前最旧组提前退场；空白歌词和歌曲结束优先清除。")
+            "超过所选组数上限前最旧组提前退场；空白歌词和歌曲结束优先清除。")
         self.parameter_fields = {}
         self.parameter_sliders = {}
         for name, low, high, suffix in (("entry_speed", 25, 300, " %"), ("exit_speed", 25, 300, " %"),
@@ -855,6 +863,7 @@ class ControlPanel(QWidget):
                           ("歌词最长显示时间（0 不限制）", self.spins["max_display_seconds"]),
                           ("延长歌词显示", self.extended_checkbox),
                           ("延长显示时间", self.spins["extended_display_seconds"]),
+                          ("同时显示上限", self.extended_limit_combo),
                           ("入场速度", self.parameter_fields["entry_speed"]), ("退场速度", self.parameter_fields["exit_speed"]),
                           ("抖动频率", self.parameter_fields["shake_frequency"]), ("跌落距离（32px 字号）", self.parameter_fields["fall_distance"]),
                           ("预览背景", self.preview_background), ("效果预览", self.font_preview), ("动画预览", self.replay_button),
@@ -1209,6 +1218,7 @@ class ControlPanel(QWidget):
         self.parameter_fields["fall_distance"].setEnabled(self.prefs.animation_style.startswith("fall_") and not self.prefs.scramble_exit)
         self.spins["max_display_seconds"].setEnabled(not self.prefs.extended_display)
         self.spins["extended_display_seconds"].setEnabled(self.prefs.extended_display)
+        self.extended_limit_combo.setEnabled(self.prefs.extended_display)
         self._refresh_word_status()
 
     def _gradient_middle_changed(self, checked):
@@ -1262,7 +1272,7 @@ class ControlPanel(QWidget):
 
     def _sync_effect_widgets(self):
         widgets = [self.animation_combo, self.text_style, self.glow_variant, self.motion, self.font_combo, self.glow_slider,
-                   self.singing_checkbox, self.translation_checkbox, self.theme_combo, self.scramble_checkbox, self.instrumental_checkbox, self.extended_checkbox, self.pause_checkbox,
+                   self.singing_checkbox, self.translation_checkbox, self.theme_combo, self.scramble_checkbox, self.instrumental_checkbox, self.extended_checkbox, self.pause_checkbox, self.extended_limit_combo,
                    *self.spins.values(), *self.parameter_sliders.values()]
         blockers = [QSignalBlocker(widget) for widget in widgets]
         for widget, key in ((self.animation_combo, "animation_style"), (self.text_style, "text_style"),
@@ -1276,6 +1286,7 @@ class ControlPanel(QWidget):
         self.singing_checkbox.setChecked(self.prefs.singing_sync)
         self.scramble_checkbox.setChecked(self.prefs.scramble_exit)
         self.extended_checkbox.setChecked(self.prefs.extended_display)
+        self.extended_limit_combo.setCurrentIndex(self.extended_limit_combo.findData(self.prefs.extended_display_limit))
         self.instrumental_checkbox.setChecked(self.prefs.hide_instrumental)
         self.pause_checkbox.setChecked(self.prefs.hide_on_pause)
         self.language_combo.setCurrentIndex(self.language_combo.findData(display_mode(self.prefs)))

@@ -47,7 +47,8 @@ def validate(output, scale):
     for name, size in (("default", (1100, 760)), ("minimum", (900, 560))):
         panel.resize(*size)
         app.processEvents()
-        for key, control in (("extended", panel.extended_checkbox), ("seconds", panel.spins["extended_display_seconds"])):
+        for key, control in (("extended", panel.extended_checkbox), ("seconds", panel.spins["extended_display_seconds"]),
+                             ("limit", panel.extended_limit_combo)):
             panel.effects_scroll.ensureWidgetVisible(control, 0, 24)
             app.processEvents()
             rectangle = QRect(control.mapTo(panel.effects_scroll.viewport(), QPoint()), control.size())
@@ -58,6 +59,15 @@ def validate(output, scale):
     checks["saved_immediately"] = store.load().extended_display_seconds == 12 and store.load().extended_display
     panel.apply_preset("builtin:lively")
     checks["preset_preserves_duration"] = prefs.extended_display and prefs.extended_display_seconds == 12
+    for limit in (2, 3, 4):
+        panel.extended_limit_combo.setCurrentIndex(panel.extended_limit_combo.findData(limit))
+        checks[f"limit_{limit}_saved"] = store.load().extended_display_limit == limit
+        panel.apply_preset("builtin:quiet")
+        checks[f"limit_{limit}_preset_independent"] = prefs.extended_display_limit == limit
+    panel.extended_checkbox.setChecked(False)
+    checks["limit_disabled_when_not_extended"] = not panel.extended_limit_combo.isEnabled()
+    panel.extended_checkbox.setChecked(True)
+    checks["limit_enabled_and_retained"] = panel.extended_limit_combo.isEnabled() and panel.extended_limit_combo.currentData() == 4
 
     class Clock(QObject):
         changed, discontinuity = Signal(), Signal()
@@ -119,6 +129,20 @@ def validate(output, scale):
         QTest.qWait(10)
     blocks = actual.timeline.visible(clock.clock, clock.duration)
     checks["actual_four_surfaces_ready"] = len(blocks) == 4 and all(actual.layouts.get(i.index) and actual.layouts[i.index].surface for i in blocks)
+    for limit in (2, 3, 4):
+        actual.prefs.extended_display_limit = limit
+        actual.refresh_preferences()
+        actual.grab()
+        deadline = time.monotonic() + 8
+        while actual._warm_jobs and time.monotonic() < deadline:
+            QTest.qWait(10)
+        visible = actual.timeline.visible(clock.clock, clock.duration)
+        checks[f"actual_limit_{limit}_active"] = len(visible) == limit
+        checks[f"actual_limit_{limit}_surfaces_ready"] = all(actual.layouts.get(item.index) and actual.layouts[item.index].surface for item in visible)
+        checks[f"actual_limit_{limit}_cache_bounded"] = len(actual.layouts) + len(actual._warm_jobs) <= limit + 1
+        frame = actual.grab().toImage()
+        checks[f"actual_limit_{limit}_has_pixels"] = bool(pixels_view(frame)[:, :, 3].any())
+        frame.save(str(output / f"limit-{limit}.png"))
     before = actual.grab()
     before.save(str(output / "four-blocks.png"))
     QTest.qWait(120)
@@ -137,7 +161,9 @@ def validate(output, scale):
     panel.tray.hide()
     panel.hide()
     overlay.hide()
+    from app_info import APP_VERSION, KUGOU_VERSION
     result = dict(passed=all(checks.values()), checks=checks, dpr=panel.devicePixelRatioF(), measurements=measurements,
+                  app_version=APP_VERSION, kugou_version=KUGOU_VERSION, packaged=bool(getattr(sys, "frozen", False)),
                   music_client_commands=0, real_playback=False, synthetic_lyric_times=True, user_settings_modified=False)
     (output / "report.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False), flush=True)

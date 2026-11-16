@@ -60,6 +60,7 @@ class Preferences:
     max_display_seconds: int = 6
     extended_display: bool = False
     extended_display_seconds: int = 10
+    extended_display_limit: int = 4
     theme: str = "light"
     qq_cache_directory: str = ""
 
@@ -98,7 +99,7 @@ def normalize_preferences(prefs):
                            ("delay_ms", -10000, 10000), ("volume", 0, 100), ("glow_strength", 0, 100),
                            ("entry_speed", 25, 300), ("exit_speed", 25, 300),
                            ("shake_frequency", 1, 15), ("fall_distance", 0, 128), ("max_display_seconds", 0, 120),
-                           ("extended_display_seconds", 1, 120)):
+                           ("extended_display_seconds", 1, 120), ("extended_display_limit", 2, 4)):
         setattr(prefs, key, max(low, min(high, getattr(prefs, key))))
     if prefs.region not in ("edges", "full"):
         prefs.region = "edges"

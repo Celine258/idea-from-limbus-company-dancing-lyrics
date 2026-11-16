@@ -169,7 +169,8 @@ class LyricTimeline:
     """Position is authoritative: pause and seek need no event replay."""
     def __init__(self, document: LyricDocument, delay_ms: int = 0, animation_style: str = "classic",
                  entry_speed: int = 100, exit_speed: int = 100, scramble_exit: bool = False,
-                 max_display_ms: int | None = None, extended_display_ms: int = 0):
+                 max_display_ms: int | None = None, extended_display_ms: int = 0,
+                 extended_display_limit: int = 4):
         # A positive LRC offset advances timestamps; a positive UI delay postpones them.
         shift = delay_ms - document.offset_ms
         self.lines = [replace(line, start_ms=line.start_ms + shift,
@@ -184,6 +185,7 @@ class LyricTimeline:
         self.classic_entry = 300 * 100 / entry_speed
         self.max_display_ms = max_display_ms
         self.extended_display_ms = extended_display_ms
+        self.extended_display_limit = max(2, min(4, extended_display_limit))
         self._nonblank = [i for i, line in enumerate(self.lines) if line.text.strip()]
         self._nonblank_starts = [self.lines[i].start_ms for i in self._nonblank]
         self._extended_ends = {}
@@ -196,16 +198,17 @@ class LyricTimeline:
                 else:
                     blank_limits[i] = next_blank
             for rank, i in enumerate(self._nonblank):
-                # Retire the oldest before a fifth block arrives, including its exit.
-                capacity_limit = (self._nonblank_starts[rank + 4]
-                                  if rank + 4 < len(self._nonblank) else float("inf"))
+                # Retire the oldest, including its exit, before exceeding capacity.
+                following = rank + self.extended_display_limit
+                capacity_limit = (self._nonblank_starts[following]
+                                  if following < len(self._nonblank) else float("inf"))
                 self._extended_ends[i] = min(self.lines[i].start_ms + extended_display_ms,
                                               blank_limits[i], capacity_limit)
 
     def _extended_visible(self, position, duration):
         rank = bisect_right(self._nonblank_starts, position)
         active = []
-        for i in self._nonblank[max(0, rank - 4):rank]:
+        for i in self._nonblank[max(0, rank - self.extended_display_limit):rank]:
             end = self._extended_ends[i]
             if duration > 0:
                 end = min(end, duration)
