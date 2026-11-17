@@ -1,0 +1,11 @@
+{
+  "version": "0.8.0",
+  "channel": "stable",
+  "accepted_candidate": "0.8.0-beta.6",
+  "candidate_runtime_commit": "822f8985b5ef12d6fb37930274bf85eabd6cbe66",
+  "candidate_delivery_commit": "8c7db4e",
+  "user_accepted": true,
+  "publication_authorized": true,
+  "approval_date": "2026-11-17",
+  "note": "The user approved formal release after local acceptance. No additional manual test cases are inferred from this approval."
+}

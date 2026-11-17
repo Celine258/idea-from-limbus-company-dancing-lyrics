@@ -196,7 +196,7 @@ class WorkflowDocumentationTests(unittest.TestCase):
         image = re.search(r"!\[([^\]]+)\]\((docs/images/lyrics-demo\.gif)\)", text)
         self.assertIsNotNone(image, "首页需要内嵌演示，而不是只提供文件链接")
         self.assertIn("实机演示", image.group(1))
-        self.assertLess(image.start(), text.index("下载 Windows x64 试用版"))
+        self.assertLess(image.start(), text.index("下载 Windows x64 正式版"))
         self.assertTrue((ROOT / image.group(2)).is_file())
 
     def test_readme_gif_decodes_complete_recording_and_loops(self):

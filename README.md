@@ -1,10 +1,14 @@
 # 都市回响
 
-**beta.6 本地验收功能**：在“歌词效果 → 律动与同步”勾选“新句出现后保留旧句”，即可设置“同时显示上限”为 **2／3／4 组**，默认 4 组。超过上限前最旧组完成退场，双语算一组；实际数量仍受显示时间及可用空间影响。该设置立即保存，切换效果预设不会重置。本轮先交付 `本地测试包/0.8.0-beta.6/`，等待用户验收后另行决定正式发布；下方公开下载仍为 beta.5。目录与归档方式见 [项目目录说明](项目目录说明.md)。
+正式版 v0.8.0：用户已验收 beta.6 并授权正式发布。网易云、QQ 音乐和酷狗共用 0.8.0 版本号，在同一发行页下载各自独立的完整 ZIP。“同时显示上限”可选 2／3／4 组，默认 4 组，在“歌词效果 → 律动与同步”开启“新句出现后保留旧句”后生效，双语算一组；设置自动保存且不随预设切换。
 
-本轮本地成品已通过三档缩放共 171 项组数检查、两份演示 BAT 静音各 75 字段及 QQ／酷狗原生入口共 10 项检查；四组双语暖绘制 P95 最大 11.994ms。原有三个使用／自启目录已升级，设置、字体、预设和连接配置保留。完整自动测试与用户待验收范围见 [本地交付记录](docs/research/local-acceptance-20261117.json)，未创建远程标签或发行版。
+正式文件集中在 `正式发布包/0.8.0/`；历史验收包和归档保留，目录用途见 [项目目录说明](项目目录说明.md)。
 
-![beta.6 同时显示上限设置](docs/images/display-limit-beta6.png)
+正式版基于已验收的 beta.6，先前自动检查与本机升级记录保留在 [beta.6 验收记录](docs/research/local-acceptance-20261117.json)，用户发布授权见 [正式版确认](release/stable-approval.json)。
+
+
+
+![自选歌词组数（已验收的 beta.6 截图）](docs/images/display-limit-beta6.png)
 
 暂停时隐藏（v0.8.0-beta.5）：在“歌词效果 → 律动与同步”勾选“暂停播放时隐藏歌词”。网易云、QQ 音乐和酷狗版均支持，默认关闭；开启后暂停即隐藏，继续播放按当前进度显示；关闭时保留暂停冻结。修改立即生效并自动保存，不随效果预设切换；手动隐藏后不会因恢复播放而弹出。不改变音乐播放或进度，设置页的独立动画预览仍可使用。
 
@@ -17,23 +21,23 @@
 
 桌面实机录屏，约 18 秒，循环播放（GIF 无声）。
 
-**[下载 Windows x64 试用版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.8.0-beta.5)** · [问题反馈](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues)
+**[下载 Windows x64 正式版](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.8.0)** · [问题反馈](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/issues)
 
 Windows 请按播放器选择独立压缩包：
 
 | 使用的播放器 | 下载 | 使用入口 |
 | --- | --- | --- |
-| 酷狗音乐 | [下载酷狗音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5-kugou.1/dancing-lyrics-0.8.0-beta.5-kugou.1-windows-x64.zip) | 开启酷狗桌面歌词，双击“启动酷狗联动.bat” |
-| QQ 音乐 | [下载 QQ 音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5/dancing-lyrics-0.8.0-beta.5-qqmusic-windows-x64.zip) | 打开 QQ 音乐，双击“启动QQ音乐联动.bat” |
-| 网易云音乐 | [下载网易云音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0-beta.5/dancing-lyrics-0.8.0-beta.5-netease-windows-x64.zip) | 首次安装联动，之后从网易云播放栏打开 |
+| 酷狗音乐 | [下载酷狗音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-kugou-windows-x64.zip) | 开启酷狗桌面歌词，双击“启动酷狗联动.bat” |
+| QQ 音乐 | [下载 QQ 音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-qqmusic-windows-x64.zip) | 打开 QQ 音乐，双击“启动QQ音乐联动.bat” |
+| 网易云音乐 | [下载网易云音乐版 ZIP](https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-netease-windows-x64.zip) | 首次安装联动，之后从网易云播放栏打开 |
 
 各播放器使用不同解压目录，入口与说明各自独立，均内置运行环境。QQ／网易云旧通用包升级时，先退出歌词程序，将旧 `.state` 整个复制到对应新目录；网易云版还需退出网易云并重新安装联动以更新路径。同一时间只运行一个歌词实例。
 
-**升级后核对实际运行版本**：左侧应显示 **0.8.0-beta.5**（酷狗带独立后缀）。下载新版 ZIP 不会自动替换旧目录里的程序；网易云仍会调用安装时记录的路径。手动升级前退出网易云和歌词程序，完整更新原目录的 EXE 与 `_internal`，保留 `.state`；换目录后重新安装联动，避免再次打开旧版。
+**升级后核对实际运行版本**：左侧应显示 **0.8.0**（三个播放器统一版本号）。下载新版 ZIP 不会自动替换旧目录里的程序；网易云仍会调用安装时记录的路径。手动升级前退出网易云和歌词程序，完整更新原目录的 EXE 与 `_internal`，保留 `.state`；换目录后重新安装联动，避免再次打开旧版。
 
 “歌词最长显示时间”位于 **歌词效果 → 律动与同步 → 乱码退场下方**，需要向下滚动；默认 6 秒，0 不限制。若找不到该项，请先检查左侧版本号与实际启动路径。
 
-**本版验收（beta.5）**：三个独立 ZIP 均已更新并核验公开下载，540 项运行时自动测试通过；成品暂停隐藏原生检查共 129 项、QQ 启动 6 项、酷狗入口 8 项通过。三个本机使用目录已升级，设置、字体、预设和连接配置保留。暂停／恢复检查使用明确的演示状态，不冒称三款真实客户端均已手动暂停实测。详见 [beta.5 成品证据](docs/research/pause-release-20261101.json)。
+**历史验收（beta.5）**：三个独立 ZIP 均已更新并核验公开下载，540 项运行时自动测试通过；成品暂停隐藏原生检查共 129 项、QQ 启动 6 项、酷狗入口 8 项通过。三个本机使用目录已升级，设置、字体、预设和连接配置保留。暂停／恢复检查使用明确的演示状态，不冒称三款真实客户端均已手动暂停实测。详见 [beta.5 成品证据](docs/research/pause-release-20261101.json)。
 
 ![beta.5 暂停隐藏选项](docs/images/pause-display-beta5.png)
 

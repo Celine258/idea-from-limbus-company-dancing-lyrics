@@ -66,4 +66,5 @@ class ScrambleReleaseTests(unittest.TestCase):
                 self.assertIn(phrase, text, name)
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         published = json.loads((ROOT / "release/published-windows.json").read_text(encoding="utf-8"))["kugou"]
-        self.assertIn(f"releases/download/v{published}/dancing-lyrics-{published}-windows-x64.zip", readme)
+        from tools.package_kugou import archive_name as kugou_archive_name
+        self.assertIn(f"releases/download/v{published}/{kugou_archive_name(published)}", readme)

@@ -42,7 +42,7 @@ class DisplayUpdateReleaseTests(unittest.TestCase):
             for phrase in ("默认 6 秒", "0–120 秒", "不额外限制", "退场", "长句", "预设"):
                 self.assertIn(phrase, text, name)
         self.assertTrue(KUGOU_VERSION.startswith(APP_VERSION))
-        self.assertRegex(APP_VERSION, r"^\d+\.\d+\.\d+-beta\.\d+$")
+        self.assertRegex(APP_VERSION, r"^\d+\.\d+\.\d+$")
 
     def test_shared_engine_dependencies_ship_exact_license_bytes(self):
         records = json.loads((ROOT / "release/licenses/sources.json").read_text(encoding="utf-8"))

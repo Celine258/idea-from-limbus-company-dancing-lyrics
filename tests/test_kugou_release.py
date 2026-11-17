@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from app_info import APP_VERSION, KUGOU_VERSION, kugou_default_mode
-from tools.package_kugou import VERSION, validate_runtime, public_files
+from tools.package_kugou import VERSION, validate_runtime, public_files, archive_name as kugou_archive_name
 
 
 class KugouReleaseTests(unittest.TestCase):
@@ -32,7 +32,7 @@ class KugouReleaseTests(unittest.TestCase):
                 self.assertIn(phrase,text)
         readme=(root/'README.md').read_text(encoding='utf-8')
         published=json.loads((root/'release/published-windows.json').read_text(encoding='utf-8'))['kugou']
-        self.assertIn(f'releases/download/v{published}/dancing-lyrics-{published}-windows-x64.zip',readme)
+        self.assertIn(f'releases/download/v{published}/{kugou_archive_name(published)}',readme)
         self.assertIn('CAR0TT0',readme)
 
     def test_double_click_defaults_are_scoped_to_dedicated_package(self):
@@ -42,7 +42,7 @@ class KugouReleaseTests(unittest.TestCase):
                                   ('DancingLyrics-Kugou.exe',True,['--netease'])):
             self.assertFalse(kugou_default_mode(exe, frozen, args))
         self.assertEqual(VERSION, KUGOU_VERSION)
-        self.assertNotEqual(KUGOU_VERSION, APP_VERSION)
+        self.assertEqual(KUGOU_VERSION, APP_VERSION)
 
     def test_incomplete_qt_is_rejected_before_creating_archive(self):
         with tempfile.TemporaryDirectory() as directory:

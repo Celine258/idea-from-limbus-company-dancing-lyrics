@@ -1,5 +1,9 @@
 {
-  "shared": "0.8.0-beta.5",
-  "kugou": "0.8.0-beta.5-kugou.1",
-  "note": "Public download versions stay pinned while beta.6 is tested locally. Update only after publication."
+  "shared": "0.8.0",
+  "kugou": "0.8.0",
+  "channel": "stable",
+  "kugou_archive": "dancing-lyrics-0.8.0-kugou-windows-x64.zip",
+  "previous_shared": "0.8.0-beta.5",
+  "previous_kugou": "0.8.0-beta.5-kugou.1",
+  "note": "Formal release approved by the user after beta.6 acceptance; assets verified in the final release record."
 }

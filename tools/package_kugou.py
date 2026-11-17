@@ -16,6 +16,12 @@ ROOT = Path(__file__).resolve().parents[1]
 VERSION = KUGOU_VERSION
 
 
+def archive_name(version=VERSION):
+    # Historical independent betas already include the player in their version.
+    suffix = "" if "-kugou." in version else "-kugou"
+    return f"dancing-lyrics-{version}{suffix}-windows-x64.zip"
+
+
 def validate_runtime(ready):
     required = ['DancingLyrics-Kugou.exe'] + [f'_internal/PySide6/Qt{module}.pyd' for module in ('Core','Gui','Widgets')]
     missing = [name for name in required if not (ready/name).is_file()]
@@ -116,7 +122,7 @@ def main():
                 exe_sha256=hashlib.sha256((ready / "DancingLyrics-Kugou.exe").read_bytes()).hexdigest(),
                 compatibility="Independent install; runtime interfaces remain subject to client changes; see guide.")
     (ready / "package-info.json").write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8")
-    archive = dist / ("dancing-lyrics-" + VERSION + "-windows-x64.zip")
+    archive = dist / archive_name()
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as output:
         for file in public_files(ready):
             output.write(file, str(Path("DancingLyrics-Kugou") / file.relative_to(ready)))

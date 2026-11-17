@@ -3,8 +3,8 @@ import ctypes
 import sys
 from pathlib import PureWindowsPath
 
-APP_VERSION = "0.8.0-beta.6"
-KUGOU_VERSION = "0.8.0-beta.6-kugou.1"
+APP_VERSION = "0.8.0"
+KUGOU_VERSION = APP_VERSION
 NETEASE_VERSIONS = ("3.1.40.205461", "3.1.41.205529")
 APP_NAME = "都市回响"
 EFFECT_PREVIEW_TEXT = "啊，对了！但丁。有一天，去一趟图书馆吧。"
