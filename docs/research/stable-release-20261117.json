@@ -1,0 +1,621 @@
+{
+  "passed": true,
+  "runtime_source_commit": "eea264bafbad350a64cdb76124d8c76fe24651e1",
+  "archives": [
+    {
+      "player": "netease",
+      "folder": "网易云音乐",
+      "name": "dancing-lyrics-0.8.0-netease-windows-x64.zip",
+      "bytes": 71916333,
+      "sha256": "d650e0db9e6989034212e660de9bb321c4ff92d6816195f1edab9522e1fb8d21",
+      "exe_sha256": "f1c528cdb6b5490139ee4a4ec9b745b65aab59bf50005e468bae83f288246359",
+      "crc": true,
+      "private_data_excluded": true,
+      "qt_runtime_complete": true,
+      "license_bytes_verified": true,
+      "developer_path_removed": true,
+      "native_groups": {
+        "passed": true,
+        "checks": {
+          "windows_platform": true,
+          "actual_dpr": true,
+          "default_extended_reachable": true,
+          "default_seconds_reachable": true,
+          "default_limit_reachable": true,
+          "default_footer_visible": true,
+          "minimum_extended_reachable": true,
+          "minimum_seconds_reachable": true,
+          "minimum_limit_reachable": true,
+          "minimum_footer_visible": true,
+          "saved_immediately": true,
+          "preset_preserves_duration": true,
+          "limit_2_saved": true,
+          "limit_2_preset_independent": true,
+          "limit_3_saved": true,
+          "limit_3_preset_independent": true,
+          "limit_4_saved": true,
+          "limit_4_preset_independent": true,
+          "limit_disabled_when_not_extended": true,
+          "limit_enabled_and_retained": true,
+          "classic_visible_blocks_do_not_overlap": true,
+          "classic_layout_within_screen": true,
+          "classic_warm_four_bilingual_p95_under_33ms": true,
+          "classic_glow_and_fall_not_clipped": true,
+          "ripple_wave_visible_blocks_do_not_overlap": true,
+          "ripple_wave_layout_within_screen": true,
+          "ripple_wave_warm_four_bilingual_p95_under_33ms": true,
+          "ripple_wave_glow_and_fall_not_clipped": true,
+          "ripple_shake_visible_blocks_do_not_overlap": true,
+          "ripple_shake_layout_within_screen": true,
+          "ripple_shake_warm_four_bilingual_p95_under_33ms": true,
+          "ripple_shake_glow_and_fall_not_clipped": true,
+          "fall_wave_visible_blocks_do_not_overlap": true,
+          "fall_wave_layout_within_screen": true,
+          "fall_wave_warm_four_bilingual_p95_under_33ms": true,
+          "fall_wave_glow_and_fall_not_clipped": true,
+          "fall_shake_visible_blocks_do_not_overlap": true,
+          "fall_shake_layout_within_screen": true,
+          "fall_shake_warm_four_bilingual_p95_under_33ms": true,
+          "fall_shake_glow_and_fall_not_clipped": true,
+          "actual_four_surfaces_ready": true,
+          "actual_limit_2_active": true,
+          "actual_limit_2_surfaces_ready": true,
+          "actual_limit_2_cache_bounded": true,
+          "actual_limit_2_has_pixels": true,
+          "actual_limit_3_active": true,
+          "actual_limit_3_surfaces_ready": true,
+          "actual_limit_3_cache_bounded": true,
+          "actual_limit_3_has_pixels": true,
+          "actual_limit_4_active": true,
+          "actual_limit_4_surfaces_ready": true,
+          "actual_limit_4_cache_bounded": true,
+          "actual_limit_4_has_pixels": true,
+          "pause_freezes_frame": true,
+          "seek_rebuilds_from_song_position": true,
+          "song_end_clears_alpha": true,
+          "blank_cue_clears_alpha": true
+        },
+        "dpr": 1.0,
+        "measurements": [
+          {
+            "style": "classic",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 2,
+            "warm_render_p95_ms": 8.766,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "ripple_wave",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 4,
+            "warm_render_p95_ms": 2.834,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "ripple_shake",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 4,
+            "warm_render_p95_ms": 3.484,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "fall_wave",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 2,
+            "warm_render_p95_ms": 3.324,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "fall_shake",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 2,
+            "warm_render_p95_ms": 3.66,
+            "synthetic_lyric_times": true
+          }
+        ],
+        "app_version": "0.8.0",
+        "kugou_version": "0.8.0",
+        "packaged": true,
+        "music_client_commands": 0,
+        "real_playback": false,
+        "synthetic_lyric_times": true,
+        "user_settings_modified": false
+      },
+      "smoke_checks": 75
+    },
+    {
+      "player": "qqmusic",
+      "folder": "QQ音乐",
+      "name": "dancing-lyrics-0.8.0-qqmusic-windows-x64.zip",
+      "bytes": 71908567,
+      "sha256": "a9f0a1719ea4dfc96d8eb1c5b1395e6ac19b898e3173ceeb4f07aa69605bd9f5",
+      "exe_sha256": "f1c528cdb6b5490139ee4a4ec9b745b65aab59bf50005e468bae83f288246359",
+      "crc": true,
+      "private_data_excluded": true,
+      "qt_runtime_complete": true,
+      "license_bytes_verified": true,
+      "developer_path_removed": true,
+      "native_groups": {
+        "passed": true,
+        "checks": {
+          "windows_platform": true,
+          "actual_dpr": true,
+          "default_extended_reachable": true,
+          "default_seconds_reachable": true,
+          "default_limit_reachable": true,
+          "default_footer_visible": true,
+          "minimum_extended_reachable": true,
+          "minimum_seconds_reachable": true,
+          "minimum_limit_reachable": true,
+          "minimum_footer_visible": true,
+          "saved_immediately": true,
+          "preset_preserves_duration": true,
+          "limit_2_saved": true,
+          "limit_2_preset_independent": true,
+          "limit_3_saved": true,
+          "limit_3_preset_independent": true,
+          "limit_4_saved": true,
+          "limit_4_preset_independent": true,
+          "limit_disabled_when_not_extended": true,
+          "limit_enabled_and_retained": true,
+          "classic_visible_blocks_do_not_overlap": true,
+          "classic_layout_within_screen": true,
+          "classic_warm_four_bilingual_p95_under_33ms": true,
+          "classic_glow_and_fall_not_clipped": true,
+          "ripple_wave_visible_blocks_do_not_overlap": true,
+          "ripple_wave_layout_within_screen": true,
+          "ripple_wave_warm_four_bilingual_p95_under_33ms": true,
+          "ripple_wave_glow_and_fall_not_clipped": true,
+          "ripple_shake_visible_blocks_do_not_overlap": true,
+          "ripple_shake_layout_within_screen": true,
+          "ripple_shake_warm_four_bilingual_p95_under_33ms": true,
+          "ripple_shake_glow_and_fall_not_clipped": true,
+          "fall_wave_visible_blocks_do_not_overlap": true,
+          "fall_wave_layout_within_screen": true,
+          "fall_wave_warm_four_bilingual_p95_under_33ms": true,
+          "fall_wave_glow_and_fall_not_clipped": true,
+          "fall_shake_visible_blocks_do_not_overlap": true,
+          "fall_shake_layout_within_screen": true,
+          "fall_shake_warm_four_bilingual_p95_under_33ms": true,
+          "fall_shake_glow_and_fall_not_clipped": true,
+          "actual_four_surfaces_ready": true,
+          "actual_limit_2_active": true,
+          "actual_limit_2_surfaces_ready": true,
+          "actual_limit_2_cache_bounded": true,
+          "actual_limit_2_has_pixels": true,
+          "actual_limit_3_active": true,
+          "actual_limit_3_surfaces_ready": true,
+          "actual_limit_3_cache_bounded": true,
+          "actual_limit_3_has_pixels": true,
+          "actual_limit_4_active": true,
+          "actual_limit_4_surfaces_ready": true,
+          "actual_limit_4_cache_bounded": true,
+          "actual_limit_4_has_pixels": true,
+          "pause_freezes_frame": true,
+          "seek_rebuilds_from_song_position": true,
+          "song_end_clears_alpha": true,
+          "blank_cue_clears_alpha": true
+        },
+        "dpr": 1.25,
+        "measurements": [
+          {
+            "style": "classic",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 2,
+            "warm_render_p95_ms": 10.975,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "ripple_wave",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 3,
+            "warm_render_p95_ms": 7.066,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "ripple_shake",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 3,
+            "warm_render_p95_ms": 7.767,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "fall_wave",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 2,
+            "warm_render_p95_ms": 7.135,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "fall_shake",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 2,
+            "warm_render_p95_ms": 7.899,
+            "synthetic_lyric_times": true
+          }
+        ],
+        "app_version": "0.8.0",
+        "kugou_version": "0.8.0",
+        "packaged": true,
+        "music_client_commands": 0,
+        "real_playback": false,
+        "synthetic_lyric_times": true,
+        "user_settings_modified": false
+      },
+      "smoke_checks": null
+    },
+    {
+      "player": "kugou",
+      "folder": "酷狗音乐",
+      "name": "dancing-lyrics-0.8.0-kugou-windows-x64.zip",
+      "bytes": 71918295,
+      "sha256": "90b2757db1773201a62a9a4d3776fca81ab2a3d33a7c984013c37e688bbc4905",
+      "exe_sha256": "f1c528cdb6b5490139ee4a4ec9b745b65aab59bf50005e468bae83f288246359",
+      "crc": true,
+      "private_data_excluded": true,
+      "qt_runtime_complete": true,
+      "license_bytes_verified": true,
+      "developer_path_removed": true,
+      "native_groups": {
+        "passed": true,
+        "checks": {
+          "windows_platform": true,
+          "actual_dpr": true,
+          "default_extended_reachable": true,
+          "default_seconds_reachable": true,
+          "default_limit_reachable": true,
+          "default_footer_visible": true,
+          "minimum_extended_reachable": true,
+          "minimum_seconds_reachable": true,
+          "minimum_limit_reachable": true,
+          "minimum_footer_visible": true,
+          "saved_immediately": true,
+          "preset_preserves_duration": true,
+          "limit_2_saved": true,
+          "limit_2_preset_independent": true,
+          "limit_3_saved": true,
+          "limit_3_preset_independent": true,
+          "limit_4_saved": true,
+          "limit_4_preset_independent": true,
+          "limit_disabled_when_not_extended": true,
+          "limit_enabled_and_retained": true,
+          "classic_visible_blocks_do_not_overlap": true,
+          "classic_layout_within_screen": true,
+          "classic_warm_four_bilingual_p95_under_33ms": true,
+          "classic_glow_and_fall_not_clipped": true,
+          "ripple_wave_visible_blocks_do_not_overlap": true,
+          "ripple_wave_layout_within_screen": true,
+          "ripple_wave_warm_four_bilingual_p95_under_33ms": true,
+          "ripple_wave_glow_and_fall_not_clipped": true,
+          "ripple_shake_visible_blocks_do_not_overlap": true,
+          "ripple_shake_layout_within_screen": true,
+          "ripple_shake_warm_four_bilingual_p95_under_33ms": true,
+          "ripple_shake_glow_and_fall_not_clipped": true,
+          "fall_wave_visible_blocks_do_not_overlap": true,
+          "fall_wave_layout_within_screen": true,
+          "fall_wave_warm_four_bilingual_p95_under_33ms": true,
+          "fall_wave_glow_and_fall_not_clipped": true,
+          "fall_shake_visible_blocks_do_not_overlap": true,
+          "fall_shake_layout_within_screen": true,
+          "fall_shake_warm_four_bilingual_p95_under_33ms": true,
+          "fall_shake_glow_and_fall_not_clipped": true,
+          "actual_four_surfaces_ready": true,
+          "actual_limit_2_active": true,
+          "actual_limit_2_surfaces_ready": true,
+          "actual_limit_2_cache_bounded": true,
+          "actual_limit_2_has_pixels": true,
+          "actual_limit_3_active": true,
+          "actual_limit_3_surfaces_ready": true,
+          "actual_limit_3_cache_bounded": true,
+          "actual_limit_3_has_pixels": true,
+          "actual_limit_4_active": true,
+          "actual_limit_4_surfaces_ready": true,
+          "actual_limit_4_cache_bounded": true,
+          "actual_limit_4_has_pixels": true,
+          "pause_freezes_frame": true,
+          "seek_rebuilds_from_song_position": true,
+          "song_end_clears_alpha": true,
+          "blank_cue_clears_alpha": true
+        },
+        "dpr": 1.5,
+        "measurements": [
+          {
+            "style": "classic",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 2,
+            "warm_render_p95_ms": 12.059,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "ripple_wave",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 3,
+            "warm_render_p95_ms": 7.915,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "ripple_shake",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 3,
+            "warm_render_p95_ms": 8.398,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "fall_wave",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 2,
+            "warm_render_p95_ms": 7.265,
+            "synthetic_lyric_times": true
+          },
+          {
+            "style": "fall_shake",
+            "simultaneous_blocks": 4,
+            "bilingual": true,
+            "scramble_exit": true,
+            "visible_without_collisions": 2,
+            "warm_render_p95_ms": 9.013,
+            "synthetic_lyric_times": true
+          }
+        ],
+        "app_version": "0.8.0",
+        "kugou_version": "0.8.0",
+        "packaged": true,
+        "music_client_commands": 0,
+        "real_playback": false,
+        "synthetic_lyric_times": true,
+        "user_settings_modified": false
+      },
+      "smoke_checks": 75
+    }
+  ],
+  "same_engine": true,
+  "public_release_created": true,
+  "remote_tag_created": true,
+  "git_push_performed": true,
+  "real_client_playback": false,
+  "music_client_commands": 0,
+  "version": "0.8.0",
+  "versions": {
+    "shared": "0.8.0",
+    "kugou": "0.8.0"
+  },
+  "channel": "stable",
+  "user_acceptance_confirmed": true,
+  "user_publication_authorized": true,
+  "accepted_candidate": "0.8.0-beta.6",
+  "accepted_delivery_commit": "8c7db4e",
+  "accepted_behavior_unchanged": true,
+  "runtime_automated_tests": 558,
+  "final_automated_tests": 560,
+  "published": {
+    "passed": true,
+    "tag": "v0.8.0",
+    "runtime_source_commit": "eea264bafbad350a64cdb76124d8c76fe24651e1",
+    "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/tag/v0.8.0",
+    "release_id": 448419986,
+    "draft": false,
+    "prerelease": false,
+    "is_latest_stable": true,
+    "assets": [
+      {
+        "name": "dancing-lyrics-0.8.0-kugou-windows-x64.zip",
+        "bytes": 71918295,
+        "sha256": "90b2757db1773201a62a9a4d3776fca81ab2a3d33a7c984013c37e688bbc4905",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-kugou-windows-x64.zip"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-kugou-windows-x64.zip.sha256",
+        "bytes": 110,
+        "sha256": "3e0f3d329f91f17831f957513a1922735436af98d03666ba3031fb2db4fdeb03",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-kugou-windows-x64.zip.sha256"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-netease-windows-x64.zip",
+        "bytes": 71916333,
+        "sha256": "d650e0db9e6989034212e660de9bb321c4ff92d6816195f1edab9522e1fb8d21",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-netease-windows-x64.zip"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-netease-windows-x64.zip.sha256",
+        "bytes": 112,
+        "sha256": "c79fa60ade07e52992589658c22d4ee0a7a065d4f8bce089b80782f1d27d65dd",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-netease-windows-x64.zip.sha256"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-qqmusic-windows-x64.zip",
+        "bytes": 71908567,
+        "sha256": "a9f0a1719ea4dfc96d8eb1c5b1395e6ac19b898e3173ceeb4f07aa69605bd9f5",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-qqmusic-windows-x64.zip"
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-qqmusic-windows-x64.zip.sha256",
+        "bytes": 112,
+        "sha256": "2795d2378be5cc0f5378e433dcce9bc5f9e6029bd57f93c95c6f3438cad99919",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-qqmusic-windows-x64.zip.sha256"
+      }
+    ]
+  },
+  "public_downloads": {
+    "passed": true,
+    "assets": [
+      {
+        "name": "dancing-lyrics-0.8.0-kugou-windows-x64.zip",
+        "bytes": 71918295,
+        "sha256": "90b2757db1773201a62a9a4d3776fca81ab2a3d33a7c984013c37e688bbc4905",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-kugou-windows-x64.zip",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag_commit": "eea264bafbad350a64cdb76124d8c76fe24651e1",
+        "downloaded_checksum_verified": null
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-kugou-windows-x64.zip.sha256",
+        "bytes": 110,
+        "sha256": "3e0f3d329f91f17831f957513a1922735436af98d03666ba3031fb2db4fdeb03",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-kugou-windows-x64.zip.sha256",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag_commit": "eea264bafbad350a64cdb76124d8c76fe24651e1",
+        "downloaded_checksum_verified": true
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-netease-windows-x64.zip",
+        "bytes": 71916333,
+        "sha256": "d650e0db9e6989034212e660de9bb321c4ff92d6816195f1edab9522e1fb8d21",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-netease-windows-x64.zip",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag_commit": "eea264bafbad350a64cdb76124d8c76fe24651e1",
+        "downloaded_checksum_verified": null
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-netease-windows-x64.zip.sha256",
+        "bytes": 112,
+        "sha256": "c79fa60ade07e52992589658c22d4ee0a7a065d4f8bce089b80782f1d27d65dd",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-netease-windows-x64.zip.sha256",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag_commit": "eea264bafbad350a64cdb76124d8c76fe24651e1",
+        "downloaded_checksum_verified": true
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-qqmusic-windows-x64.zip",
+        "bytes": 71908567,
+        "sha256": "a9f0a1719ea4dfc96d8eb1c5b1395e6ac19b898e3173ceeb4f07aa69605bd9f5",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-qqmusic-windows-x64.zip",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag_commit": "eea264bafbad350a64cdb76124d8c76fe24651e1",
+        "downloaded_checksum_verified": null
+      },
+      {
+        "name": "dancing-lyrics-0.8.0-qqmusic-windows-x64.zip.sha256",
+        "bytes": 112,
+        "sha256": "2795d2378be5cc0f5378e433dcce9bc5f9e6029bd57f93c95c6f3438cad99919",
+        "url": "https://github.com/Celine258/idea-from-limbus-company-dancing-lyrics/releases/download/v0.8.0/dancing-lyrics-0.8.0-qqmusic-windows-x64.zip.sha256",
+        "anonymous_head_status": 200,
+        "server_digest_matches": true,
+        "tag_commit": "eea264bafbad350a64cdb76124d8c76fe24651e1",
+        "downloaded_checksum_verified": true
+      }
+    ]
+  },
+  "native_entries": {
+    "passed": true,
+    "reports": [
+      {
+        "passed": true,
+        "source": "qqmusic",
+        "checks": {
+          "native_bat_window": true,
+          "correct_version": true,
+          "correct_source": true,
+          "limit_control_present": true,
+          "reuses_existing_instance": true
+        },
+        "developer_path_removed": true,
+        "real_client_playback": false,
+        "music_client_commands": 0
+      },
+      {
+        "passed": true,
+        "source": "kugou",
+        "checks": {
+          "native_bat_window": true,
+          "correct_version": true,
+          "correct_source": true,
+          "limit_control_present": true,
+          "reuses_existing_instance": true
+        },
+        "developer_path_removed": true,
+        "real_client_playback": false,
+        "music_client_commands": 0
+      }
+    ]
+  },
+  "source_smoke": {
+    "passed": true,
+    "result_fields": 75
+  },
+  "installed": {
+    "passed": true,
+    "upgrades": [
+      {
+        "path_preserved": true,
+        "backup_available": true,
+        "backup": "artifacts\\archive\\2026-11-17\\stable-installations\\0-FloatingLyrics",
+        "exe_sha256": "f1c528cdb6b5490139ee4a4ec9b745b65aab59bf50005e468bae83f288246359"
+      },
+      {
+        "path_preserved": true,
+        "backup_available": true,
+        "backup": "artifacts\\archive\\2026-11-17\\stable-installations\\1-DancingLyrics-Kugou",
+        "exe_sha256": "f1c528cdb6b5490139ee4a4ec9b745b65aab59bf50005e468bae83f288246359"
+      },
+      {
+        "path_preserved": true,
+        "backup_available": true,
+        "backup": "artifacts\\archive\\2026-11-17\\stable-installations\\2-DancingLyrics-Kugou",
+        "exe_sha256": "f1c528cdb6b5490139ee4a4ec9b745b65aab59bf50005e468bae83f288246359"
+      }
+    ],
+    "profiles_preserved": 2,
+    "old_setting_values_unchanged": true,
+    "fonts_presets_and_bridge_unchanged": true,
+    "music_client_commands": 0
+  },
+  "restored": {
+    "passed": true,
+    "companions_restarted": [
+      "--netease"
+    ],
+    "existing_companions_reused": [],
+    "registered_watchers_restored": [
+      "CityEchoesKugou"
+    ],
+    "old_setting_values_unchanged": true,
+    "music_client_commands": 0
+  },
+  "installed_ui": {
+    "limit_control_present": true,
+    "native_version_present": true,
+    "existing_netease_reused": true,
+    "single_instance": true,
+    "passed": true,
+    "music_client_commands": 0
+  },
+  "not_verified": [
+    "additional_client_versions",
+    "new_real_song_regression_in_formal_packaging_step",
+    "second_clean_machine",
+    "mac_binary_update"
+  ]
+}
